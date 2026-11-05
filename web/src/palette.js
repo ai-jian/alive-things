@@ -16,7 +16,7 @@ function rgb2hsv(r, g, b) {
 /** @param {Color} dominant  @returns {Color[]} six stops, deep → light */
 export function paletteFromColor(dominant, driftDeep = -25, driftLight = 22) {
   let [h, s] = rgb2hsv(dominant.r, dominant.g, dominant.b);
-  if (s < 0.15) { h = 0.72; s = 0.35; }                  // near-neutral objects borrow a soft violet dusk
+  if (s < 0.15) { h = 0.72; s = 0.55; }                  // near-neutral objects borrow a soft violet dusk
   const vals = [0.34, 0.50, 0.68, 0.84, 0.94, 1.0];
   const sats = [0.95, 0.90, 0.80, 0.60, 0.35, 0.12];
   const drift = [1, 0.6, 0, -0.4, -0.8, -1];
