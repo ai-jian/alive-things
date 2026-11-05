@@ -1,6 +1,7 @@
-// What a cup becomes when you let go: eyes, a mouth, feet, a personality grown from how you drew.
+// What a cup becomes when you let go: googly eyes (face.js), feet, arms, a personality grown from how you drew.
 // Visual layer only here; the My Space brain drives movement later.
-import { Group, Mesh, SphereGeometry, TorusGeometry, CylinderGeometry, CircleGeometry, MeshBasicMaterial, Vector3, TubeGeometry, QuadraticBezierCurve3 } from 'three';
+import { Group, Mesh, SphereGeometry, CylinderGeometry, MeshBasicMaterial, Vector3, TubeGeometry, QuadraticBezierCurve3 } from 'three';
+import { makeFace } from './face.js';
 
 /** a short curved arm rooted at the object's side; the group pivots at the shoulder */
 function makeArm(side, root, ink) {
@@ -36,14 +37,8 @@ const head = new Vector3();
 export function wakeCup(cup, { traits, dark }) {
   const fit = cup.wakeFit || { unit: 1, offset: [0, 0, 0] }; const unit = fit.unit; const hw = fit.halfWidth || 0.6;   // half width in parts units
   const ink = new MeshBasicMaterial({ color: dark || 0x2a2a6b });
-  const blush = new MeshBasicMaterial({ color: 0xf3a7b6, transparent: true, opacity: 0.7 });
   const face = new Group();
-  const eyeL = new Mesh(new SphereGeometry(0.045, 14, 10), ink); eyeL.position.set(-0.17, 0.62, 0.575);
-  const eyeR = eyeL.clone(); eyeR.position.x = 0.17;
-  const mouth = new Mesh(new TorusGeometry(0.07, 0.016, 8, 18, Math.PI), ink); mouth.position.set(0, 0.48, 0.60); mouth.rotation.z = Math.PI;
-  const cheekL = new Mesh(new CircleGeometry(0.05, 14), blush); cheekL.position.set(-0.3, 0.5, 0.53); cheekL.rotation.y = -0.5;
-  const cheekR = cheekL.clone(); cheekR.position.x = 0.3; cheekR.rotation.y = 0.5;
-  face.add(eyeL, eyeR, mouth, cheekL, cheekR);
+  const eyes = makeFace({ y: 0.62, bodyR: 0.6, traits }); face.add(eyes.group);
   const legs = []; const limbs = new Group();
   for (const x of [-0.22, 0.22]) {
     const g = new Group(); const leg = new Mesh(new CylinderGeometry(0.03, 0.03, 0.22, 8), ink); leg.position.y = -0.11;
@@ -57,13 +52,16 @@ export function wakeCup(cup, { traits, dark }) {
   const parts = new Group(); parts.add(face, limbs); parts.scale.setScalar(0.001); parts.position.set(fit.offset[0], fit.offset[1], fit.offset[2]); cup.group.add(parts);
 
   const c = {
-    traits, parts, legs, arms, eyeL, eyeR, awake: true, t: 0, pop: 0, blinkT: 2 + Math.random() * 2, walking: false, napping: false, talkT: 0, lookTarget: null,
+    traits, parts, legs, arms, face: eyes, awake: true, t: 0, pop: 0, walking: false, napping: false, talkT: 0, lookTarget: null,
+    /** a passing feeling, see face.js */
+    feel(mood, seconds, opts) { eyes.feel(mood, seconds, opts); },
     update(dt, headWorld) {
       c.t += dt;
       // pop in with a little overshoot
       if (c.pop < 1) { c.pop = Math.min(1, c.pop + dt * 2.2); const k = c.pop; const s = k < 0.8 ? k / 0.8 * 1.15 : 1.15 - (k - 0.8) / 0.2 * 0.15; parts.scale.setScalar(Math.max(0.001, s) * unit); }
-      // blink
-      c.blinkT -= dt; const ey = c.blinkT < 0.12 ? 0.1 : 1; eyeL.scale.y = eyeR.scale.y = ey; if (c.blinkT < 0) c.blinkT = 2 + Math.random() * 3 + traits.sleepy * 2;
+      // eyes: napping closes them, talking opens the little mouth, pupils follow what it is looking at
+      eyes.base.mood = c.napping ? 'content' : 'open'; eyes.talk = c.talkT > 0; if (!eyes.talk) eyes.talkT = 0;
+      eyes.update(dt, c.lookTarget || headWorld);
       // feet
       const f = c.walking ? 9 : 0; for (let i = 0; i < legs.length; i++) legs[i].rotation.x = f ? Math.sin(c.t * f + i * Math.PI) * 0.4 : 0;
       // arms: breathe at rest, swing when walking, lift and wave a little while talking, droop when napping
@@ -81,5 +79,6 @@ export function wakeCup(cup, { traits, dark }) {
       if (headWorld) { const local = cup.group.worldToLocal(head.copy(headWorld)); const want = Math.atan2(local.x, local.z); const amt = 0.15 + 0.25 * traits.curious; face.rotation.y += ((Math.max(-0.6, Math.min(0.6, want)) * amt) - face.rotation.y) * Math.min(1, dt * 2); }
     },
   };
+  eyes.feel('happy', 1.6);   // wakes up pleased
   return c;
 }

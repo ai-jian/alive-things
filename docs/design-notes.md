@@ -37,6 +37,12 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 - Same seated 2 ft rule: nothing asks you to walk; you move the world, not yourself.
 - A pinch on or near the island never starts a trace; both hands pinching cancels a pending trace.
 
+## Nov 6, late: faces after the owner's reference sheet
+- Owner sent a sheet of soft gradient blobs with big white googly eyes. Faces now follow it: two white eyes with a round black pupil and a catch-light, a soft shadow instead of an outline, no mouth at rest, no cheeks.
+- Pupils dart and hold (saccades) toward you or toward whoever they are talking to; curious ones glance away on their own, shy ones look down.
+- Moods: open, wide (startled, small o mouth, three marks above the head), happy ^ ^ (waking, a good talk, the party, a playful one being touched), content ‿ ‿ (napping), cross (slanted lids), and a resting lid that comes from how sleepy you drew it.
+- Touching a creature on the island with a fingertip now gets a reaction by personality.
+
 ## Technical path for "real object → thing in your hand"
 1. Pinch near the object → Passthrough Camera API grabs one frame + pinch world position.
 2. Segment: MobileSAM/EfficientSAM via Unity Sentis with the pinch point as the prompt. Backup: depth threshold from Depth API. Backup of the backup: GrabCut.

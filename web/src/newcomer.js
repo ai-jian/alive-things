@@ -5,6 +5,7 @@ import { Group, Mesh, SphereGeometry, CircleGeometry, MeshBasicMaterial, Vector3
 
 function poolTexture() { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); const g = x.createRadialGradient(64, 64, 2, 64, 64, 64); g.addColorStop(0, 'rgba(255,236,205,0.9)'); g.addColorStop(0.5, 'rgba(255,226,190,0.3)'); g.addColorStop(1, 'rgba(255,226,190,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new CanvasTexture(c); }
 import { makeCup } from './cup.js';
+import { makeFace } from './face.js';
 
 const tmp = new Vector3(), fwd = new Vector3(), toIt = new Vector3(), q = new Quaternion();
 
@@ -29,10 +30,10 @@ export class Newcomer {
     // blank: pale, quiet, no handle, no paint yet
     cup.uniforms.uBaseLo.value = 0.62; cup.uniforms.uBaseHi.value = 0.92; cup.uniforms.uShade.value = 0.08; cup.uniforms.uUnder.value = 0.3;
     if (cup.handle) { cup.group.remove(cup.handle); cup.handle = null; }
-    const ink = new MeshBasicMaterial({ color: 0x2a2a6b, transparent: true });
-    const eyes = new Group(); const e1 = new Mesh(new SphereGeometry(0.05, 12, 8), ink); e1.position.set(-0.16, 0.66, 0.6); const e2 = e1.clone(); e2.position.x = 0.16; eyes.add(e1, e2);
-    cup.group.add(eyes); cup.peekEyes = eyes; cup.isNewcomer = true;
-    this.cup = cup; this.eyes = [e1, e2]; this.blinkT = 1.5;
+    // the same googly eyes as everyone, only wider and warier
+    const face = makeFace({ y: 0.64, bodyR: 0.6, size: 0.27, gap: 0.16, traits: { shy: 0.9, curious: 0.9, sleepy: 0 } });
+    cup.group.add(face.group); cup.peekEyes = face.group; cup.isNewcomer = true;
+    this.cup = cup; this.face = face; this.surprised = false;
     // its own hill, so it truly hides behind something
     const r = this.garden.radius, a = this.angle;
     const sh = new Shape(); const w = 0.09, h = 0.075; sh.moveTo(-w, 0); sh.quadraticCurveTo(-w * 0.5, h * 1.5, 0.01, h); sh.quadraticCurveTo(w * 0.55, h * 0.9, w, 0); sh.lineTo(-w, 0);
@@ -55,6 +56,7 @@ export class Newcomer {
     if (!this.cup) return null; const cup = this.cup;
     if (cup.group.parent) cup.group.parent.remove(cup.group);
     if (cup.peekEyes) { cup.group.remove(cup.peekEyes); cup.peekEyes = null; }
+    if (this.face) { this.face.dispose(); this.face = null; }
     if (this.hill) { this.garden.hills.remove(this.hill); this.hill = null; }
     if (this.pool) { this.garden.group.remove(this.pool); this.pool = null; }
     this.cup = null; this.state = 'away'; this.p = 0; this.peeks = 0;
@@ -102,8 +104,11 @@ export class Newcomer {
     tmp.copy(headLocal).sub(pos); const yaw = Math.atan2(tmp.x, tmp.z);
     cup.group.rotation.set(0, yaw, -this.side * 0.32 * this.p);
     // blink, and fade with the garden
-    this.blinkT -= dt; const ey = this.blinkT < 0.1 ? 0.1 : 1; for (const e of this.eyes) e.scale.y = ey; if (this.blinkT < 0) this.blinkT = 1.5 + Math.random() * 3;
-    for (const e of this.eyes) e.material.opacity = fade;
+    // eyes on you; being stared at makes them go wide just before it ducks
+    if (this.stare > 0.55 && !this.surprised) { this.surprised = true; this.face.feel('wide', 0.8, { marks: true, mouth: 'o' }); }
+    if (this.state === 'hidden') this.surprised = false;
+    tmp.copy(headLocal); this.garden.group.localToWorld(tmp); this.face.update(dt, tmp);
+    for (const e of this.face.eyes) e.mat.opacity = fade;
     cup.setGlow(0.35 * this.p);
     if (this.pool) { this.pool.position.set(pos.x, 0.004, pos.z); this.pool.material.opacity = 0.7 * this.p * fade; }
     cup.tick(dt, time);

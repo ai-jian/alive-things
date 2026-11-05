@@ -25,7 +25,12 @@ export class Brain {
     if (top === n.play && this.t.curious > 0.4) { this.enter('look', 3 + Math.random() * 3); n.play *= 0.4; return; }
     this.pickWander(); this.enter('wander', 3 + Math.random() * 5); n.explore *= 0.4;
   }
-  enter(s, seconds) { this.state = s; this.timer = seconds; if (this.cup.creature) this.cup.creature.walking = (s === 'wander' || s === 'approach'); }
+  enter(s, seconds) {
+    const c = this.cup.creature;
+    // a good talk ends with closed happy eyes
+    if (c && this.state === 'whisper' && s !== 'whisper' && this.partner && (this.affinity.get(this.partner) || 0) >= 0.2) c.feel('happy', 1.4);
+    this.state = s; this.timer = seconds; if (c) c.walking = (s === 'wander' || s === 'approach');
+  }
   nearest(all) { let best = null, bd = Infinity; for (const o of all) { if (o === this) continue; let d = o.pos().distanceToSquared(this.pos()); d *= 1 - 0.5 * (this.affinity.get(o) || 0); if (d < bd) { bd = d; best = o; } } return best; }
   bond(o, d) { const v = Math.min(1, (this.affinity.get(o) || 0) + d); this.affinity.set(o, v); }
   moveToward(to, dt, stopAt) {
@@ -59,7 +64,12 @@ export class Brain {
       case 'look': if (head) { tmp2.copy(head).sub(this.pos()); const yaw = Math.atan2(tmp2.x, tmp2.z); this.cup.group.rotation.y += ((yaw - this.cup.group.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 3); } break;
       default: break;
     }
-    if (this.cup.creature) { this.cup.creature.napping = this.state === 'nap'; }
+    if (this.cup.creature) {
+      const c = this.cup.creature; c.napping = this.state === 'nap';
+      // eyes on the one it is talking to, otherwise on you
+      if ((this.state === 'whisper' || this.state === 'approach') && this.partner) { c.lookTarget = (c.lookTarget || new Vector3()).copy(this.partner.pos()); c.lookTarget.y += 0.04; this.garden.group.localToWorld(c.lookTarget); c.looking = true; }
+      else if (c.looking) { c.lookTarget = null; c.looking = false; }
+    }
     // whisper card placement + fade
     const w = this.whisper; const talking = this.state === 'whisper' && this.cup.creature && this.cup.creature.talkT > 0; w.alpha += ((talking ? 1 : 0) - w.alpha) * Math.min(1, dt * 5); w.mat.opacity = w.alpha; w.mesh.visible = w.alpha > 0.02;
     if (w.mesh.visible) { w.mesh.position.copy(this.pos()); w.mesh.position.y += 0.1; if (head) w.mesh.lookAt(head); }
@@ -67,7 +77,8 @@ export class Brain {
     this.cup.group.rotation.x += (((this.state === 'nap') ? 0.18 : 0) - this.cup.group.rotation.x) * Math.min(1, dt * 2);
   }
   invite(from) { this.partner = from; this.enter('whisper', 4 + Math.random() * 3); this.turn = false; this.said = 1; this.bond(from, 0.2); this.need.company = 0; }
-  poke(dir) { if (this.t.shy > 0.5) { this.enter('idle', 1.2); this.cup.group.position.addScaledVector(dir.clone().setY(0).normalize(), -0.015); } else { this.enter('idle', 0.8); this.need.play = 0; } }
+  poke(dir) { const c = this.cup.creature; if (c) { if (this.t.shy > 0.5) c.feel('wide', 1.0, { marks: true, mouth: 'o' }); else if (this.t.playful > 0.5) c.feel('happy', 1.0, { marks: true }); else c.feel('wide', 0.8, { mouth: 'o' }); }
+    if (this.t.shy > 0.5) { this.enter('idle', 1.2); this.cup.group.position.addScaledVector(dir.clone().setY(0).normalize(), -0.015); } else { this.enter('idle', 0.8); this.need.play = 0; } }
 }
 
 /** wordless speech: marks in the creature's palette (dots for dotty creatures, strokes for the rest) */

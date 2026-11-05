@@ -9,6 +9,7 @@ import { Newcomer } from './newcomer.js';
 import { makeCard } from './hints.js';
 import { makeCup } from './cup.js';
 import { wakeCup } from './creature.js';
+import { makeFace } from './face.js';
 import { loadAll, upsert, serialize, restorePaint, decodeMask } from './store.js';
 import { makeThing } from './thing.js';
 import { inflateMask, sidesAt, inflatePolygon, sidesFromPolygon } from './inflate.js';
@@ -73,8 +74,8 @@ function makePlant() {
   const g = new Group(); const pot = new Mesh(new LatheGeometry([new Vector2(0, 0), new Vector2(0.03, 0), new Vector2(0.038, 0.045), new Vector2(0, 0.045)], 24), new MeshBasicMaterial({ color: 0xf3a7b6 }));
   const leafMat = new MeshBasicMaterial({ color: 0xa9d38f, side: DoubleSide }); const leaf = (ry, rot) => { const sh = new Shape(); sh.moveTo(0, 0); sh.quadraticCurveTo(0.05, 0.04, 0.0, 0.11); sh.quadraticCurveTo(-0.05, 0.04, 0, 0); const m = new Mesh(new ShapeGeometry(sh), leafMat); m.position.y = 0.045; m.rotation.set(0, ry, rot); return m; };
   g.add(pot, leaf(0, 0.5), leaf(1.2, -0.4), leaf(2.4, 0.3), leaf(3.6, -0.5), leaf(4.8, 0.2));
-  const ink = new MeshBasicMaterial({ color: 0x2e2a36 }); const e1 = new Mesh(new SphereGeometry(0.004, 8, 6), ink); e1.position.set(-0.01, 0.028, 0.036); const e2 = e1.clone(); e2.position.x = 0.01; g.add(e1, e2);
-  const smile = new Mesh(new LatheGeometry([new Vector2(0.007, 0), new Vector2(0.009, 0)], 12, 0, Math.PI), ink); smile.rotation.set(Math.PI / 2, 0, Math.PI); smile.position.set(0, 0.02, 0.037); g.add(smile);
+  // the same googly eyes as the creatures, scaled down to the pot
+  const face = makeFace({ y: 0.47, bodyR: 0.62, traits: { curious: 0.6, sleepy: 0.15, shy: 0 } }); face.group.scale.setScalar(0.06); g.add(face.group); g.userData.face = face;
   return g;
 }
 /** the sky you are under once inside: deep dusk above, a pink-lavender horizon, stars */
@@ -198,7 +199,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.adopt(cup); events.adopted = true; this.doorOn = Math.min(this.doorOn, 0.6);
       if (this.onAdopted) this.onAdopted(cup);
     }
-    say(line) { this.plantCard.draw(line); this.plantT = 4.5; }
+    say(line) { this.plantCard.draw(line); this.plantT = 4.5; this.plant.userData.face.feel('happy', 1.6); }
     showCard(text, seconds) { if (this.cardText !== text) { this.card.draw(text); this.cardText = text; } this.cardT = seconds; }
     catchNewcomer() { const nc = this.newcomer.release(); if (!nc) return; this.nextNewcomerAt = this.gardenTime + 120; events.newcomerCaught = true; sound.wake(1.4); if (this.mode === 'inside') this.exit(); if (this.onNewcomer) this.onNewcomer(nc); }
 
@@ -226,7 +227,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       if (opts.persist !== false) upsert(serialize(cup)); else cup.noPersist = true;
       if (opts.showcase || opts.restored) return;
       if (this.residents.length === 1) this.say('it looks a little lonely out here.');
-      if (this.residents.length === 3 && !this.partyDone) { this.partyDone = true; this.say('you brought friends!'); for (const b of this.brains) b.enter('look', 3); sound.wake(1.2); }
+      if (this.residents.length === 3 && !this.partyDone) { this.partyDone = true; this.say('you brought friends!'); for (const b of this.brains) { b.enter('look', 3); b.cup.creature && b.cup.creature.feel('happy', 2.5, { marks: true }); } sound.wake(1.2); }
     }
 
     // ---------------------------------------------------------------- hands: hold, move, pull apart, push together
@@ -334,6 +335,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.orb.position.y = 0.42 + Math.sin(time * 0.5) * 0.01; this.orbGlow.position.copy(this.orb.position); this.orbGlow.material.opacity = 0.85 + Math.sin(time * 1.3) * 0.1;
       for (const s of this.flora.children) if (s.isSprite) s.material.opacity = 0.6 + 0.4 * Math.sin(time * 1.7 + s.userData.ph);
       this.plant.rotation.z = Math.sin(time * 0.7) * 0.05;
+      this.plant.userData.face.update(delta, head);
       const headLocal = this.group.worldToLocal(head.clone());
       this.plantCard.mesh.position.copy(this.plant.position); this.plantCard.mesh.position.y += 0.12; this.plantCard.mesh.lookAt(headLocal);
       this.plantCard.mat.opacity = this.plantT > 0 ? Math.min(1, this.plantT) : 0; if (this.plantT > 0) this.plantT -= delta;
@@ -341,6 +343,12 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       { const q = headObj.getWorldQuaternion(new Quaternion()); sound.setListener(head, new Vector3(0, 0, -1).applyQuaternion(q), new Vector3(0, 1, 0).applyQuaternion(q)); }
       // creatures
       for (const b of this.brains) b.update(delta, this.brains, headLocal);
+      // touch one with a fingertip: it startles, giggles or shies away, by personality
+      if (this.isOpen()) for (const b of this.brains) {
+        b.pokeCool = Math.max(0, (b.pokeCool || 0) - delta); if (b.pokeCool > 0 || !b.cup.creature) continue;
+        const hgt = (b.cup.heightMetres || 0.09) * this.group.scale.x; b.cup.group.getWorldPosition(tmp2); tmp2.y += hgt * 0.5;
+        for (const h of ['left', 'right']) { if (hands.tip[h].distanceTo(tmp2) < Math.max(0.025, hgt * 0.6)) { const d = this.group.worldToLocal(hands.tip[h].clone()).sub(b.pos()); b.poke(d.lengthSq() > 1e-8 ? d : new Vector3(0, 0, 1)); b.pokeCool = 1.5; sound.tick && sound.tick(1.4); break; } }
+      }
       for (const p of this.pools) { p.grow = Math.min(1, p.grow + delta); const nap = p.cup.creature && p.cup.creature.napping; p.pool.scale.setScalar(0.2 * p.grow * (nap ? 0.8 : 1) * (1 + Math.sin(time * 1.5) * 0.03)); p.pool.position.copy(p.cup.group.position); p.pool.position.y = 0.005; p.pool.material.opacity = 0.55;
         p.beam.position.set(p.cup.group.position.x, 0.15, p.cup.group.position.z); p.beam.scale.set(p.grow, 1, p.grow); p.beam.material.opacity = (nap ? 0.12 : 0.2) * (1 + Math.sin(time * 1.5 + 1) * 0.08);
         p.cup.creature && p.cup.creature.update(delta, head); p.cup.tick(delta, time); }
