@@ -4,27 +4,29 @@ using UnityEngine;
 namespace AliveThings.Creature
 {
     /// <summary>
-    /// A speech bubble with no words. It shows icons built from the creature's own paint
-    /// patterns, so a cup painted with scallops "talks" in scallops. Attach to a creature,
-    /// give it a world-space canvas or a sprite quad as the bubble, and pattern sprites.
+    /// A speech bubble with no words. It shows little marks in the creature's own palette and manner:
+    /// a dotty creature whispers in dots, a swirly one in curls, a slow one in long soft strokes.
+    /// Attach to a creature, give it a sprite quad as the bubble and three mark sprites.
     /// </summary>
     public class WhisperBubble : MonoBehaviour
     {
         public Transform bubble;                   // enabled while whispering, faces the player
         public SpriteRenderer[] slots = new SpriteRenderer[2];
-        public Sprite[] patternSprites;            // icon per Paint.ZenBrush.Pattern (dimple, ridge, scale, swirl, leaf, weave)
+        public Sprite dotSprite, strokeSprite, curlSprite;
         public AudioSource voice;                  // short syllables, pitched by personality
         public AudioClip[] syllables;
         public Transform lookTarget;               // the player's head
 
         CreatureBrain brain;
-        Paint.PaintSurface paint;
+        Paint.ZenBrush brush;
+        Paint.PaletteFromObject palette;
         Coroutine running;
 
         void Awake()
         {
             brain = GetComponent<CreatureBrain>();
-            paint = GetComponentInChildren<Paint.PaintSurface>();
+            brush = GetComponentInChildren<Paint.ZenBrush>();
+            palette = GetComponentInChildren<Paint.PaletteFromObject>();
             if (bubble != null) bubble.gameObject.SetActive(false);
         }
 
@@ -39,12 +41,11 @@ namespace AliveThings.Creature
         IEnumerator Whisper()
         {
             if (bubble != null) bubble.gameObject.SetActive(true);
+            Color tint = palette != null ? Paint.PaletteFromObject.Build(palette.dominant, palette.hueDriftDeep, palette.hueDriftLight)[3] : Color.white;
             int said = 0;
             while (brain.state == CreatureBrain.State.Whisper && said < 3)
             {
-                for (int i = 0; i < slots.Length; i++)
-                    if (slots[i] != null && patternSprites != null && patternSprites.Length > 0)
-                        slots[i].sprite = patternSprites[PickPattern()];
+                foreach (var s in slots) if (s != null) { s.sprite = PickMark(); s.color = tint; }
                 Chirp();
                 said++;
                 yield return new WaitForSeconds(Random.Range(0.9f, 1.4f));
@@ -53,16 +54,13 @@ namespace AliveThings.Creature
             running = null;
         }
 
-        /// <summary>Weighted by what the player actually painted on this creature.</summary>
-        int PickPattern()
+        /// <summary>Weighted by how the player actually drew on this creature.</summary>
+        Sprite PickMark()
         {
-            if (paint == null || paint.patternCounts == null || paint.patternCounts.Length == 0)
-                return Random.Range(0, patternSprites.Length);
-            int total = 0; foreach (var c in paint.patternCounts) total += c;
-            if (total == 0) return Random.Range(0, patternSprites.Length);
-            int r = Random.Range(0, total);
-            for (int i = 0; i < paint.patternCounts.Length; i++) { r -= paint.patternCounts[i]; if (r < 0) return Mathf.Min(i, patternSprites.Length - 1); }
-            return 0;
+            var st = brush != null ? brush.stats : default;
+            float dot = 0.2f + st.dotRatio, curl = 0.2f + st.turnRatio, line = 0.2f + (1f - st.turnRatio) * 0.5f;
+            float r = Random.value * (dot + curl + line);
+            return r < dot ? dotSprite : r < dot + curl ? curlSprite : strokeSprite;
         }
 
         /// <summary>Animalese-style: a random syllable, pitch set by traits. No recorded lines needed.</summary>

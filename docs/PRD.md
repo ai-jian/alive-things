@@ -36,8 +36,8 @@ Someone at the end of a long day who wants ten quiet minutes with their hands bu
 | F1 | Passthrough + hand tracking | P0 | Hands visible and tracked in passthrough at 72 fps |
 | F2 | Ready-object shelf (cup, bowl, lamp, book, plant) | P0 | Pinch-grab any of five objects; they are soft and jelly-poke |
 | F3 | Hold-and-open gesture → Focus Mode | P0 | Pull >15 cm with the other hand enters Focus in under 2 s; release exits |
-| F4 | Zen brush, relief carving | P0 | Six patterns picked by motion; units appear along the stroke with tick + haptic; slow strokes deeper; strokes follow flow lines |
-| F5 | Toon relief shader (3渲2) | P0 | Relief visible from any angle under one light; three bands; no outlines; one clay colour per creature |
+| F4 | Zen brush with symmetry guide | P0 | 2 × 6 × mirror guide; line and dot; width follows slowness, depth and taper; dwell blooms; long-press sets centre; twist changes fold; tick + haptic per stamp |
+| F5 | Whole-body gradient surface | P0 | Palette built from the object's colour; strokes push up the same palette; shadow side slides down the palette; no outlines; reads at 72 fps |
 | F6 | Water gesture smooths | P1 | Flat palm over a carving softens it within 1 s; nothing is removed |
 | F7 | Wake: traits from strokes, blink, feet, tag | P0 | Tag shows two words that change with carving style |
 | F8 | My Space scene | P0 | Dark painted garden, light pool per creature, fireflies |
@@ -74,5 +74,5 @@ Someone at the end of a long day who wants ten quiet minutes with their hands bu
 
 ## 11. Open questions
 - Exact Devpost rules: file formats, max video length, whether a store listing is required.
-- Clay colour for captured objects: dominant colour of the photo vs user pick.
+- (resolved) Palette comes from the photo's dominant colour; no user pick.
 - Does Focus Mode dim passthrough via OVRPassthroughLayer colour controls or a fog quad? Test both on device.

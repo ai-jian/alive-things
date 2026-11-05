@@ -4,182 +4,205 @@ using UnityEngine;
 namespace AliveThings.Paint
 {
     /// <summary>
-    /// The "anyone can draw" brush. It carves, it doesn't colour: units are height kernels
-    /// (ridges and grooves) stamped into PaintSurface's height map; the toon relief shader
-    /// lets the light draw them. The player only provides a path and a rhythm. The brush:
-    ///  1. picks a pattern from the motion itself (tap, straight, wavy, circle, flick, scrub),
-    ///  2. places repeating units along the path at even spacing,
-    ///  3. gently bends the path toward the surface's flow lines (so shaky lines look intentional),
-    ///  4. rewards slowness: slow strokes make bigger, more opaque units,
-    ///  5. plays a tick and a light haptic per unit.
-    /// Fingertip comes from HandInput; hits come from a MeshCollider on the paintable object.
+    /// The "anyone can draw" brush, final design (Nov 5). No menus, no pattern list.
+    ///  - Fingertip on the surface → a line. Width from slowness, press depth and a taper-in.
+    ///  - Tap → a dot.
+    ///  - Hold still while touching → ink pools and blooms (adds water).
+    ///  - Press and hold 0.6 s before moving → sets the mandala centre (ripple).
+    ///  - Two fingertips on the surface and twist → fold 4/6/8/12.
+    ///  - Flat palm → water (softens, never erases).
+    /// Every mark goes through the composite symmetry guide: 2 around the axis × N mandala × mirror.
+    /// Works on lathe-like objects (cups, bowls, vases) out of the box; other shapes still paint, the
+    /// "around" copies just land where the UV says.
     /// </summary>
+    [RequireComponent(typeof(PaintSurface))]
     public class ZenBrush : MonoBehaviour
     {
-        public enum Pattern { Dot, Stripe, Scallop, Spiral, Leaf, Grid }
-        public const int PatternCount = 6;
+        [Header("Guide")]
+        public int around = 2;
+        public int mandala = 6;
+        public bool mirror = true;
+        public Vector2 centreUV = new Vector2(0f, 0.5f);
+        static readonly int[] Folds = { 4, 6, 8, 12 };
 
-        public PaintSurface surface;
-        [Tooltip("Height kernels, one per Pattern: dimple, ridge, scale, swirl, leaf, weave. Grayscale, 0.5 = flat.")]
-        public Texture2D[] patternKernels = new Texture2D[PatternCount];
-        public float depth = 1f;                               // overall carve strength
-        public float touchDistance = 0.015f;
-        public float unitSpacing = 0.012f;      // metres along the surface between units
-        [Range(0, 1)] public float flowSnap = 0.6f;   // 0 = your line, 1 = fully follows the flow lines
-        public AudioSource tick;
-        public AudioClip tickClip;
+        [Header("Feel")]
+        public float touchDistance = 0.012f;      // m, how close the tip must be to count as touching
+        public float maxDepth = 0.02f;            // m, press this deep for full width
+        public float spacingUV = 0.006f;          // distance between stamps in U
+        public float minRadius = 0.004f, maxRadius = 0.016f;   // UV units (U), like 4..16 px of 1024
+        public float longPressSeconds = 0.6f;
+        public float dwellSeconds = 0.15f;
+        public AudioSource tick; public AudioClip tickClip;
 
         [HideInInspector] public Creature.StrokeStats stats;
 
-        Collider col;
-        readonly List<Vector3> stroke = new List<Vector3>();
-        Vector3 lastUnitPos, lastDir;
-        float distSinceUnit, strokeStart, speedAccum; int speedSamples;
-        int usedMask; int dots, loops;
-        bool down;
+        PaintSurface surface; Collider col;
+        // texture aspect for the mandala rotation: U is "around", V is "up". For a lathe object the physical
+        // size of one U unit is the circumference, of one V unit the wall height. Set from the mesh bounds.
+        float pxX = 1f, pxY = 1f;
 
-        void Start() { if (surface == null) surface = GetComponent<PaintSurface>(); col = surface.target.GetComponent<Collider>(); }
+        // stroke state
+        bool down, pressDone; float downT, lastMoveT, strokeLen, smoothSpeed, speedAccum; int speedSamples, dots, stampsTotal; float turnAccum, dwellTotal;
+        Vector2 lastUV; bool hasLast; Vector3 lastDirUV;
+        // twist state
+        bool twisting; float twistAngle0, twistAcc;
+
+        void Start()
+        {
+            surface = GetComponent<PaintSurface>();
+            col = surface.target.GetComponent<Collider>();
+            var b = surface.target.bounds; float circumference = Mathf.PI * (b.size.x + b.size.z) * 0.5f;
+            pxX = 1f / Mathf.Max(circumference, 0.01f); pxY = 1f / Mathf.Max(b.size.y, 0.01f);   // UV per metre
+        }
 
         void Update()
         {
             var input = Interaction.HandInput.Instance; if (input == null || col == null) return;
-            var h = input.Right.tracked ? input.Right : input.Left;
-            if (!h.tracked) { EndStroke(); return; }
+            surface.Tick(Time.deltaTime);
+            var R = input.Right; var L = input.Left;
 
-            Vector3 tip = h.indexTip;
-            Vector3 onSurface = col.ClosestPoint(tip);
-            bool touching = Vector3.Distance(onSurface, tip) < touchDistance && !h.IsPinching;
+            // water: an open palm near the surface
+            foreach (var h in new[] { R, L })
+                if (h.tracked && h.IsOpenPalm && Near(h.palm, touchDistance * 3f) && TryUV(col.ClosestPoint(h.palm), out Vector2 puv))
+                    surface.AddWet(puv, 0.05f, Time.deltaTime * 1.5f);
 
-            // water: an open palm near the surface smooths instead of carving
-            if (h.IsOpenPalm && Vector3.Distance(col.ClosestPoint(h.palm), h.palm) < touchDistance * 3f)
-            { EndStroke(); if (TryUV(col.ClosestPoint(h.palm), out Vector2 puv)) surface.Smooth(puv, 0.08f, Time.deltaTime * 2f); return; }
-
-            if (!touching) { EndStroke(); return; }
-            if (!down) BeginStroke(onSurface);
-            Continue(onSurface);
-        }
-
-        void BeginStroke(Vector3 p)
-        {
-            down = true; stroke.Clear(); stroke.Add(p);
-            lastUnitPos = p; lastDir = Vector3.zero; distSinceUnit = 0; strokeStart = Time.time;
-        }
-
-        void Continue(Vector3 p)
-        {
-            Vector3 prev = stroke[stroke.Count - 1];
-            float step = Vector3.Distance(prev, p);
-            if (step < 0.001f) return;
-
-            // speed for "slow is rewarded"
-            float speed = step / Mathf.Max(Time.deltaTime, 1e-4f);
-            speedAccum += speed; speedSamples++;
-
-            // bend toward the flow line at this point
-            Vector3 dir = (p - prev).normalized;
-            Vector3 flow = FlowDirection(p, dir);
-            dir = Vector3.Slerp(dir, flow, flowSnap).normalized;
-            p = prev + dir * step;
-            p = col.ClosestPoint(p);
-
-            stroke.Add(p);
-            distSinceUnit += step;
-
-            if (distSinceUnit >= unitSpacing)
+            // twist: both index tips on the surface
+            bool bothOn = R.tracked && L.tracked && Near(R.indexTip, touchDistance) && Near(L.indexTip, touchDistance);
+            if (bothOn)
             {
-                distSinceUnit = 0;
-                Pattern pat = Classify();
-                float slow = 1f - Mathf.Clamp01(speed / 0.6f);
-                float size = Mathf.Lerp(0.02f, 0.045f, slow);                       // UV units
-                float strength = depth * Mathf.Lerp(0.5f, 1f, slow);                // slow = deeper
-                PlaceUnit(pat, p, dir, size, strength);
+                Vector3 d = L.indexTip - R.indexTip; float ang = Mathf.Atan2(Vector3.Dot(d, transform.up), Vector3.Dot(d, transform.right));
+                if (!twisting) { twisting = true; twistAngle0 = ang; twistAcc = 0; EndStroke(); }
+                float delta = Mathf.DeltaAngle(twistAngle0 * Mathf.Rad2Deg, ang * Mathf.Rad2Deg); twistAngle0 = ang; twistAcc += delta;
+                const float step = 36f;
+                while (twistAcc > step) { twistAcc -= step; StepFold(+1); }
+                while (twistAcc < -step) { twistAcc += step; StepFold(-1); }
+                return;
             }
+            twisting = false;
+
+            // paint with whichever index is touching (prefer right)
+            var hand = R.tracked && Near(R.indexTip, touchDistance) ? R : (L.tracked && Near(L.indexTip, touchDistance) ? L : default);
+            if (!hand.tracked || hand.IsPinching) { EndStroke(); return; }
+            Vector3 onSurface = col.ClosestPoint(hand.indexTip);
+            if (!TryUV(onSurface, out Vector2 uv)) { EndStroke(); return; }
+            float depth = Depth(hand.indexTip);
+            if (!down) BeginStroke(uv);
+            Continue(uv, depth);
+        }
+
+        void BeginStroke(Vector2 uv) { down = true; pressDone = false; downT = lastMoveT = Time.time; strokeLen = 0; smoothSpeed = 0; hasLast = true; lastUV = uv; }
+
+        void Continue(Vector2 uv, float depth)
+        {
+            float now = Time.time;
+            Vector2 d = uv - lastUV; if (d.x > 0.5f) d.x -= 1f; if (d.x < -0.5f) d.x += 1f;
+            float len = d.magnitude;
+
+            if (len < spacingUV)
+            {
+                // still: long press sets the centre; after that, dwell adds water
+                if (!pressDone && strokeLen == 0 && now - downT > longPressSeconds) { pressDone = true; centreUV = uv; OnCentreSet(uv); }
+                else if (pressDone) { /* centre already set this press; do nothing */ }
+                else if (now - lastMoveT > dwellSeconds && strokeLen > 0) { float r = 0.01f + Mathf.Min(0.03f, (now - lastMoveT) * 0.025f); surface.AddWet(lastUV, r, Time.deltaTime * 1.5f); dwellTotal += Time.deltaTime; }
+                return;
+            }
+            if (pressDone) return;   // a centre press is not a stroke
+
+            float speed = len / Mathf.Max(Time.deltaTime, 1e-4f) / pxX;   // metres per second along the surface
+            smoothSpeed = smoothSpeed * 0.6f + speed * 0.4f; speedAccum += speed; speedSamples++; lastMoveT = now;
+            float slow = 1f - Mathf.Clamp01(smoothSpeed / 0.5f);
+            float taperIn = Mathf.Clamp01(strokeLen / 0.03f);
+            float press = 0.6f + 0.8f * Mathf.Clamp01(depth / maxDepth);
+            float radius = Mathf.Lerp(minRadius, maxRadius, slow) * (0.35f + 0.65f * taperIn) * press;
+            float strength = (0.3f + 0.7f * slow) * (0.4f + 0.6f * taperIn);
+
+            Vector2 dir = d / len;
+            if (hasLast && lastDirUV != Vector3.zero) turnAccum += Mathf.Abs(Vector2.SignedAngle(lastDirUV, dir));
+            lastDirUV = dir;
+            Vector2 next = lastUV + dir * spacingUV; next.x = Mathf.Repeat(next.x, 1f);
+            Symmetric(next, radius, strength);
+            lastUV = next; strokeLen += spacingUV; stampsTotal++;
+            Tick();
         }
 
         void EndStroke()
         {
             if (!down) return;
-            down = false;
-            float dur = Time.time - strokeStart;
-            if (dur < 0.2f && stroke.Count < 4) { PlaceUnit(Pattern.Dot, stroke[0], Vector3.forward, 0.03f, depth); } // a tap is a dimple
+            if (!pressDone && strokeLen == 0 && Time.time - downT < 0.25f) { Symmetric(lastUV, maxRadius * 0.6f, 1f); dots++; stampsTotal++; Tick(); }   // a tap is a dot
+            down = false; hasLast = false; lastDirUV = Vector3.zero;
             UpdateStats();
         }
 
-        /// <summary>Which pattern does this motion feel like? Decided from the recent path shape.</summary>
-        Pattern Classify()
+        /// <summary>The guide: around × mandala × mirror, in UV space with the lathe aspect applied.</summary>
+        void Symmetric(Vector2 uv, float radius, float strength)
         {
-            int n = stroke.Count; if (n < 6) return Pattern.Stripe;
-            // curvature and wiggle over the last ~12 points
-            int from = Mathf.Max(1, n - 12); float turn = 0, wiggle = 0; Vector3 pd = Vector3.zero;
-            for (int i = from; i < n; i++)
+            float dx = uv.x - centreUV.x; if (dx > 0.5f) dx -= 1f; if (dx < -0.5f) dx += 1f;
+            float px = dx / pxX, py = (uv.y - centreUV.y) / pxY;              // metres from the centre
+            var local = new List<Vector2>(mandala * 2);
+            for (int k = 0; k < mandala; k++)
             {
-                Vector3 d = (stroke[i] - stroke[i - 1]).normalized;
-                if (pd != Vector3.zero) { float a = Vector3.SignedAngle(pd, d, Vector3.up); turn += a; wiggle += Mathf.Abs(a); }
-                pd = d;
+                float a = k * Mathf.PI * 2f / mandala, c = Mathf.Cos(a), s = Mathf.Sin(a);
+                local.Add(new Vector2(px * c - py * s, px * s + py * c));
+                if (mirror) local.Add(new Vector2(-px * c - py * s, -px * s + py * c));
             }
-            float absTurn = Mathf.Abs(turn);
-            if (absTurn > 150f) return Pattern.Spiral;                 // kept turning one way: circles
-            if (wiggle > 120f && absTurn < 60f) return Pattern.Scallop; // lots of back-and-forth: waves
-            if (wiggle > 220f) return Pattern.Grid;                     // frantic scrub: hatch
-            float len = Vector3.Distance(stroke[from], stroke[n - 1]);
-            if (len > 0.06f && wiggle < 40f) return Pattern.Stripe;    // long and straight
-            return Pattern.Leaf;                                        // short curved flick
+            for (int j = 0; j < around; j++)
+            {
+                float shift = (float)j / around;
+                foreach (var l in local)
+                {
+                    var p = new Vector2(Mathf.Repeat(centreUV.x + shift + l.x * pxX, 1f), centreUV.y + l.y * pxY);
+                    if (p.y < 0.02f || p.y > 0.98f) continue;
+                    surface.Stamp(p, radius, strength);
+                }
+            }
         }
 
-        void PlaceUnit(Pattern pat, Vector3 worldPos, Vector3 dir, float size, float strength)
-        {
-            if (!TryUV(worldPos, out Vector2 uv)) return;
-            float angle = Mathf.Atan2(dir.z, dir.x) * Mathf.Rad2Deg; // rough; refine with tangent space later
-            int idx = (int)pat;
-            surface.Stamp(patternKernels[idx], uv, angle, size, strength, idx);
-            usedMask |= 1 << idx; if (pat == Pattern.Dot) dots++; if (pat == Pattern.Spiral) loops++;
-            if (tick != null && tickClip != null) { tick.pitch = Random.Range(0.95f, 1.05f); tick.PlayOneShot(tickClip, 0.35f); }
-            Haptics.Pulse(0.15f, 0.02f);
-        }
+        void StepFold(int dirn) { int i = System.Array.IndexOf(Folds, mandala); if (i < 0) i = 1; mandala = Folds[(i + dirn + Folds.Length) % Folds.Length]; OnFoldChanged(mandala); }
 
-        /// <summary>
-        /// Flow lines: for a lathe-like object (cups, bowls, vases) the natural flow is "around" the axis.
-        /// For anything else, fall back to the tangent perpendicular to the local up.
-        /// </summary>
-        Vector3 FlowDirection(Vector3 worldPos, Vector3 currentDir)
+        /// <summary>Hook visuals here: a ripple on the surface at the new centre.</summary>
+        protected virtual void OnCentreSet(Vector2 uv) { Haptics.Pulse(0.4f, 0.06f); }
+        /// <summary>Hook visuals here: spokes flash around the centre.</summary>
+        protected virtual void OnFoldChanged(int fold) { Haptics.Pulse(0.25f, 0.03f); }
+
+        bool Near(Vector3 p, float r) => Vector3.Distance(col.ClosestPoint(p), p) <= r;
+
+        /// <summary>How far the fingertip is pressed into the wall. Lathe assumption: compare radial distances from the object's axis.</summary>
+        float Depth(Vector3 tip)
         {
-            Vector3 axis = surface.transform.up;
-            Vector3 radial = Vector3.ProjectOnPlane(worldPos - surface.transform.position, axis);
-            Vector3 around = Vector3.Cross(axis, radial).normalized;
-            if (around == Vector3.zero) return currentDir;
-            // keep the player's sense of direction: don't flip them around
-            return Vector3.Dot(around, currentDir) < 0 ? -around : around;
+            Vector3 axisPoint = new Vector3(transform.position.x, tip.y, transform.position.z);
+            Vector3 radial = tip - axisPoint; radial.y = 0; if (radial.sqrMagnitude < 1e-6f) return 0f;
+            Vector3 outside = tip + radial.normalized * 0.05f;
+            if (col.Raycast(new Ray(outside, -radial.normalized), out RaycastHit hit, 0.1f))
+                return Mathf.Max(0f, Vector3.Distance(hit.point, axisPoint) - radial.magnitude);
+            return 0f;
         }
 
         bool TryUV(Vector3 worldPos, out Vector2 uv)
         {
             uv = default;
-            Vector3 inward = (surface.transform.position - worldPos); inward.y = 0;
-            if (inward == Vector3.zero) return false;
+            Vector3 inward = transform.position - worldPos; inward.y = 0;
+            if (inward.sqrMagnitude < 1e-6f) return false;
             Vector3 origin = worldPos - inward.normalized * 0.01f;
             if (col.Raycast(new Ray(origin, inward.normalized), out RaycastHit hit, 0.1f)) { uv = hit.textureCoord; return true; }
             return false;
         }
 
+        void Tick() { if (tick != null && tickClip != null) { tick.pitch = Random.Range(0.95f, 1.05f); tick.PlayOneShot(tickClip, 0.3f); } Haptics.Pulse(0.12f, 0.015f); }
+
         void UpdateStats()
         {
-            int total = 0; foreach (var n in surface.patternCounts) total += n;
-            int used = 0; for (int i = 0; i < PatternCount; i++) if ((usedMask & (1 << i)) != 0) used++;
             stats = new Creature.StrokeStats
             {
                 averageSpeed = speedSamples > 0 ? speedAccum / speedSamples : 0,
                 coverage = surface.coverage,
-                dotRatio = total > 0 ? (float)dots / total : 0,
-                loopRatio = total > 0 ? (float)loops / total : 0,
-                patternVariety = used / (float)PatternCount,
-                unitCount = total,
+                dotRatio = stampsTotal > 0 ? (float)dots / stampsTotal : 0,
+                turnRatio = stampsTotal > 0 ? Mathf.Clamp01(turnAccum / (stampsTotal * 20f)) : 0,
+                dwellRatio = Mathf.Clamp01(dwellTotal / Mathf.Max(1f, Time.time - downT + dwellTotal)),
+                unitCount = stampsTotal,
             };
         }
     }
 
-    /// <summary>Tiny haptics shim. Replace the body with OVRInput.SetControllerVibration or the hand haptics API.</summary>
-    public static class Haptics
-    {
-        public static void Pulse(float amplitude, float seconds) { /* platform call goes here */ }
-    }
+    /// <summary>Tiny haptics shim. Replace the body with the hand haptics API when the Meta SDK is in.</summary>
+    public static class Haptics { public static void Pulse(float amplitude, float seconds) { } }
 }

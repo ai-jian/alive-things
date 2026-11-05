@@ -3,86 +3,109 @@ using UnityEngine;
 namespace AliveThings.Paint
 {
     /// <summary>
-    /// The carving layer. Not colour: a signed HEIGHT map the ZenBrush stamps into.
-    /// 0 = flat, positive = ridge, negative = groove. Stored in a half-float RenderTexture
-    /// so additive blending can go negative. The relief shader (Shaders/ToonRelief.hlsl)
-    /// turns it into displaced vertices and perturbed normals; a toon ramp draws the light.
-    /// Keeps per-pattern counts for traits and whispers.
+    /// The creature's paint layer for the decided look (whole-body gradient, Option A).
+    /// Two half-float RenderTextures: Intensity (0..1, what the player laid down) and Wet (0..1,
+    /// how fresh the ink is). While wet, a small diffusion blit runs each frame so strokes bloom.
+    /// The surface shader (Shaders/GradientSurface.hlsl) maps base gradient + intensity through the
+    /// object's own palette. No colour is ever chosen by the player.
     /// </summary>
     public class PaintSurface : MonoBehaviour
     {
         public Renderer target;
         public int resolution = 1024;
-        [Tooltip("Unlit material with Blend One One, Cull Off, ZTest Always. Draws one kernel sprite scaled by a signed strength.")]
+        [Tooltip("Shaders/Stamp.shader: additive soft disc. _Strength scales intensity, _WetMul scales wetness.")]
         public Material stampMaterial;
-        [Tooltip("Blur material for the water gesture: samples _MainTex around the uv and writes the average into a disc.")]
-        public Material smoothMaterial;
+        [Tooltip("Shaders/Diffuse.shader: one diffusion step gated by wetness, plus wet decay.")]
+        public Material diffuseMaterial;
+        [Range(0, 1)] public float bleed = 0.55f;
 
-        [HideInInspector] public int[] patternCounts = new int[ZenBrush.PatternCount];
-        [HideInInspector] public float coverage;    // 0..1, estimated from stamps placed
+        [HideInInspector] public float coverage;   // 0..1 rough estimate of surface touched
 
-        public RenderTexture Height { get; private set; }
-        RenderTexture scratch;
-        static readonly int HeightTex = Shader.PropertyToID("_HeightTex");
+        public RenderTexture Intensity { get; private set; }
+        public RenderTexture Wet { get; private set; }
+        RenderTexture scratchI, scratchW;
+        static readonly int IntensityTex = Shader.PropertyToID("_IntensityTex");
+        static readonly int WetTex = Shader.PropertyToID("_WetTex");
         static readonly int Strength = Shader.PropertyToID("_Strength");
+        static readonly int WetMul = Shader.PropertyToID("_WetMul");
+        static readonly int Bleed = Shader.PropertyToID("_Bleed");
+        static readonly int Decay = Shader.PropertyToID("_Decay");
         MaterialPropertyBlock block;
+        bool anyWet;
 
         void Awake()
         {
             if (target == null) target = GetComponentInChildren<Renderer>();
             var fmt = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RHalf) ? RenderTextureFormat.RHalf : RenderTextureFormat.ARGBHalf;
-            Height = new RenderTexture(resolution, resolution, 0, fmt) { wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Bilinear };
-            scratch = new RenderTexture(Height.descriptor);
+            Intensity = Make(fmt); Wet = Make(fmt); scratchI = Make(fmt); scratchW = Make(fmt);
             Clear();
             block = new MaterialPropertyBlock();
             target.GetPropertyBlock(block);
-            block.SetTexture(HeightTex, Height);
+            block.SetTexture(IntensityTex, Intensity);
             target.SetPropertyBlock(block);
         }
 
+        RenderTexture Make(RenderTextureFormat fmt) => new RenderTexture(resolution, resolution / 2, 0, fmt) { wrapMode = TextureWrapMode.Repeat, filterMode = FilterMode.Bilinear };
+
         public void Clear()
         {
-            var prev = RenderTexture.active; RenderTexture.active = Height;
-            GL.Clear(true, true, Color.clear);          // 0 = flat
-            RenderTexture.active = prev;
-            coverage = 0; System.Array.Clear(patternCounts, 0, patternCounts.Length);
+            foreach (var rt in new[] { Intensity, Wet, scratchI, scratchW }) { var prev = RenderTexture.active; RenderTexture.active = rt; GL.Clear(true, true, Color.clear); RenderTexture.active = prev; }
+            coverage = 0; anyWet = false;
         }
 
-        /// <summary>
-        /// Carve one pattern unit. kernel is a grayscale sprite (0.5 = no change, 1 = ridge, 0 = groove) or
-        /// a signed sprite if your stamp shader expects that. strength scales depth; slow strokes pass more.
-        /// </summary>
-        public void Stamp(Texture2D kernel, Vector2 uv, float angleDeg, float size, float strength, int patternIndex)
+        /// <summary>Lay down ink: a soft disc at uv. radius in UV units, strength 0..1. Also wets the spot.</summary>
+        public void Stamp(Vector2 uv, float radius, float strength)
         {
-            if (stampMaterial == null || kernel == null) return;
-            var prev = RenderTexture.active; RenderTexture.active = Height;
-            GL.PushMatrix(); GL.LoadPixelMatrix(0, 1, 0, 1);  // UV space
-            stampMaterial.mainTexture = kernel; stampMaterial.SetFloat(Strength, strength); stampMaterial.SetPass(0);
-            float h = size * 0.5f, c = Mathf.Cos(angleDeg * Mathf.Deg2Rad), s = Mathf.Sin(angleDeg * Mathf.Deg2Rad);
+            if (stampMaterial == null) return;
+            stampMaterial.SetFloat(Strength, strength * 0.12f);
+            stampMaterial.SetFloat(WetMul, 2f * bleed);
+            Draw(Intensity, uv, radius, 0);
+            Draw(Wet, uv, radius, 1);
+            coverage = Mathf.Clamp01(coverage + radius * radius * 2.5f);
+            anyWet = true;
+        }
+
+        /// <summary>Dwell: add water only, so the ink already there spreads out.</summary>
+        public void AddWet(Vector2 uv, float radius, float amount)
+        {
+            if (stampMaterial == null) return;
+            stampMaterial.SetFloat(WetMul, amount);
+            Draw(Wet, uv, radius, 1);
+            anyWet = true;
+        }
+
+        /// <summary>Call once per frame. One diffusion step where wet, then wet decays.</summary>
+        public void Tick(float dt)
+        {
+            if (!anyWet || diffuseMaterial == null) return;
+            diffuseMaterial.SetTexture(WetTex, Wet);
+            diffuseMaterial.SetFloat(Bleed, 0.22f * bleed);
+            diffuseMaterial.SetFloat(Decay, Mathf.Pow(0.45f, dt));
+            Graphics.Blit(Intensity, scratchI, diffuseMaterial, 0);   // pass 0: intensity diffusion
+            Graphics.Blit(Wet, scratchW, diffuseMaterial, 1);         // pass 1: wet spread + decay
+            Graphics.Blit(scratchI, Intensity); Graphics.Blit(scratchW, Wet);
+        }
+
+        void Draw(RenderTexture rt, Vector2 uv, float radius, int pass)
+        {
+            var prev = RenderTexture.active; RenderTexture.active = rt;
+            GL.PushMatrix(); GL.LoadPixelMatrix(0, 1, 0, 1);
+            stampMaterial.SetPass(pass);
+            float r = radius, ra = radius * 2f;      // texture is 2:1, so the disc needs 2x the V radius to stay round
             GL.Begin(GL.QUADS);
-            Quad(uv, -h, -h, c, s, 0, 0); Quad(uv, h, -h, c, s, 1, 0); Quad(uv, h, h, c, s, 1, 1); Quad(uv, -h, h, c, s, 0, 1);
+            for (int wrap = -1; wrap <= 1; wrap++)   // draw across the U seam
+            {
+                float ox = uv.x + wrap;
+                if (ox + r < 0 || ox - r > 1) continue;
+                GL.TexCoord2(0, 0); GL.Vertex3(ox - r, uv.y - ra, 0);
+                GL.TexCoord2(1, 0); GL.Vertex3(ox + r, uv.y - ra, 0);
+                GL.TexCoord2(1, 1); GL.Vertex3(ox + r, uv.y + ra, 0);
+                GL.TexCoord2(0, 1); GL.Vertex3(ox - r, uv.y + ra, 0);
+            }
             GL.End(); GL.PopMatrix();
             RenderTexture.active = prev;
-
-            if (patternIndex >= 0 && patternIndex < patternCounts.Length) patternCounts[patternIndex]++;
-            coverage = Mathf.Clamp01(coverage + size * size * 0.6f);
         }
 
-        /// <summary>Water gesture: smooth the relief under the palm. Never erases, only softens, like wet clay.</summary>
-        public void Smooth(Vector2 uv, float radius, float amount)
-        {
-            if (smoothMaterial == null) return;
-            smoothMaterial.SetVector("_Disc", new Vector4(uv.x, uv.y, radius, amount));
-            Graphics.Blit(Height, scratch, smoothMaterial);
-            Graphics.Blit(scratch, Height);
-        }
-
-        static void Quad(Vector2 o, float x, float y, float c, float s, float u, float v)
-        {
-            GL.TexCoord2(u, v);
-            GL.Vertex3(o.x + x * c - y * s, o.y + x * s + y * c, 0);
-        }
-
-        void OnDestroy() { if (Height != null) Height.Release(); if (scratch != null) scratch.Release(); }
+        void OnDestroy() { foreach (var rt in new[] { Intensity, Wet, scratchI, scratchW }) if (rt != null) rt.Release(); }
     }
 }
