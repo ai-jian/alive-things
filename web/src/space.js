@@ -10,7 +10,7 @@ import { makeCard } from './hints.js';
 import { makeCup } from './cup.js';
 import { wakeCup } from './creature.js';
 import { makeFace } from './face.js';
-import { loadAll, upsert, serialize, restorePaint, decodeMask } from './store.js';
+import { loadAll, saveAll, serialize, savePaint, restorePaint, decodeMask, loadIsland, saveIsland, status as storeStatus } from './store.js';
 import { makeThing } from './thing.js';
 import { inflateMask, sidesAt, inflatePolygon, sidesFromPolygon } from './inflate.js';
 
@@ -19,6 +19,8 @@ const MINI = 0.36;              // god view: ~32 cm across over the table
 const ENTER_AT = MINI * 2.4;    // pull it this big and it carries you in
 const INSIDE = 6.0;             // creature scale: a 9 cm cup becomes ~54 cm, eye to eye with you seated
 const EXIT_AT = 3.0;            // push it this small from inside and you come back out
+const LIVELY = 6;               // at most this many wander and talk at once (PRD: six live); older ones sleep, cheaply
+const AWAY = 20 * 60 * 1000;    // gone longer than this and the island has moved on without you
 const Y = new Vector3(0, 1, 0);
 const head = new Vector3(), tmp = new Vector3(), tmp2 = new Vector3(), fwd = new Vector3();
 
@@ -28,7 +30,7 @@ function seedStrokes(cup) {
   for (let i = 0; i < 16; i++) { const t = i / 15; const taper = Math.sin(t * Math.PI); const ang = -0.4 + t * 1.2; const x = P.centre.x + 6 + t * 80, y = P.centre.y - 2 - t * 26 + 14 * Math.sin(t * 4);
     P.line(x / P.W, 1 - y / P.H, { x: Math.cos(ang), y: -Math.sin(ang) * 0.4 }, 5 + 12 * taper, 0.4 + 0.6 * taper); }
   for (let i = 0; i < 3; i++) P.dot(0.1 + i * 0.04, 0.42, 7, 0.8);
-  P.wetBox = null; P.wet.fill(0); P.upload();
+  P.dry(); P.upload();
 }
 
 function radialTexture(inner, outer) { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const g = x.createRadialGradient(128, 128, 6, 128, 128, 128); g.addColorStop(0, inner); g.addColorStop(0.55, outer); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); return new CanvasTexture(c); }
@@ -64,6 +66,20 @@ function makeFlora() {
   for (let i = 0; i < 9; i++) { const s = new Sprite(new SpriteMaterial({ map: seedTex, transparent: true, depthWrite: false, blending: AdditiveBlending })); s.scale.setScalar(0.018 + Math.random() * 0.012); s.position.set(-0.2 + (Math.random() - 0.5) * 0.14, 0.03 + Math.random() * 0.1, -0.14 + (Math.random() - 0.5) * 0.12); s.userData.ph = Math.random() * 6; g.add(s); }
   return g;
 }
+/** what grows while you spend time with the island: each piece appears at an age in seconds (and one per day you come back) */
+function makeGrowth() {
+  const items = [];
+  const flower = (x, z, col, h = 0.05) => { const g = new Group(); const stem = new Mesh(new CylinderGeometry(0.003, 0.004, h, 6), new MeshBasicMaterial({ color: 0x8f6fd8 })); stem.position.y = h / 2; const bud = makeBlob(0.014, 0.9, col, 0xffe4f2); bud.position.y = h; g.add(stem, bud); g.position.set(x, 0, z); return g; };
+  const shroom = (x, z, s) => { const g = new Group(); const st = new Mesh(new CylinderGeometry(0.005 * s, 0.007 * s, 0.08 * s, 8), new MeshBasicMaterial({ color: 0xb48ad8 })); st.position.y = 0.04 * s; const cap = makeBlob(0.04 * s, 0.45, 0xc02e86, 0xff9ccb); cap.position.y = 0.085 * s; g.add(st, cap); g.position.set(x, 0, z); return g; };
+  items.push({ at: 60, obj: flower(-0.08, 0.16, 0xf08ac0) }, { at: 75, obj: flower(-0.05, 0.19, 0xffb38a, 0.04) }, { at: 90, obj: flower(0.14, -0.08, 0xc49cff) });
+  items.push({ at: 180, obj: shroom(0.18, 0.18, 0.8), say: 'something is growing.' });
+  items.push({ at: 300, obj: flower(0.3, 0.1, 0xf08ac0, 0.06) }, { at: 320, obj: flower(-0.33, -0.05, 0xffb38a) }, { at: 340, obj: shroom(-0.12, -0.3, 0.6) });
+  items.push({ at: 480, obj: shroom(0.08, 0.3, 1.1), say: 'the island likes you.' }, { at: 600, obj: flower(-0.25, 0.25, 0xffe08a, 0.07), say: 'ten quiet minutes. look how it grew.' });
+  // one flower for each day you come back, around the rim
+  for (let d = 0; d < 8; d++) { const a = d / 8 * Math.PI * 2 + 0.3; items.push({ day: d + 1, obj: flower(Math.cos(a) * R * 0.72, Math.sin(a) * R * 0.72, [0xf08ac0, 0xffb38a, 0xc49cff, 0xffe08a][d % 4], 0.045) }); }
+  for (const it of items) { it.obj.visible = false; it.obj.scale.setScalar(0.001); it.k = 0; }
+  return items;
+}
 function makeHills() {
   const g = new Group(); const mat = new MeshBasicMaterial({ color: 0x5546bd, transparent: true, opacity: 0.95, side: DoubleSide });
   for (let i = 0; i < 6; i++) { const sh = new Shape(); const w = 0.07 + Math.random() * 0.06, h = 0.025 + Math.random() * 0.03; sh.moveTo(-w, 0); sh.quadraticCurveTo(-w * 0.4, h * 1.6, 0.01, h); sh.quadraticCurveTo(w * 0.5, h * 0.8, w, 0); sh.lineTo(-w, 0);
@@ -81,10 +97,11 @@ function makePlant() {
 /** the sky you are under once inside: deep dusk above, a pink-lavender horizon, stars */
 function makeSky() {
   const sky = new Group();
-  const geo = new SphereGeometry(30, 40, 24); const col = new Float32Array(geo.attributes.position.count * 3);
+  // vertex alpha: solid overhead, thinner toward and below the horizon, so a little of the real room shows at the edges
+  const geo = new SphereGeometry(30, 40, 24); const col = new Float32Array(geo.attributes.position.count * 4);
   const top = C(0x12143c), mid = C(0x3a3488), hor = C(0xc489b8), low = C(0x241f5c);
-  for (let i = 0; i < geo.attributes.position.count; i++) { const y = geo.attributes.position.getY(i) / 30; const c = y > 0.25 ? mid.clone().lerp(top, Math.min(1, (y - 0.25) / 0.6)) : y > 0 ? hor.clone().lerp(mid, y / 0.25) : hor.clone().lerp(low, Math.min(1, -y / 0.3)); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
-  geo.setAttribute('color', new BufferAttribute(col, 3));
+  for (let i = 0; i < geo.attributes.position.count; i++) { const y = geo.attributes.position.getY(i) / 30; const c = y > 0.25 ? mid.clone().lerp(top, Math.min(1, (y - 0.25) / 0.6)) : y > 0 ? hor.clone().lerp(mid, y / 0.25) : hor.clone().lerp(low, Math.min(1, -y / 0.3)); col[i * 4] = c.r; col[i * 4 + 1] = c.g; col[i * 4 + 2] = c.b; col[i * 4 + 3] = y > 0.2 ? 1 : y > -0.05 ? 0.78 + (y + 0.05) / 0.25 * 0.22 : Math.max(0.5, 0.78 - (-0.05 - y) * 1.2); }
+  geo.setAttribute('color', new BufferAttribute(col, 4));
   const dome = new Mesh(geo, new MeshBasicMaterial({ vertexColors: true, side: BackSide, transparent: true, opacity: 0, depthWrite: false })); dome.renderOrder = -2; sky.add(dome);
   const n = 260, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, e = 0.15 + Math.asin(Math.random()) * 0.9; pos[i * 3] = Math.cos(a) * Math.cos(e) * 28; pos[i * 3 + 1] = Math.sin(e) * 28; pos[i * 3 + 2] = Math.sin(a) * Math.cos(e) * 28; }
   const sg = new BufferGeometry(); sg.setAttribute('position', new BufferAttribute(pos, 3));
@@ -102,6 +119,8 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       g.add(makeIsland());
       this.hills = makeHills(); g.add(this.hills);
       this.flora = makeFlora(); g.add(this.flora);
+      this.growth = makeGrowth(); for (const it of this.growth) g.add(it.obj);
+      this.memory = loadIsland(); this.lastMemorySave = 0;
       // the light: a warm orb floating over the island
       this.orb = new Sprite(new SpriteMaterial({ map: radialTexture('rgba(255,236,200,1)', 'rgba(255,200,140,0.6)'), transparent: true, depthWrite: false })); this.orb.scale.setScalar(0.07); this.orb.position.set(0.06, 0.42, -0.08); g.add(this.orb);
       this.orbGlow = new Sprite(new SpriteMaterial({ map: radialTexture('rgba(255,200,150,0.45)', 'rgba(255,160,120,0.1)'), transparent: true, depthWrite: false, blending: AdditiveBlending })); this.orbGlow.scale.setScalar(0.55); this.orbGlow.position.copy(this.orb.position); g.add(this.orbGlow);
@@ -125,7 +144,8 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.door = flatDisc(radialTexture('rgba(255,236,205,0.95)', 'rgba(200,190,255,0.35)'), 0.18); this.scene.add(this.door); this.doorOn = 0; this.doorPlaced = false;
       this.card = makeCard(); this.scene.add(this.card.mesh); this.cardT = 0; this.cardText = '';
       // creatures you already have come back
-      for (const rec of loadAll()) this.adopt(this.rebuild(rec), { restored: true });
+      const lastSeen = this.memory.lastSeen; const recs = loadAll(); for (const rec of recs) { const c = this.rebuild(rec); this.adopt(c, { restored: true }); if (rec.pos) c.group.position.set(rec.pos[0], 0.002, rec.pos[1]); }
+      this.restoreFriends(recs); this.welcomeBack(lastSeen);
       window.addEventListener('keydown', (e) => {
         if (e.key === 'g') this.toggle();
         // emulator: 'n' makes the newcomer appear and peek at once; pressed again, it is caught (on a headset: a quick pinch while it is out)
@@ -189,7 +209,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
     }
     spotBeside(cup) {
       this.headObj().getWorldPosition(head);
-      const at = cup ? cup.group.position.clone() : head.clone().add(new Vector3(0, -0.4, -0.5));
+      const at = cup && !cup.inSpace ? cup.group.position.clone() : events.tableHome ? events.tableHome.clone() : head.clone().add(new Vector3(0, -0.4, -0.5));
       tmp.copy(head).sub(at); tmp.y = 0; tmp.normalize(); const side = new Vector3(-tmp.z, 0, tmp.x);
       return at.addScaledVector(side, 0.28);
     }
@@ -199,13 +219,46 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.adopt(cup); events.adopted = true; this.doorOn = Math.min(this.doorOn, 0.6);
       if (this.onAdopted) this.onAdopted(cup);
     }
+    /** the creature list is small: rewrite it (only if it changed) with positions and friendships */
+    saveNow() {
+      const recs = []; for (const b of this.brains) { const c = b.cup; if (c.noPersist) continue; const friends = {}; for (const [o, v] of b.affinity) if (o.cup.id && v > 0.01) friends[o.cup.id] = +v.toFixed(2); recs.push(serialize(c, { pos: [+c.group.position.x.toFixed(3), +c.group.position.z.toFixed(3)], friends })); }
+      if (recs.length || this.residents.length === 0) saveAll(recs);
+      this.memory.lastSeen = Date.now(); saveIsland(this.memory);
+      if (storeStatus.full && !this.warnedFull) { this.warnedFull = true; this.say('my memory is full. the newest ones may not be kept.'); }
+    }
+    restoreFriends(recs) {
+      const byId = new Map(this.brains.map(b => [b.cup.id, b]));
+      for (const rec of recs) { const b = byId.get(rec.id); if (!b || !rec.friends) continue; for (const [id, v] of Object.entries(rec.friends)) { const o = byId.get(id); if (o) b.affinity.set(o, v); } }
+    }
+    /** time passes on the island while you are away: they move, some nap, friendships grow; a flower for each day you come */
+    welcomeBack(lastSeen) {
+      const m = this.memory, now = Date.now(); const today = new Date().toISOString().slice(0, 10);
+      if (!m.days.includes(today)) m.days.push(today);
+      if (!this.brains.length || !lastSeen || now - lastSeen < AWAY) return;
+      const hours = Math.min(48, (now - lastSeen) / 3.6e6); let befriended = false;
+      for (const b of this.brains) { const a = Math.random() * Math.PI * 2, r = 0.08 + Math.random() * 0.22; b.cup.group.position.set(Math.cos(a) * r, 0.002, Math.min(Math.sin(a) * r, R * 0.15)); b.cup.group.rotation.y = Math.random() * Math.PI * 2; if (Math.random() < 0.35 + 0.4 * b.t.sleepy) b.enter('nap', 6 + Math.random() * 10); }
+      for (let k = 0; k < Math.min(3, this.brains.length - 1); k++) { const a = this.brains[Math.floor(Math.random() * this.brains.length)]; const o = a.nearest(this.brains); if (!o) continue; const before = a.affinity.get(o) || 0; const add = Math.min(0.35, 0.08 * Math.sqrt(hours) * (0.5 + a.t.social)); a.bond(o, add); o.bond(a, add); if (before < 0.3 && before + add >= 0.3) befriended = true; }
+      this.returnLine = befriended ? 'while you were away, two of them became friends.' : hours > 20 ? 'you came back. they kept your spot warm.' : 'they kept the lights on for you.';
+    }
+    /** the island grows with the time you spend on it (ten minutes changes it) and with the days you come back */
+    grow(delta, presenting) {
+      const m = this.memory; if (presenting && this.isOpen()) m.age = (m.age || 0) + delta;
+      if (this.returnLine && this.isOpen() && presenting) { this.say(this.returnLine); this.returnLine = null; }
+      for (const it of this.growth) {
+        const due = it.day ? m.days.length > it.day : m.age >= it.at;
+        if (due && !it.obj.visible) { it.obj.visible = true; it.k = this.mode === 'showcase' || !presenting ? 1 : 0; if (it.say && presenting && this.isOpen()) this.say(it.say); }
+        if (it.obj.visible && it.k < 1) { it.k = Math.min(1, it.k + delta * 1.2); const k = it.k; it.obj.scale.setScalar(Math.max(0.001, k < 0.75 ? k / 0.75 * 1.15 : 1.15 - (k - 0.75) / 0.25 * 0.15)); }
+        else if (it.obj.visible && it.obj.scale.x < 0.99) it.obj.scale.setScalar(1);
+      }
+      if (presenting && performance.now() - this.lastMemorySave > 15000) { this.lastMemorySave = performance.now(); saveIsland(m); }
+    }
     say(line) { this.plantCard.draw(line); this.plantT = 4.5; this.plant.userData.face.feel('happy', 1.6); }
     showCard(text, seconds) { if (this.cardText !== text) { this.card.draw(text); this.cardText = text; } this.cardT = seconds; }
     catchNewcomer() { const nc = this.newcomer.release(); if (!nc) return; this.nextNewcomerAt = this.gardenTime + 120; events.newcomerCaught = true; sound.wake(1.4); if (this.mode === 'inside') this.exit(); if (this.onNewcomer) this.onNewcomer(nc); }
 
     rebuild(rec) {
       let cup = null;
-      if (rec.kind === 'thing' && rec.shape && rec.shape.poly) { const r = inflatePolygon(rec.shape.poly, { cells: 112, thickness: 0.45 }); if (r) { cup = makeThing({ geometry: r.geometry, dominant: new Color(rec.dominant), width: r.width, height: r.height, sides: sidesFromPolygon(rec.shape.poly, 0.5) }); cup.shape = rec.shape; } }
+      if (rec.kind === 'thing' && rec.shape && rec.shape.poly) { const r = inflatePolygon(rec.shape.poly, { cells: 112, thickness: 0.45 }); if (r) { cup = makeThing({ geometry: r.geometry, dominant: new Color(rec.dominant), paletteName: rec.paletteName || null, width: r.width, height: r.height, sides: sidesFromPolygon(rec.shape.poly, 0.5) }); cup.shape = rec.shape; } }
       else if (rec.kind === 'thing' && rec.shape) { const sh = decodeMask(rec); const geo = sh && inflateMask(sh.mask, sh.w, sh.h, sh.width, sh.height, 0.45); if (geo) { cup = makeThing({ geometry: geo, dominant: new Color(rec.dominant), width: sh.width, height: sh.height, sides: sidesAt(sh.mask, sh.w, sh.h, 0.5) }); cup.shape = sh; } }
       if (!cup) cup = makeCup({ palette: rec.paletteName || 'dusk', dominant: rec.paletteName ? null : new Color(rec.dominant), heightMetres: 0.09 });
       cup.id = rec.id; cup.traits = rec.traits; cup.dominant = new Color(rec.dominant); cup.bornAt = rec.bornAt; restorePaint(cup, rec);
@@ -224,7 +277,8 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       const beam = new Mesh(new CylinderGeometry(0.02, 0.075, 0.3, 24, 1, true), new MeshBasicMaterial({ map: this.beamTex, transparent: true, opacity: 0, depthWrite: false, side: DoubleSide, blending: AdditiveBlending })); beam.position.y = 0.15; this.group.add(beam);
       this.pools.push({ pool, beam, cup, grow: 0 });
       this.brains.push(new Brain(cup, { group: this.group, radius: R }, sound)); this.residents.push(cup);
-      if (opts.persist !== false) upsert(serialize(cup)); else cup.noPersist = true;
+      if (opts.persist !== false) { if (!cup.paintSaved) cup.paintSaved = savePaint(cup); if (!opts.restored) this.saveNow(); } else cup.noPersist = true;
+      cup.paint.freeze();   // it will never be painted again: drop the working buffers
       if (opts.showcase || opts.restored) return;
       if (this.residents.length === 1) this.say('it looks a little lonely out here.');
       if (this.residents.length === 3 && !this.partyDone) { this.partyDone = true; this.say('you brought friends!'); for (const b of this.brains) { b.enter('look', 3); b.cup.creature && b.cup.creature.feel('happy', 2.5, { marks: true }); } sound.wake(1.2); }
@@ -275,7 +329,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       }
 
       // with creatures already saved, the island comes back over your table once the table is found
-      if (this.mode === 'closed' && presenting && this.residents.length && cup && cup.entity) { this.openDelay = (this.openDelay || 0) + delta; if (this.openDelay > 3) this.openIsland(this.spotBeside(cup)); }
+      if (this.mode === 'closed' && presenting && this.residents.length) { this.openDelay = (this.openDelay || 0) + delta; if ((this.openDelay > 3 && (events.tableHome || cup)) || this.openDelay > 8) this.openIsland(this.spotBeside(cup)); }
 
       // doorway on the table: shown under the island while it is open, and beside an awake creature waiting to go in
       const awake = !!(cup && cup.creature && !cup.inSpace && cup.entity); const grabbed = !!(cup && cup.entity && cup.entity.hasComponent(Grabbed));
@@ -312,7 +366,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       // mini: a gentle float
       if (this.mode === 'mini' && !this.gesture && !this.anim && this.miniPos) this.group.position.y = this.miniPos.y + Math.sin(time * 0.9) * 0.004;
 
-      this.inSpace = this.mode === 'inside' || this.mode === 'entering'; events.inSpace = this.inSpace;
+      this.inSpace = this.mode === 'inside' || this.mode === 'entering'; events.inSpace = this.inSpace; events.residents = this.residents.length;
       // tell the trace brush where the island is, so a pinch on it never starts a trace
       events.island = this.isOpen() && this.mode !== 'inside' && this.mode !== 'entering' ? { pos: this.group.position, r: R * this.group.scale.x + 0.08 } : null;
       // sky and the room: the dusk closes in as you go in
@@ -342,7 +396,12 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       // the ear is where the head is
       { const q = headObj.getWorldQuaternion(new Quaternion()); sound.setListener(head, new Vector3(0, 0, -1).applyQuaternion(q), new Vector3(0, 1, 0).applyQuaternion(q)); }
       // creatures
-      for (const b of this.brains) b.update(delta, this.brains, headLocal);
+      // only the most recent few live at once; the rest sleep where they are (no thinking, no talking)
+      const firstLively = Math.max(0, this.brains.length - LIVELY);
+      for (let i = 0; i < this.brains.length; i++) { const b = this.brains[i];
+        if (i < firstLively) { if (!b.resting) { b.resting = true; b.enter('nap', 1e9); if (b.cup.creature) { b.cup.creature.napping = true; b.cup.creature.walking = false; } } continue; }
+        if (b.resting) { b.resting = false; b.enter('idle', 1); }
+        b.update(delta, this.brains.slice(firstLively), headLocal); }
       // touch one with a fingertip: it startles, giggles or shies away, by personality
       if (this.isOpen()) for (const b of this.brains) {
         b.pokeCool = Math.max(0, (b.pokeCool || 0) - delta); if (b.pokeCool > 0 || !b.cup.creature) continue;
@@ -361,7 +420,8 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
         if (this.newcomer.update(delta, time, headLocal, fwdLocal, tips, pinch, 1, this.group.scale.x) === 'caught') { this.gesture = null; this.catchNewcomer(); }
       }
       // periodic save
-      if (time - this.lastSave > 10) { this.lastSave = time; for (const c of this.residents) if (!c.noPersist) upsert(serialize(c)); }
+      if (time - this.lastSave > 10) { this.lastSave = time; this.saveNow(); }
+      this.grow(delta, presenting);
     }
   }
   return SpaceSystem;

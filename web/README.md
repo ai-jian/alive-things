@@ -18,16 +18,15 @@ Push to the branch; `.github/workflows/pages.yml` builds `web/` and publishes to
 One-time: repository Settings → Pages → Source: **GitHub Actions**.
 
 ## What it does now
-- **Room.** `immersive-ar` with hand tracking, plane detection, anchors. A cup waits on the detected table (or in front of you after 4 s). It glows when a hand comes near. Pinch to grab.
-- **Capture.** Pinch in the air, hold, trace around any real object, release: the loop is resampled and rounded, then inflated straight from the curve (boundary vertices snap to the outline, heights from the exact distance to it, two smoothing passes, front and back share the rim) into a soft thing at real size and place. On a headset with camera access the colour inside the loop becomes its palette (IWSDK camera feature; OculusBrowser only). Fallback: a soft default colour.
-- **Brush.** Fingertip on the surface: line (slow/deep = thick, tapered), tap = dot, hold still = bloom, press-and-hold 0.9 s without moving = move the mandala centre (if the finger then travels, it becomes a stroke), two fingertips twist = fold 4/6/8/12. Guide 2 × 6 × mirror (traced things: 1 × 6 × mirror, front and back share the pattern). Whole-body gradient from the object's own colour.
-- **Studio.** Pinch the object: it grows in your hand. Let go: it floats up in front of you as a big canvas (about 30 cm) while the room fades to warm dark fog and a hum comes up. It slowly turns to show its back; painting pauses the turn. Pinch it and lower it below chest height: it shrinks back to real size, lands on the table and wakes, with a face, arms, feet and a two-word personality grown from how you drew.
-- **The island.** A disc appears beside the awake creature; set it down there and a tiny floating island opens above the table with your creatures on it (god view). Move it with one hand, scale and turn it with two; pull both hands apart to go in at creature height under a dusk sky; push them together to come back. On it: a light pool per creature, needs-based free will (wander, approach, whisper, nap, look at you), wordless whisper cards in its palette, chirps, a plant that speaks one line at milestones. A fresh cup waits on the table.
-- **Come back.** Creatures persist in localStorage (paint at half resolution, traced shapes as masks).
-- **Hints.** One soft card above the object that advances on what you actually did, then fades.
-- **Landing.** Outside XR the page shows the floating island with your creatures (or a painted demo cup) under a slow orbiting camera; the words sit on top.
-- **The newcomer.** After a while in the garden a tiny blank one peeks out from behind a hill at the far edge. Stare at it or reach slowly and it ducks back; catch it with a quick pinch and it comes home as your next blank canvas.
-- **Emulator keys (desktop):** `t` demo trace, `f` studio in/out, `w` wake, `g` island (open / go in / come out), `n` newcomer appear / catch.
+See the root `CLAUDE.md` ("The interaction, as built") for the exact numbers. In short:
+- **Real object first.** On a headset the first card asks you to trace around a real cup; a ready cup comes after 45 s if you don't. On a desktop the cup is there at once.
+- **Studio.** Pinch: it grows. Let go: it floats to you, big; the room dims only at the edges.
+- **Brush.** Line, dot, bloom, long-press centre, twist fold; guide 2 × 6 × mirror; whole-body gradient from the object's own colour.
+- **Quiet and set down.** It needs about three minutes of quiet company before it can wake. Lowering it lands it asleep on the table; pick it up to keep drawing; a tap (or a few seconds) wakes a ready one.
+- **The island.** A small floating island over the table; pull it apart with both hands to go in at creature height, push together to come out. Creatures wander, nap, whisper, make friends; at most six live at once.
+- **Come back.** Saved locally (small list, PNG paint, island memory). The island grows over ten minutes and a flower appears for each day you return.
+- **The newcomer.** A shy blank one peeks over the island's rim; quick hands catch it.
+- **Emulator keys (desktop):** `t` demo trace, `f` studio in/out (out = set down asleep), `w` make ready and wake, `g` island (adopt / go in / come out), `n` newcomer appear / catch. `?tracefirst` in the URL forces the headset's trace-first start.
 
 ## Files
 - `src/main.js` world, cup entity, systems

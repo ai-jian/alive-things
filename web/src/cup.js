@@ -97,7 +97,7 @@ export function makeCup({ palette = 'dusk', dominant = null, heightMetres = 0.09
     tick(dt, time) {
       poke.vel += (-70 * poke.amt - 6 * poke.vel) * dt; poke.amt += poke.vel * dt;
       uniforms.uAmt.value = Math.max(0, poke.amt); uniforms.uWob.value *= Math.pow(0.08, dt); uniforms.uTime.value = time;
-      cup._acc = (cup._acc || 0) + dt; if (cup._acc > 1 / 30) { paint.diffuse(cup._acc); cup._acc = 0; }
+      cup._acc = (cup._acc || 0) + dt; if (cup._acc > 1 / 20) { paint.diffuse(cup._acc); cup._acc = 0; }
       paint.upload();
     },
     _acc: 0,

@@ -43,6 +43,14 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 - Moods: open, wide (startled, small o mouth, three marks above the head), happy ^ ^ (waking, a good talk, the party, a playful one being touched), content ‿ ‿ (napping), cross (slanted lids), and a resting lid that comes from how sleepy you drew it.
 - Touching a creature on the island with a fingertip now gets a reaction by personality.
 
+## Nov 6, late: fixes after an outside critique (owner agreed with all points)
+Owner decisions (asked, not assumed):
+- **Ten minutes stays.** The first creature needs about three minutes of quiet company; the island grows across ten minutes (flowers, mushrooms, a line from the plant at 3, 8 and 10 minutes) and a flower per day you return.
+- **Real object first.** The first card asks you to trace a real cup on your desk; the ready cup is the fallback after 45 s.
+- **Passthrough stays visible.** The studio fog became a vignette clear along the line to the object (your real hands stay visible); inside the island the sky thins near and below the horizon.
+- **Setting down is not waking.** Lowering lands it asleep; you can pick it up and keep drawing; a ready one wakes on a tap or by itself shortly after.
+Engineering fixes: tiled paint (wet tiles only, partial uploads, a lookup table for the stamps), smoothed fingertip with touch hysteresis and stroke bridging, rate-limited ticks; saving as a small list plus one PNG per creature with quota reporting; six lively creatures at most; personalities from more signals and judged against a typical session; table search all session, spots clamped onto the table and within reach, resting objects pinned to the plane; trace projected on the plane you drew in and flat loops as footprints; camera at session start and no random colours; old objects stay on the table and can be picked up again; the newcomer hides under the rim from above, gaze measured against its size, quick vs slow hands; hints wait for required steps.
+
 ## Technical path for "real object → thing in your hand"
 1. Pinch near the object → Passthrough Camera API grabs one frame + pinch world position.
 2. Segment: MobileSAM/EfficientSAM via Unity Sentis with the pinch point as the prompt. Backup: depth threshold from Depth API. Backup of the backup: GrabCut.

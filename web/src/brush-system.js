@@ -3,9 +3,13 @@
 import { createSystem, Grabbed } from '@iwsdk/core';
 import { Vector3, Vector2, Raycaster } from 'three';
 
-const TOUCH = 0.012;        // m: how close a fingertip must be to the wall to count as touching
-const MAX_DEPTH = 0.02;     // m: press this deep for full width
-const LONG_PRESS = 0.9;     // s
+const TOUCH_IN = 0.015;     // m: a fingertip this close to the wall starts touching
+const TOUCH_OUT = 0.03;     // m: and keeps touching until it is this far off (hand tracking jitters a few mm)
+const BRIDGE = 0.12;        // s: a stroke survives losing the wall this long, so jitter does not break lines
+const MAX_DEPTH = 0.03;     // m: press this deep for full width
+const LONG_PRESS = 0.8;     // s
+const STILL = 0.012;        // m: a long press allows this much drift of the smoothed fingertip
+const TICK_GAP = 0.09;      // s: ticks never come faster than this
 const DWELL = 0.15;         // s
 const SPACING_PX = 7;
 
@@ -43,7 +47,7 @@ export function makeBrushSystem(active, events, hands, sound) {
       return true;
     }
 
-    _hand() { return { down: false, pressDone: false, downT: 0, lastMoveT: 0, strokeLen: 0, smoothSpeed: 0, lastU: 0, lastV: 0, lastX: 0, lastY: 0, downU: 0, downV: 0, moved: 0, tipWorld: new Vector3(), touching: false }; }
+    _hand() { return { lostT: 0, smooth: null, down: false, pressDone: false, downT: 0, lastMoveT: 0, strokeLen: 0, smoothSpeed: 0, lastU: 0, lastV: 0, lastX: 0, lastY: 0, downU: 0, downV: 0, moved: 0, tipWorld: new Vector3(), touching: false }; }
 
     update(delta, time) {
       hands.update(time);
@@ -64,11 +68,17 @@ export function makeBrushSystem(active, events, hands, sound) {
       for (const side of ['left', 'right', 'mouse']) {
         const h = this.hands[side];
         if (side === 'mouse') { if (!this.mouse.down || !this.mouse.tip) { if (h.down) this._end(h, time); continue; } h.tipWorld.copy(this.mouse.tip); }
-        else h.tipWorld.copy(hands.tip[side]);
+        else {
+          // adaptive smoothing: heavy when the finger is nearly still (kills tracking jitter), light when it moves
+          const raw = hands.tip[side]; if (!h.smooth) h.smooth = raw.clone();
+          const v = raw.distanceTo(h.smooth) / Math.max(delta, 1e-3); const a = Math.min(1, 0.25 + v * 1.5);
+          h.smooth.lerp(raw, a); h.tipWorld.copy(h.smooth);
+        }
         const local = cup.body.worldToLocal(tmpA.copy(h.tipWorld));
         const s = cup.surface(local);
-        // a hand that is pinching is holding the cup, not painting
-        const touching = (side === 'mouse' || !this.pinching[side]) && s.onWall && s.gap < TOUCH / cup.group.scale.x && s.gap > -0.5;
+        // a hand that is pinching is holding the cup, not painting; once touching, it takes more distance to let go
+        const limit = (h.touching ? TOUCH_OUT : TOUCH_IN) / cup.group.scale.x;
+        const touching = (side === 'mouse' || !this.pinching[side]) && s.onWall && s.gap < limit && s.gap > -0.5;
         if (touching) touches.push({ side, s, local: local.clone() });
         this._handStep(h, touching, s, local, time, delta);
       }
@@ -79,13 +89,18 @@ export function makeBrushSystem(active, events, hands, sound) {
         const ang = Math.atan2(b.y - a.y, Math.atan2(b.x, b.z) - Math.atan2(a.x, a.z));
         if (this.twist == null) { this.twist = { a0: ang, acc: 0 }; for (const side of ['left', 'right']) this._end(this.hands[side], time); }
         else { let d = ang - this.twist.a0; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; this.twist.acc += d; this.twist.a0 = ang;
-          const step = Math.PI / 5; while (this.twist.acc > step) { this.twist.acc -= step; cup.paint.stepFold(1); events.foldChanged = true; this.tick(1.3); } while (this.twist.acc < -step) { this.twist.acc += step; cup.paint.stepFold(-1); events.foldChanged = true; this.tick(0.8); } }
+          const step = Math.PI / 5; while (this.twist.acc > step) { this.twist.acc -= step; cup.paint.stepFold(1); events.foldChanged = true; this.tick(1.3, true); } while (this.twist.acc < -step) { this.twist.acc += step; cup.paint.stepFold(-1); events.foldChanged = true; this.tick(0.8, true); } }
       } else this.twist = null;
     }
 
     _handStep(h, touching, s, local, time, delta) {
       const cup = active.cup;
-      if (!touching) { if (h.down) this._end(h, time); h.touching = false; return; }
+      if (!touching) {
+        // a short loss of contact keeps the stroke alive; a real lift ends it
+        if (h.down) { h.lostT += delta; if (h.lostT > BRIDGE) { this._end(h, time); h.touching = false; } } else h.touching = false;
+        return;
+      }
+      h.touching = true; h.lostT = 0;
       if (this.twist) return;
       const x = s.u * cup.paint.W, y = (1 - s.v) * cup.paint.H;
       if (!h.down) {
@@ -100,18 +115,18 @@ export function makeBrushSystem(active, events, hands, sound) {
       const len = Math.hypot(dx, dy);
       if (len < SPACING_PX) {
         // a long press means the fingertip really stayed put in space, whatever the canvas scale
-        if (!h.pressDone && h.strokeLen === 0 && h.moveMax < 0.004 && time - h.downT > LONG_PRESS) { h.pressDone = true; cup.paint.setCentreUV(s.u, s.v); events.centreSet = true; this.tick(0.6); }
+        if (!h.pressDone && h.strokeLen === 0 && h.moveMax < STILL && time - h.downT > LONG_PRESS) { h.pressDone = true; cup.paint.setCentreUV(s.u, s.v); events.centreSet = true; cup.centreMoved = true; this.tick(0.6, true); }
         else if (!h.pressDone && h.strokeLen > 0 && time - h.lastMoveT > DWELL) { const r = 10 + Math.min(30, (time - h.lastMoveT) * 25); cup.paint.water(h.lastU, h.lastV, r, delta * 1.5); this.stats.dwellTime += delta; if (time - h.lastMoveT > 0.6) events.dwell = true; }
         return;
       }
       // a held press that then travels becomes a stroke: the centre stays where it was set, painting starts here
-      if (h.pressDone) { if (h.moveMax > 0.012) { h.pressDone = false; h.lastX = x; h.lastY = y; h.lastU = s.u; h.lastV = s.v; h.lastMoveT = time; } return; }
+      if (h.pressDone) { if (h.moveMax > STILL + 0.01) { h.pressDone = false; h.lastX = x; h.lastY = y; h.lastU = s.u; h.lastV = s.v; h.lastMoveT = time; } return; }
       const speedPx = len / Math.max(delta, 1e-4);                       // px per second
       const speedM = speedPx / cup.paint.pxX * (cup.group.scale.x / (cup.scale || 1));   // hand speed in metres, however big the canvas is
       h.smoothSpeed = h.smoothSpeed * 0.6 + speedM * 0.4; h.lastMoveT = time; this.stats.speedAccum += speedM; this.stats.speedSamples++; this.stats.touchTime += delta;
       const slow = 1 - Math.min(1, h.smoothSpeed / 0.5);
       const taperIn = Math.min(1, h.strokeLen / 28);
-      const press = 0.6 + 0.8 * Math.min(1, s.depth * cup.group.scale.x / MAX_DEPTH);
+      const press = 0.75 + 0.5 * Math.min(1, Math.max(0, s.depth) * cup.group.scale.x / MAX_DEPTH);
       const width = (4 + 12 * slow) * (0.35 + 0.65 * taperIn) * press;
       const a = (0.3 + 0.7 * slow) * (0.4 + 0.6 * taperIn);
       const dir = { x: dx / len, y: dy / len };
@@ -125,15 +140,19 @@ export function makeBrushSystem(active, events, hands, sound) {
 
     _end(h, time) {
       const cup = active.cup; if (!h.down || !cup) return;
-      if (!h.pressDone && h.strokeLen === 0 && time - h.downT < 0.25) { cup.paint.dot(h.downU, h.downV, 9, 1.0); this.stats.dots++; this.stats.stamps++; this.tick(1); }
+      if (!h.pressDone && h.strokeLen === 0 && time - h.downT < 0.25 + BRIDGE) { cup.paint.dot(h.downU, h.downV, 9, 1.0); this.stats.dots++; this.stats.stamps++; this.tick(1); }
       h.lastDir = null;
       h.down = false;
     }
 
-    tick(pitch = 1) { sound.tick(pitch); }
+    tick(pitch = 1, force) { const now = performance.now() / 1000; if (!force && now - (this.lastTick || 0) < TICK_GAP) return; this.lastTick = now; sound.tick(pitch, force ? 0.04 : 0.022); }
+    /** a hand moving fast on the surface: frantic, not quiet */
+    scribbling() { for (const side of ['left', 'right', 'mouse']) { const h = this.hands[side]; if (h.down && h.smoothSpeed > 0.35) return true; } return false; }
+    getStats() { return this.stats; }
+    setStats(st) { if (st) this.stats = st; else this.resetStats(); }
     resetStats() { this.stats = { speedAccum: 0, speedSamples: 0, dots: 0, stamps: 0, turnAccum: 0, dwellTime: 0, touchTime: 0 }; }
     /** stats for traits */
-    summary() { const st = this.stats, cup = active.cup; return { averageSpeed: st.speedSamples ? st.speedAccum / st.speedSamples : 0, coverage: cup ? cup.paint.coverage : 0, dotRatio: st.stamps ? st.dots / st.stamps : 0, turnRatio: st.stamps ? Math.min(1, st.turnAccum / (st.stamps * 20)) : 0, dwellRatio: st.touchTime + st.dwellTime > 0 ? st.dwellTime / (st.touchTime + st.dwellTime) : 0 }; }
+    summary() { const st = this.stats, cup = active.cup; return { averageSpeed: st.speedSamples ? st.speedAccum / st.speedSamples : 0, coverage: cup ? cup.paint.coverage : 0, dotRatio: st.stamps ? st.dots / st.stamps : 0, turnRatio: st.stamps ? Math.min(1, st.turnAccum / (st.stamps * 20)) : 0, dwellRatio: st.touchTime + st.dwellTime > 0 ? st.dwellTime / (st.touchTime + st.dwellTime) : 0, mandala: cup ? cup.paint.mandala : 6, centreMoved: !!(cup && cup.centreMoved) }; }
   }
   return BrushSystem;
 }

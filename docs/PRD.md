@@ -1,6 +1,6 @@
 # Alive Things, PRD
 
-Status: v1.1, 2026-11-05. Owner: ai-jian. Target: Meta VR Start Developer Competition 2026. Official rules read (Devpost PDF, Nov 4 capture): see section 12.
+Status: v1.2, 2026-11-06 (sections 3, 5, 6, 7 rewritten to match the WebXR build after an outside critique). Owner: ai-jian. Target: Meta VR Start Developer Competition 2026. Official rules read (Devpost PDF, Nov 4 capture): see section 12.
 
 ## 1. One line
 Pick up a cup. Be quiet for ten minutes. It comes alive.
@@ -13,46 +13,48 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 - G4. The creatures feel alive without the player: they wander, nap, meet, whisper.
 
 ## 3. Non-goals (v1)
-- Saving between sessions, sharing, multiplayer.
+- Sharing, multiplayer, accounts. (Saving on the device is in: see F16.)
 - Real 3D scanning. A soft inflated silhouette is the product, not a limitation.
-- Music or melodies. Ambient hum and chirps only.
+- Music or melodies. Ambient hum, ticks and wordless whispers only.
 - A quest or progression system. Light prompts from the plant guide at most.
 
 ## 4. Who it's for
 Someone at the end of a long day who wants ten quiet minutes with their hands busy and their mind empty. Also: anyone watching the video.
 
-## 5. Core loop
-1. **Take.** In passthrough, reach for a real object. It glows. Pinch: a photo is taken, a soft copy lifts out into your hand. (Fallback: a shelf of ready objects.)
-2. **Focus.** Hold it in one hand, pull with the other. The room fades to warm dark fog. Only the object is lit.
-3. **Carve.** Drag a fingertip slowly. Relief patterns rise along the path, chosen by how you move. Light draws them. A palm smooths. No eraser.
-4. **Wake.** Open your hand. It blinks, grows feet, gets a personality derived from how you carved.
-5. **Keep.** Place it in My Space, a dark painted garden. It gets a pool of light and starts to live: wander, nap, meet others, whisper in its own patterns, make friends.
-6. Repeat with another object. At three, a tiny party.
+## 5. Core loop (as built, WebXR)
+1. **Take.** In passthrough, the first card asks you to trace around a real cup on your desk: pinch the air, hold, draw its outline (any plane; a flat loop around it on the desk works too). The loop becomes a soft copy at real size and place, coloured from the camera. If nothing is traced in 45 s (or two traces fail), a ready cup appears on the detected table.
+2. **Focus.** Pinch it: it grows in your hand. Let go: it floats to you, about 26 cm tall, 45 cm ahead. The room dims at the edges only; the object, your hands and the space between stay clear.
+3. **Draw.** One fingertip on the surface: lines and dots through the 2 × 6 × mirror guide, ink blooms when you hold still, long-press moves the centre, a two-finger twist changes the fold. Strokes are a tint of the object's own gradient.
+4. **Quiet.** It breathes, a little more as it gets ready. The first one needs about three minutes of quiet company (frantic scribbling does not count); later ones about two. A soft chime says it is ready.
+5. **Set down.** Pinch it and lower it: it lands on the table where you lowered it, asleep. Pick it up again to keep drawing. Once ready, a tap wakes it, or it wakes by itself a few seconds after you set it down: face, arms, feet, a two-word personality from how you drew.
+6. **Keep.** A disc appears beside it; set it there and a small floating island opens above the table with it on board (god view). Pull the island apart with both hands to go in at creature height; push your hands together to come back. They wander, nap, meet, whisper; friendships form.
+7. **Come back.** The island remembers: positions, friendships, its age. It grows over ten minutes of your company (flowers, mushrooms, a few words from the plant) and adds a flower for each day you return. While you are away they move, nap and make friends.
 
-## 6. Features and priority
+## 6. Features and status
 
-| ID | Feature | Pri | Acceptance |
+| ID | Feature | Pri | Status (Nov 6) |
 |---|---|---|---|
-| F1 | Passthrough + hand tracking | P0 | Hands visible and tracked in passthrough at 72 fps |
-| F2 | Ready-object shelf (cup, bowl, lamp, book, plant) | P0 | Pinch-grab any of five objects; they are soft and jelly-poke |
-| F3 | Hold-and-open gesture → Focus Mode | P0 | Pull >15 cm with the other hand enters Focus in under 2 s; release exits |
-| F4 | Zen brush with symmetry guide | P0 | 2 × 6 × mirror guide; line and dot; width follows slowness, depth and taper; dwell blooms; long-press sets centre; twist changes fold; tick + haptic per stamp |
-| F5 | Whole-body gradient surface | P0 | Palette built from the object's colour; strokes push up the same palette; shadow side slides down the palette; no outlines; reads at 72 fps |
-| F6 | Water gesture smooths | P1 | Flat palm over a carving softens it within 1 s; nothing is removed |
-| F7 | Wake: traits from strokes, blink, feet, tag | P0 | Tag shows two words that change with carving style |
-| F8 | My Space scene | P0 | Dark painted garden, light pool per creature, fireflies |
-| F9 | Creature brain | P0 | Needs-based states: idle, wander, approach, whisper, nap, follow, flinch |
-| F10 | Whisper bubbles from own patterns + chirps | P1 | Bubbles show icons weighted by what was carved; pitch varies by trait |
-| F11 | Affinity and following | P1 | After three meetings two creatures follow each other sometimes |
-| F12 | Plant guide prompts, three-creature party | P2 | One line at one creature, party at three |
-| F13 | Real object capture (photo → mask → inflated mesh) | P1 | Works on a plain desk in daylight for a cup; otherwise falls back to F2 silently |
-| F14 | Hidden blank newcomer in a corner | P2 | Built Nov 6: peeks from behind its own hill after ~20 s in the garden; ducks when stared at or reached for; a quick pinch catches it and it becomes the next blank canvas |
-| F15 | Sound: hum, ticks, chirps | P1 | No melody assets required |
+| F1 | Passthrough + hand tracking, objects on the detected table | P0 | Built. Objects rest pinned to the table plane; table search continues all session; spots clamped inside the table and within reach. Device check pending. |
+| F2 | Ready-object fallback | P0 | Built as one ready cup (four reference palettes in turn), shown after 45 s without a trace or after two failed traces. |
+| F3 | Pinch → studio (grows, floats to you) | P0 | Built (`studio-system.js`). Replaced the hold-and-pull gesture. |
+| F4 | Zen brush with symmetry guide | P0 | Built: 2 × 6 × mirror, line and dot, width from slowness and press, dwell blooms, long-press centre, twist fold, ticks (rate-limited). Fingertip smoothed; touch has enter/leave distances; short contact loss does not break a line. No haptics (hands only). |
+| F5 | Whole-body gradient surface | P0 | Built, palettes from `docs/lookdev-gradient.html`. |
+| F6 | Flat palm softens | P1 | **Not built.** |
+| F7 | Wake: traits from strokes, face, feet, arms, tag | P0 | Built. Traits from speed, pauses, dots, turns, coverage, centre and fold changes; words chosen by what stands out from a typical session. Googly-eye faces with moods (`face.js`). |
+| F8 | My Space: floating island | P0 | Built (`space.js`): mini island over the table, two-hand scale to go in, dusk sky with the room faintly visible at the edges. |
+| F9 | Creature brain | P0 | Built: idle, wander, approach, whisper, nap, look; poke reactions. At most six live at once; older ones sleep. |
+| F10 | Whispers + chirps | P1 | Built: spatial wordless voices in turns, cards in the creature's palette. |
+| F11 | Affinity and following | P1 | Affinity built and saved; following not built. |
+| F12 | Plant guide, three-creature party | P2 | Built. |
+| F13 | Real object capture (trace + camera colour) | P1 | Built; first step on a headset. Camera colour unverified on device. |
+| F14 | Hidden blank newcomer | P2 | Built: hides under the island rim from above, behind its hill inside; gaze measured against its size; slow hands send it back, quick hands startle it still; a pinch catches it. |
+| F15 | Sound: hum, ticks, chirps | P1 | Built. |
+| F16 | Saving and coming back | P0 | Built: small creature list, paint as PNG once per creature, island memory (age, days, last seen), quota failures reported by the plant. |
 
 ## 7. Technical constraints
-- Meta Quest 3 / 3S, Horizon OS v74+ (Passthrough Camera API), Unity 2022.3 LTS, URP, Meta XR All-in-One SDK + Interaction SDK, Unity Sentis for segmentation.
-- 72 fps target. Height maps 1024², half float. Vertex displacement on meshes under ~15k verts each; at most six creatures live.
-- Hands only. Everything is a pinch, a pull, or a palm.
+- Meta Quest 3 / 3S browser, WebXR via Meta's Immersive Web SDK (three.js). Unity in `unity/` is a dormant port target.
+- Rules: at least 60 fps (aim for 72). Paint work is tiled: diffusion only on wet tiles at ~20 Hz, texture uploads only for changed rectangles.
+- Hands only. Everything is a pinch, a touch, or a two-hand pull.
 
 ## 8. Risks and mitigations
 - **Capture fails in bad light / clutter** → shelf fallback is always present; demo video shows one real capture shot, rest can be shelf.

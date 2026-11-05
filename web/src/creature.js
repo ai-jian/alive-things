@@ -13,21 +13,29 @@ function makeArm(side, root, ink) {
   return g;
 }
 
-/** Personality from stroke stats. Never random. Mirrors unity/.../CreatureTraits.cs. */
+/** Personality from how you drew. Never random. Uses speed, pauses, dots, turns, coverage, and whether you moved
+ *  the centre or changed the fold. (Mirrors the idea of unity/.../CreatureTraits.cs, with more signals.) */
 export function traitsFromStats(s) {
-  const slow = 1 - Math.min(1, (s.averageSpeed || 0) / 0.5);
   const c = x => Math.max(0, Math.min(1, x));
+  const slow = 1 - Math.min(1, (s.averageSpeed || 0) / 0.3);
+  const dots = s.dotRatio || 0, turn = s.turnRatio || 0, dwell = s.dwellRatio || 0, cover = Math.min(1, (s.coverage || 0) / 0.35);
+  const explore = (s.centreMoved ? 0.5 : 0) + (s.mandala && s.mandala !== 6 ? 0.5 : 0);
   return {
-    curious: c(0.3 + 0.7 * (s.turnRatio || 0)),
-    sleepy: c(0.2 + 0.5 * slow + 0.3 * (s.dwellRatio || 0)),
-    social: c(0.2 + 0.8 * (s.coverage || 0)),
-    playful: c(0.1 + 0.5 * (s.turnRatio || 0) + 0.4 * (1 - slow)),
-    shy: c(0.6 * (s.dotRatio || 0) * slow + 0.2 * (s.dwellRatio || 0)),
+    curious: c(0.25 + 0.4 * turn + 0.35 * explore),
+    sleepy: c(0.1 + 0.35 * slow + 0.55 * dwell),
+    social: c(0.15 + 0.85 * cover),
+    playful: c(0.1 + 0.45 * (1 - slow) + 0.45 * dots),
+    shy: c(0.1 + 0.6 * dots * (1 - cover) + 0.15 * (1 - cover)),
   };
 }
+// what a typical session produces (the hints ask everyone to draw slowly), so the words say what stands out
+const TYPICAL = { sleepy: 0.49, playful: 0.23, social: 0.44, curious: 0.39, shy: 0.23 };
 export function describeTraits(t) {
-  const a = t.sleepy > .6 ? 'quiet' : t.playful > .6 ? 'bouncy' : t.social > .6 ? 'chatty' : 'calm';
-  const b = t.curious > .6 ? 'curious' : t.shy > .5 ? 'shy' : t.social > .5 ? 'friendly' : 'dreamy';
+  const dev = k => (t[k] || 0) - TYPICAL[k];
+  const first = [['quiet', 'sleepy'], ['bouncy', 'playful'], ['chatty', 'social']].sort((a, b) => dev(b[1]) - dev(a[1]))[0];
+  const a = dev(first[1]) > 0.04 ? first[0] : 'calm';
+  const second = [['curious', 'curious'], ['shy', 'shy'], ['friendly', 'social'], ['dreamy', 'sleepy']].filter(w => a === 'calm' || w[1] !== first[1]).sort((x, y) => dev(y[1]) - dev(x[1]))[0];
+  const b = dev(second[1]) > 0.02 ? second[0] : 'gentle';
   return `${a} · ${b}`;
 }
 

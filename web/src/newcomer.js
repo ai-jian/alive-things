@@ -41,6 +41,9 @@ export class Newcomer {
     hill.position.set(Math.cos(a) * r * 0.9, 0, Math.sin(a) * r * 0.9); hill.lookAt(0, 0, 0); hill.rotateY(Math.PI);
     this.garden.hills.add(hill); this.hill = hill;
     this.hidden = new Vector3(Math.cos(a) * r * 1.02, -0.035, Math.sin(a) * r * 1.02);
+    // seen from above (the small island over the table) a hill hides nothing: there it hides under the island's rim
+    this.under = new Vector3(Math.cos(a) * r * 1.03, -0.075, Math.sin(a) * r * 1.03);
+    this.overRim = new Vector3(Math.cos(a) * r * 0.96, 0.002, Math.sin(a) * r * 0.96);
     // peek out to the side of the hill, a little inward
     const tangent = new Vector3(-Math.sin(a), 0, Math.cos(a)).multiplyScalar(this.side);
     this.out = new Vector3(Math.cos(a) * r * 0.9, 0.002, Math.sin(a) * r * 0.9).addScaledVector(tangent, 0.075);
@@ -75,15 +78,23 @@ export class Newcomer {
   update(dt, time, headLocal, headFwdLocal, tipsLocal, pinching, fade, scale = 1) {
     const cup = this.cup; if (!cup) return null;
     const pos = cup.group.position;
-    // how close the nearest hand is, and whether a pinch closed right on it
-    let near = Infinity, caughtBy = -1;
-    // distances in real metres, so it behaves the same on the small island over the table and when you are inside
-    for (let i = 0; i < tipsLocal.length; i++) { const d = tipsLocal[i].distanceTo(pos) * scale; near = Math.min(near, d); if (pinching[i] && d < Math.max(0.05, 0.06 * scale) && this.p > 0.45) caughtBy = i; }
+    // hands, in real metres (so it behaves the same over the table and inside): how close, and how fast
+    let near = Infinity, nearSpeed = 0, caughtBy = -1;
+    if (!this.lastTips) this.lastTips = tipsLocal.map(t => t.clone());
+    for (let i = 0; i < tipsLocal.length; i++) {
+      const d = tipsLocal[i].distanceTo(pos) * scale; const v = tipsLocal[i].distanceTo(this.lastTips[i]) * scale / Math.max(dt, 1e-3); this.lastTips[i].copy(tipsLocal[i]);
+      if (d < near) { near = d; nearSpeed = v; }
+      if (pinching[i] && d < Math.max(0.06, 0.07 * scale) && this.p > 0.3) caughtBy = i;
+    }
     if (caughtBy >= 0) { this.state = 'caught'; return 'caught'; }
-    // being stared at: the head looks straight at it
-    toIt.copy(pos).sub(headLocal).normalize();
-    const looked = headFwdLocal.dot(toIt) > Math.cos(10 * Math.PI / 180);
+    // being stared at: the gaze has to land on it, measured against how big it looks from where you are
+    toIt.copy(pos).sub(headLocal); const dist = toIt.length(); toIt.normalize();
+    const angR = Math.atan2(0.035, dist);                                // its angular radius
+    const looked = Math.acos(Math.max(-1, Math.min(1, headFwdLocal.dot(toIt)))) < Math.max(2.5 * Math.PI / 180, angR * 1.4);
     this.stare = looked && this.p > 0.3 ? this.stare + dt : Math.max(0, this.stare - dt * 2);
+    // a quick hand startles it: it freezes for a moment (that is your chance); a slow, creeping hand sends it home
+    this.freezeT = (this.freezeT ?? -1) - dt;   // > 0 frozen; after that, a short cooldown before it can be startled again
+    if (this.state === 'peeking' && near < 0.16 && nearSpeed > 0.45 && this.freezeT < -0.6) { this.freezeT = 0.6; this.face && this.face.feel('wide', 0.7, { marks: true, mouth: 'o' }); }
 
     this.timer -= dt;
     if (this.state === 'hidden') {
@@ -91,14 +102,15 @@ export class Newcomer {
         tmp.copy(pos); this.garden.group.localToWorld(tmp);
         this.sound.whisper({ pitch: 1.5, speed: 1.35, syllables: 2, volume: 0.02, question: true, pos: tmp });
         if (this.peeks === 1 && this.onFirstPeek) this.onFirstPeek(); }
-    } else if (this.state === 'peeking') {
-      // shy: a long stare or a slow hand sends it back; a fast pinch can still catch it
-      if (this.stare > 1.1 || near < Math.max(0.1, 0.12 * Math.min(scale, 2)) || this.timer <= 0) { this.state = 'hidden'; this.timer = 4 + Math.random() * 5; this.stare = 0; }
+    } else if (this.state === 'peeking' && !(this.freezeT > 0)) {
+      const creeping = near < 0.12 && nearSpeed < 0.25;
+      if (this.stare > 1.5 || creeping || this.timer <= 0) { this.state = 'hidden'; this.timer = 4 + Math.random() * 5; this.stare = 0; }
     }
     const want = this.state === 'peeking' ? 1 : 0;
     const speed = want > this.p ? 1.6 : 5;                        // eases out, darts back
     this.p += (want - this.p) * Math.min(1, dt * speed);
-    pos.lerpVectors(this.hidden, this.out, this.p);
+    const fromAbove = scale < 1.5;   // the small island: hide under the rim and peek over it
+    pos.lerpVectors(fromAbove ? this.under : this.hidden, fromAbove ? this.overRim : this.out, this.p);
     pos.y += Math.sin(time * 6) * 0.002 * this.p;                // a tiny nervous bob
     // lean out from behind the hill and look at you
     tmp.copy(headLocal).sub(pos); const yaw = Math.atan2(tmp.x, tmp.z);

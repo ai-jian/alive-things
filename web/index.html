@@ -7,7 +7,9 @@
     <script>
       // Desktop emulator (IWER) sessions are not native XRSessions, but desktop Chrome exposes a native XRWebGLBinding
       // that three.js prefers and whose constructor rejects them. Drop it before any module evaluates, except on a real headset.
-      if (!/OculusBrowser/i.test(navigator.userAgent)) { try { delete window.XRWebGLBinding; } catch (e) {} }
+      // The emulator later rewrites navigator.userAgent to a Quest one, so remember the real answer now.
+      window.REAL_HEADSET = /OculusBrowser/i.test(navigator.userAgent);
+      if (!window.REAL_HEADSET) { try { delete window.XRWebGLBinding; } catch (e) {} }
     </script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" />
     <style>
