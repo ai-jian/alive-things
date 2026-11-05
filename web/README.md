@@ -2,6 +2,9 @@
 
 Primary build path. Runs in the Meta Quest browser from a link; the competition accepts WebXR entries this way.
 
+## Try it without a headset
+The deployed page has Meta's WebXR emulator (IWER) baked in. On a desktop browser: open the URL, press **Enter**. The emulator panel appears (top bar: toggle controllers/hands, a synthetic living room, play mode with WASD + mouse look). You can also simply **drag on the cup with the mouse** to paint; the pointer acts as a fingertip. On a real Quest browser the emulator stays out of the way.
+
 ## Run locally
 ```bash
 cd web

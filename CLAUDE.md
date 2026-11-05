@@ -11,14 +11,14 @@ One line: *Pick up a cup. Be quiet for ten minutes. It comes alive.*
 5. `docs/PRD.md` §12 — the official rules that bind the build: seated 2 ft, 60 fps, plane-anchored passthrough, ≤10 min sessions, WebXR allowed via link.
 
 ## Platform decision (Nov 5, evening)
-The rules accept **IWSDK / WebXR entries by link**. That makes WebXR (three.js + Meta Immersive Web SDK) the primary build path: it can be built and deployed from a cloud session and tested on the Quest browser without Unity. The `unity/` folder stays as the port target if a native build is ever needed. One real loss on WebXR: no camera access, so "photo capture" becomes **trace the object's outline with a fingertip** → inflate; palette then comes from the plant guide, not the photo.
+The rules accept **IWSDK / WebXR entries by link**. That makes WebXR (three.js + Meta Immersive Web SDK) the primary build path: it can be built and deployed from a cloud session and tested on the Quest browser without Unity. The `unity/` folder stays as the port target if a native build is ever needed. Camera: IWSDK exposes `features.camera` (`CameraSource` → texture via getUserMedia). Plan: **trace the object's outline with a fingertip** for the shape (hands-first, no CV), sample the camera frame inside the trace for the palette; if the camera is unavailable the palette falls back to the shelf default. Owner's instruction (Nov 5, night): build the complete product now, no staging, use the camera.
 
 ## Repo map
 - `docs/lookdev-gradient.html` — Option A, current pass: whole-body gradient, guide 2 × 6 × mirror, natural stroke width, all options as gestures (table on the page). Open in a browser; loads three.js 0.152.2 from cdnjs.
 - `docs/lookdev-symmetry.html` — Option A, first pass: strokes only, six patterns (owner found them indistinguishable at this scale).
 - `docs/lookdev-relief.html` — archived Option B (carved relief). Not chosen.
 - `docs/lookdev.html` — first colour-paint test. Kept for the lighting and jelly reference only.
-- `web/` — (coming) IWSDK/WebXR app, deployed to GitHub Pages.
+- `web/` — the product. IWSDK/WebXR app, deployed to GitHub Pages from `main` (https://ai-jian.github.io/alive-things/). The deployed page carries Meta's IWER emulator, so a desktop browser shows an emulated Quest 3 (see `web/README.md`). Mouse-drag on the cup paints in the emulator.
 - `unity/` — Unity 2022.3 LTS project (secondary path now). URP. Scripts under `Assets/AliveThings/Scripts/`, grouped: Creature, Interaction, Paint, Capture, World. Shader includes under `Assets/AliveThings/Shaders/`.
 
 ## Unity setup (local machine)
@@ -49,6 +49,8 @@ With either, an agent can build the first scene and fix compile errors itself; t
 ## Working rules for agents
 - Branch off `main`, push the branch, don't open a PR unless asked.
 - Don't commit `Library/`, builds, or APKs (see `.gitignore`).
+- Deploy = push to `main`. Branch pushes only build. Pages environment only accepts `main`.
+- Emulator gotcha: desktop Chrome's native `XRWebGLBinding` rejects IWER sessions; `web/index.html` deletes it before modules load unless the UA is OculusBrowser. Keep that script.
 - Storyboard changes are design changes: edit `docs/storyboard-v4.html`, re-render the PNG, and note the reason in `docs/design-notes.md`.
 - When something can't be verified here (no headset, no Unity), say so plainly in the handoff instead of claiming it works.
 

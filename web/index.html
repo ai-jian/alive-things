@@ -4,20 +4,49 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Alive Things</title>
+    <script>
+      // Desktop emulator (IWER) sessions are not native XRSessions, but desktop Chrome exposes a native XRWebGLBinding
+      // that three.js prefers and whose constructor rejects them. Drop it before any module evaluates, except on a real headset.
+      if (!/OculusBrowser/i.test(navigator.userAgent)) { try { delete window.XRWebGLBinding; } catch (e) {} }
+    </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" />
     <style>
-      html, body { margin: 0; height: 100%; background: #efe9df; color: #2e2a36; font-family: system-ui, sans-serif; }
+      :root { --paper: #efe9df; --ink: #2e2a36; --soft: #8a8190; --card: rgba(255, 253, 248, 0.92); --accent: #4b4a8f; }
+      html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font-family: 'Nunito', system-ui, sans-serif; }
       #app { position: fixed; inset: 0; }
-      #intro { position: fixed; left: 16px; bottom: 16px; max-width: 360px; padding: 12px 14px; background: rgba(255,253,248,.9); border-radius: 10px; font-size: 14px; line-height: 1.45; pointer-events: none; }
-      #intro b { display: block; font-size: 18px; margin-bottom: 4px; }
+      /* landing: a quiet card over the live scene */
+      #landing { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; background: linear-gradient(180deg, rgba(239,233,223,.55), rgba(239,233,223,.85)); transition: opacity .6s ease; }
+      #landing.hidden { opacity: 0; pointer-events: none; }
+      .card { max-width: 440px; width: 100%; background: var(--card); border-radius: 18px; padding: 28px 28px 22px; box-shadow: 0 12px 40px rgba(46,42,54,.12); }
+      .card h1 { font-size: 34px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+      .card .line { margin: 0 0 18px; color: var(--soft); font-size: 16px; }
+      .steps { display: grid; gap: 10px; margin: 0 0 20px; padding: 0; list-style: none; }
+      .steps li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; font-size: 15px; line-height: 1.4; }
+      .steps b { display: block; font-weight: 700; }
+      .steps span.n { width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; margin-top: 2px; }
+      .enter { width: 100%; font: inherit; font-size: 17px; font-weight: 700; padding: 13px 16px; border-radius: 12px; border: 0; background: var(--ink); color: #fff; cursor: pointer; }
+      .enter:disabled { opacity: .6; cursor: default; }
+      .small { margin: 10px 0 0; font-size: 12.5px; color: var(--soft); line-height: 1.45; }
+      .small b { color: var(--ink); font-weight: 600; }
+      #reenter { position: fixed; right: 14px; bottom: 14px; display: none; font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 999px; border: 0; background: var(--card); color: var(--ink); cursor: pointer; box-shadow: 0 4px 16px rgba(46,42,54,.12); }
     </style>
   </head>
   <body>
     <div id="app"></div>
-    <div id="intro">
-      <b>Alive Things</b>
-      Pick up a cup. Be quiet for ten minutes. It comes alive.<br />
-      On a Quest: tap the headset button to enter. Hands only.
+    <div id="landing">
+      <div class="card">
+        <h1>Alive Things</h1>
+        <p class="line">Pick up a cup. Be quiet for ten minutes. It comes alive.</p>
+        <ol class="steps">
+          <li><span class="n">1</span><div><b>Find the cup</b>It is sitting on your table. Pinch to pick it up and turn it.</div></li>
+          <li><span class="n">2</span><div><b>Draw with one fingertip</b>Slowly. Every stroke appears six times and closes into a pattern on its own. You don't need to know how to draw.</div></li>
+          <li><span class="n">3</span><div><b>Stay a while</b>Hold still and the ink blooms. Nothing can go wrong here.</div></li>
+        </ol>
+        <button class="enter" id="enter">Enter</button>
+        <p class="small" id="note">Hands only, no controllers. On a Meta Quest, open this page in the headset browser.</p>
+      </div>
     </div>
+    <button id="reenter">Enter again</button>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

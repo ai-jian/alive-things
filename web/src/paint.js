@@ -63,7 +63,7 @@ export class PaintLayer {
       this.heat[i] = Math.min(1, this.heat[i] + v); this.wet[i] = Math.min(1, this.wet[i] + v * 2 * this.bleed);
     }
     this._grow(x0 - 2, y0 - 2, x1 + 2, y1 + 2); this.dirty = true;
-    this.coverage = Math.min(1, this.coverage + (radius * radius) / (W * H) * 40);
+    this.coverage = Math.min(1, this.coverage + (radius * radius * 2.5) / (W * H));   // one unit ≈ its own footprint
   }
   _wet(cx, cy, radius, amount) {
     const { W, H } = this;
