@@ -12,7 +12,7 @@ namespace AliveThings.Creature
     {
         public Transform bubble;                   // enabled while whispering, faces the player
         public SpriteRenderer[] slots = new SpriteRenderer[2];
-        public Sprite[] patternSprites;            // index matches Paint.ZenBrush.Pattern
+        public Sprite[] patternSprites;            // icon per Paint.ZenBrush.Pattern (dimple, ridge, scale, swirl, leaf, weave)
         public AudioSource voice;                  // short syllables, pitched by personality
         public AudioClip[] syllables;
         public Transform lookTarget;               // the player's head

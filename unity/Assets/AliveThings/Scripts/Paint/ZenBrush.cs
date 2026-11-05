@@ -4,8 +4,9 @@ using UnityEngine;
 namespace AliveThings.Paint
 {
     /// <summary>
-    /// The "anyone can draw" brush.
-    /// The player only provides a path and a rhythm. The brush:
+    /// The "anyone can draw" brush. It carves, it doesn't colour: units are height kernels
+    /// (ridges and grooves) stamped into PaintSurface's height map; the toon relief shader
+    /// lets the light draw them. The player only provides a path and a rhythm. The brush:
     ///  1. picks a pattern from the motion itself (tap, straight, wavy, circle, flick, scrub),
     ///  2. places repeating units along the path at even spacing,
     ///  3. gently bends the path toward the surface's flow lines (so shaky lines look intentional),
@@ -19,8 +20,9 @@ namespace AliveThings.Paint
         public const int PatternCount = 6;
 
         public PaintSurface surface;
-        public Texture2D[] patternSprites = new Texture2D[PatternCount];
-        public Color ink = new Color(0.82f, 0.28f, 0.60f);     // zen pink
+        [Tooltip("Height kernels, one per Pattern: dimple, ridge, scale, swirl, leaf, weave. Grayscale, 0.5 = flat.")]
+        public Texture2D[] patternKernels = new Texture2D[PatternCount];
+        public float depth = 1f;                               // overall carve strength
         public float touchDistance = 0.015f;
         public float unitSpacing = 0.012f;      // metres along the surface between units
         [Range(0, 1)] public float flowSnap = 0.6f;   // 0 = your line, 1 = fully follows the flow lines
@@ -47,6 +49,10 @@ namespace AliveThings.Paint
             Vector3 tip = h.indexTip;
             Vector3 onSurface = col.ClosestPoint(tip);
             bool touching = Vector3.Distance(onSurface, tip) < touchDistance && !h.IsPinching;
+
+            // water: an open palm near the surface smooths instead of carving
+            if (h.IsOpenPalm && Vector3.Distance(col.ClosestPoint(h.palm), h.palm) < touchDistance * 3f)
+            { EndStroke(); if (TryUV(col.ClosestPoint(h.palm), out Vector2 puv)) surface.Smooth(puv, 0.08f, Time.deltaTime * 2f); return; }
 
             if (!touching) { EndStroke(); return; }
             if (!down) BeginStroke(onSurface);
@@ -85,8 +91,8 @@ namespace AliveThings.Paint
                 Pattern pat = Classify();
                 float slow = 1f - Mathf.Clamp01(speed / 0.6f);
                 float size = Mathf.Lerp(0.02f, 0.045f, slow);                       // UV units
-                Color c = ink; c.a = Mathf.Lerp(0.55f, 1f, slow);
-                PlaceUnit(pat, p, dir, size, c);
+                float strength = depth * Mathf.Lerp(0.5f, 1f, slow);                // slow = deeper
+                PlaceUnit(pat, p, dir, size, strength);
             }
         }
 
@@ -95,7 +101,7 @@ namespace AliveThings.Paint
             if (!down) return;
             down = false;
             float dur = Time.time - strokeStart;
-            if (dur < 0.2f && stroke.Count < 4) { PlaceUnit(Pattern.Dot, stroke[0], Vector3.forward, 0.03f, ink); } // a tap is a dot
+            if (dur < 0.2f && stroke.Count < 4) { PlaceUnit(Pattern.Dot, stroke[0], Vector3.forward, 0.03f, depth); } // a tap is a dimple
             UpdateStats();
         }
 
@@ -120,12 +126,12 @@ namespace AliveThings.Paint
             return Pattern.Leaf;                                        // short curved flick
         }
 
-        void PlaceUnit(Pattern pat, Vector3 worldPos, Vector3 dir, float size, Color c)
+        void PlaceUnit(Pattern pat, Vector3 worldPos, Vector3 dir, float size, float strength)
         {
             if (!TryUV(worldPos, out Vector2 uv)) return;
             float angle = Mathf.Atan2(dir.z, dir.x) * Mathf.Rad2Deg; // rough; refine with tangent space later
             int idx = (int)pat;
-            surface.Stamp(patternSprites[idx], uv, angle, size, c, idx);
+            surface.Stamp(patternKernels[idx], uv, angle, size, strength, idx);
             usedMask |= 1 << idx; if (pat == Pattern.Dot) dots++; if (pat == Pattern.Spiral) loops++;
             if (tick != null && tickClip != null) { tick.pitch = Random.Range(0.95f, 1.05f); tick.PlayOneShot(tickClip, 0.35f); }
             Haptics.Pulse(0.15f, 0.02f);

@@ -1,0 +1,331 @@
+<title>Alive Things Relief Test</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;600;700&display=swap">
+<style>
+/* Layout: one 3D stage, one row of pill controls. The point of the page is the light on the clay. */
+:root{ --paper:#f6f2ea; --ink:#2e2a36; --soft:#8a8190; --line:#e2dbd0; --card:#fff; --accent:#3f6fc0;
+  --display:'Patrick Hand',"Comic Sans MS",cursive; --body:'Nunito',system-ui,sans-serif; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --paper:#1b1a20; --ink:#f1ebe2; --soft:#a79fab; --line:#36333e; --card:#26242d; --accent:#9ec5e8; color-scheme:dark } }
+:root[data-theme="dark"]{ --paper:#1b1a20; --ink:#f1ebe2; --soft:#a79fab; --line:#36333e; --card:#26242d; --accent:#9ec5e8; color-scheme:dark }
+body{ background:var(--paper); color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:24px 48px; }
+.wrap{ max-width:1000px; margin:0 auto; }
+h1{ font-family:var(--display); font-weight:400; font-size:38px; line-height:1; margin:0 0 4px; }
+.sub{ color:var(--soft); margin:0 0 14px; }
+#stage{ position:relative; width:100%; aspect-ratio:16/10; max-width:100%; border-radius:12px; overflow:hidden; background:#efe9df; touch-action:none; box-shadow:0 6px 0 var(--line); }
+#stage canvas{ display:block; width:100%; height:100%; }
+#hint{ position:absolute; left:10px; bottom:8px; font-family:var(--display); font-size:15px; color:#2e2a36; background:rgba(255,253,248,.8); padding:2px 8px; border-radius:6px; pointer-events:none; }
+#fail{ position:absolute; inset:0; display:none; place-items:center; text-align:center; padding:20px; color:#2e2a36; background:#efe9df; }
+.bar{ display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-top:12px; }
+.grp{ display:flex; gap:4px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px; flex-wrap:wrap; }
+.grp span.lbl{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--soft); padding:0 6px 0 8px; }
+button{ font:inherit; font-family:var(--display); font-size:17px; color:var(--ink); background:transparent; border:0; border-radius:999px; padding:4px 12px; cursor:pointer; }
+button:hover{ background:var(--line) } button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px }
+button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+.notes{ margin-top:22px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; font-size:14px; }
+.notes h2{ font-family:var(--display); font-weight:400; font-size:22px; margin:0 0 4px }
+.notes p{ margin:0 } .notes ul{ margin:0; padding-left:18px }
+</style>
+
+<div class="wrap">
+  <h1>Alive Things, relief test</h1>
+  <p class="sub">You carve, the light paints. One clay colour, three bands of light, patterns only where you touched.</p>
+  <div id="stage">
+    <div id="fail">3D could not start in this browser. Try a desktop browser or the Quest browser.</div>
+    <div id="hint">drag empty space to orbit · drag on the cup to carve · tap for a dimple</div>
+  </div>
+  <div class="bar">
+    <div class="grp"><span class="lbl">Pattern</span>
+      <button data-p="auto" aria-pressed="true">Auto</button>
+      <button data-p="dot" aria-pressed="false">Dimple</button>
+      <button data-p="stripe" aria-pressed="false">Ridge</button>
+      <button data-p="scallop" aria-pressed="false">Scale</button>
+      <button data-p="spiral" aria-pressed="false">Swirl</button>
+      <button data-p="leaf" aria-pressed="false">Leaf</button>
+      <button data-p="grid" aria-pressed="false">Weave</button>
+    </div>
+    <div class="grp"><span class="lbl">Clay</span>
+      <button data-c="cream" aria-pressed="true">Cream</button>
+      <button data-c="celadon" aria-pressed="false">Celadon</button>
+      <button data-c="indigo" aria-pressed="false">Indigo</button>
+      <button data-c="terracotta" aria-pressed="false">Terracotta</button>
+    </div>
+    <div class="grp"><span class="lbl">Glaze in grooves</span>
+      <button id="gOff" aria-pressed="true">Off</button>
+      <button id="gOn" aria-pressed="false">On</button>
+    </div>
+    <div class="grp"><span class="lbl">World</span>
+      <button id="wRoom" aria-pressed="true">Room</button>
+      <button id="wSpace" aria-pressed="false">My Space</button>
+    </div>
+    <div class="grp"><button id="tLight" aria-pressed="true">Light moves</button><button id="tReset">Clear</button></div>
+  </div>
+  <div class="notes">
+    <div><h2>What this proves</h2><p>Carving instead of colouring removes "ugly" from the user's hands. The clay is one colour. Patterns are relief. A three-band toon ramp plus a rim light makes the relief read from any angle, and turning the cup in your hand becomes the way you look at your own work.</p></div>
+    <div><h2>How it works</h2><ul><li>Height map painted by the brush (signed: ridges and grooves)</li><li>Vertex displacement from height, normal from height gradient</li><li>Toon ramp: 3 bands, hard specular dot, cool rim</li><li>Optional glaze colour pools in the grooves</li></ul></div>
+    <div><h2>Try</h2><ul><li>Scale pattern, then switch to My Space and orbit</li><li>Celadon + glaze, swirl in slow circles</li><li>Stop the light, drag the cup under it</li></ul></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.152.2/three.min.js"></script>
+<script>
+(function(){
+  if(!window.THREE){ document.getElementById('fail').style.display='grid'; return; }
+  const stage = document.getElementById('stage');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let renderer; try { renderer = new THREE.WebGLRenderer({ antialias:true }); } catch(e){ document.getElementById('fail').style.display='grid'; return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace; else renderer.outputEncoding = THREE.sRGBEncoding;
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(30, 1.6, 0.1, 50);
+  const orbit = { theta: 0.5, phi: 1.12, r: 5.4, target: new THREE.Vector3(0, 0.7, 0) };
+  function placeCamera(){
+    camera.position.set(orbit.target.x + orbit.r*Math.sin(orbit.phi)*Math.sin(orbit.theta), orbit.target.y + orbit.r*Math.cos(orbit.phi), orbit.target.z + orbit.r*Math.sin(orbit.phi)*Math.cos(orbit.theta));
+    camera.lookAt(orbit.target);
+  }
+
+  // ---------- height map (signed, 0.5 = flat) ----------
+  const W = 1024, H = 512;
+  const height = new Float32Array(W*H).fill(0.5);
+  const bytes = new Uint8Array(W*H);
+  const heightTex = new THREE.DataTexture(bytes, W, H, THREE.RedFormat, THREE.UnsignedByteType);
+  heightTex.wrapS = THREE.RepeatWrapping; heightTex.wrapT = THREE.ClampToEdgeWrapping;
+  heightTex.minFilter = THREE.LinearFilter; heightTex.magFilter = THREE.LinearFilter;
+  let dirty = true;
+  function upload(){ for (let i=0;i<height.length;i++) bytes[i] = Math.max(0, Math.min(255, height[i]*255)) | 0; heightTex.needsUpdate = true; dirty = false; }
+  function addKernel(cx, cy, radius, fn){ // fn(dx,dy) -> signed delta in [-1,1]
+    const x0 = Math.floor(cx-radius), x1 = Math.ceil(cx+radius), y0 = Math.max(0,Math.floor(cy-radius)), y1 = Math.min(H-1,Math.ceil(cy+radius));
+    for (let y=y0; y<=y1; y++) for (let x=x0; x<=x1; x++){
+      const v = fn(x-cx, y-cy); if (!v) continue;
+      const xi = ((x % W) + W) % W, i = y*W + xi;
+      height[i] = Math.max(0, Math.min(1, height[i] + v));
+    }
+    dirty = true;
+  }
+  const gauss = (d, r) => Math.exp(-(d*d)/(2*r*r*0.25));
+  // pattern stamps. dir is a unit vector in texture space. s = size in px.
+  const stamps = {
+    dot(cx,cy,dir,s){ addKernel(cx,cy,s, (dx,dy)=> -0.35*gauss(Math.hypot(dx,dy), s)); },
+    stripe(cx,cy,dir,s){ addKernel(cx,cy,s*1.6, (dx,dy)=>{ const along = dx*dir.x+dy*dir.y, across = -dx*dir.y+dy*dir.x; if (Math.abs(along) > s*1.4) return 0; const cap = Math.min(1, (s*1.4-Math.abs(along))/(s*0.4)); return 0.3*gauss(across, s*0.45)*cap; }); },
+    scallop(cx,cy,dir,s){ addKernel(cx,cy,s*1.2, (dx,dy)=>{ const along = dx*dir.x+dy*dir.y, across = -dx*dir.y+dy*dir.x; const r = Math.hypot(along, across); const ring = gauss(r - s*0.9, s*0.22); const half = across < 0 ? 1 : Math.max(0, 1 - across/(s*0.3)); return 0.28*ring*half - 0.12*gauss(r, s*0.6)*half; }); },
+    spiral(cx,cy,dir,s){ addKernel(cx,cy,s*1.3, (dx,dy)=>{ const r = Math.hypot(dx,dy); if (r > s*1.25) return 0; const a = Math.atan2(dy,dx); const k = s*1.2/(Math.PI*4); const rr = ((a + Math.PI*2) % (Math.PI*2)); let best = 1e9; for (let n=0;n<3;n++){ const target = k*(rr + n*Math.PI*2); best = Math.min(best, Math.abs(r-target)); } return -0.3*gauss(best, s*0.16); }); },
+    leaf(cx,cy,dir,s){ addKernel(cx,cy,s*1.5, (dx,dy)=>{ const along = dx*dir.x+dy*dir.y, across = -dx*dir.y+dy*dir.x; const u = along/(s*1.4), v = across/(s*0.7); const inside = u*u+v*v; if (inside > 1) return 0; const body = 0.3*Math.sqrt(1-inside); const vein = -0.18*gauss(across, s*0.12)*Math.max(0,1-Math.abs(u)); return body+vein; }); },
+    grid(cx,cy,dir,s){ addKernel(cx,cy,s*1.4, (dx,dy)=>{ const r = Math.hypot(dx,dy); if (r > s*1.3) return 0; const p = s*0.5; const a = Math.abs(((dx+dy)%p+p)%p - p/2), b = Math.abs(((dx-dy)%p+p)%p - p/2); const fade = 1 - r/(s*1.3); return (-0.12*gauss(a, p*0.18) - 0.12*gauss(b, p*0.18))*fade; }); },
+  };
+
+  // starter carving so the first frame is not blank: a band of scales and a row of dimples
+  (function seed(){
+    const yWall = H*0.68; const d = {x:1,y:0};
+    for (let x=0; x<W; x+=22) stamps.scallop(x, yWall-30, d, 12);
+    for (let x=11; x<W; x+=22) stamps.scallop(x, yWall-12, d, 12);
+    for (let x=0; x<W; x+=26) stamps.dot(x, yWall+28, d, 9);
+    upload();
+  })();
+
+  // ---------- toon relief shader ----------
+  const uni = {
+    uHeight: { value: heightTex }, uTexel: { value: new THREE.Vector2(1/W, 1/H) },
+    uDisplace: { value: 0.035 }, uBump: { value: 2.2 },
+    uClay: { value: new THREE.Color(0xf1e8d6) }, uShadow: { value: new THREE.Color(0xc9b4a8) }, uLight: { value: new THREE.Color(0xfff6e6) },
+    uRim: { value: new THREE.Color(0xbfd3ff) }, uGlaze: { value: new THREE.Color(0x4f8f7a) }, uGlazeOn: { value: 0 },
+    uLightDir: { value: new THREE.Vector3(0.6, 0.8, 0.5).normalize() }, uAmbient: { value: 0.35 },
+    uPoke: { value: new THREE.Vector3() }, uAmt: { value: 0 }, uWob: { value: 0 }, uTime: { value: 0 },
+  };
+  const vert = `
+    uniform sampler2D uHeight; uniform float uDisplace; uniform vec3 uPoke; uniform float uAmt; uniform float uWob; uniform float uTime;
+    attribute vec4 tangent;
+    varying vec2 vUv; varying vec3 vN; varying vec3 vT; varying vec3 vB; varying vec3 vWorld;
+    void main(){
+      vUv = uv;
+      float h = texture2D(uHeight, uv).r - 0.5;
+      vec3 p = position + normal * h * uDisplace;
+      float dj = distance(p, uPoke); float fj = smoothstep(0.55, 0.0, dj);
+      p -= normalize(p*vec3(1.0,0.0,1.0)+vec3(0.0001)) * fj * uAmt * 0.34;
+      float wj = sin(uTime*9.0 + p.y*5.0) * uWob; p.x *= 1.0+wj; p.z *= 1.0+wj; p.y *= 1.0-wj*0.8;
+      vN = normalize(normalMatrix * normal);
+      vT = normalize(normalMatrix * tangent.xyz);
+      vB = normalize(cross(vN, vT) * tangent.w);
+      vec4 wp = modelMatrix * vec4(p,1.0); vWorld = wp.xyz;
+      gl_Position = projectionMatrix * viewMatrix * wp;
+    }`;
+  const frag = `
+    uniform sampler2D uHeight; uniform vec2 uTexel; uniform float uBump;
+    uniform vec3 uClay, uShadow, uLight, uRim, uGlaze; uniform float uGlazeOn; uniform vec3 uLightDir; uniform float uAmbient;
+    varying vec2 vUv; varying vec3 vN; varying vec3 vT; varying vec3 vB; varying vec3 vWorld;
+    void main(){
+      float hc = texture2D(uHeight, vUv).r;
+      float hx = texture2D(uHeight, vUv + vec2(uTexel.x,0.0)).r - texture2D(uHeight, vUv - vec2(uTexel.x,0.0)).r;
+      float hy = texture2D(uHeight, vUv + vec2(0.0,uTexel.y)).r - texture2D(uHeight, vUv - vec2(0.0,uTexel.y)).r;
+      vec3 N = normalize(vN - vT * hx * uBump * 40.0 - vB * hy * uBump * 40.0);
+      vec3 L = normalize((viewMatrix * vec4(uLightDir,0.0)).xyz);
+      vec3 V = normalize(-(viewMatrix * vec4(vWorld,1.0)).xyz);
+      float ndl = dot(N, L);
+      // three bands with soft edges: shadow / mid / light
+      float band = smoothstep(-0.05, 0.02, ndl) * 0.5 + smoothstep(0.42, 0.48, ndl) * 0.5;
+      // carved grooves catch extra shadow, ridges catch extra light (ambient occlusion by height)
+      float carve = (hc - 0.5);
+      band = clamp(band + carve * 1.2, 0.0, 1.0);
+      vec3 base = uClay;
+      if (uGlazeOn > 0.5) base = mix(base, uGlaze, smoothstep(0.0, 0.25, -carve));
+      vec3 lit = mix(uShadow, uLight, band) * base + uAmbient * base * 0.2;
+      // hard specular dot
+      vec3 Hh = normalize(L + V); float spec = step(0.985, dot(N, Hh)) * 0.35;
+      // cool rim on the shadow side
+      float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0) * (1.0 - smoothstep(0.2, 0.5, ndl)) * 0.45;
+      vec3 col = lit + spec * uLight + rim * uRim;
+      gl_FragColor = vec4(col, 1.0);
+      #include <colorspace_fragment>
+    }`;
+  let bodyMat;
+  try { bodyMat = new THREE.ShaderMaterial({ uniforms: uni, vertexShader: vert, fragmentShader: frag }); }
+  catch(e){ document.getElementById('fail').style.display='grid'; return; }
+  // older three builds name the include differently; fall back without it
+  if (!THREE.ShaderChunk.colorspace_fragment) bodyMat.fragmentShader = frag.replace('#include <colorspace_fragment>', '#include <encodings_fragment>');
+
+  // ---------- cup geometry ----------
+  const prof = [[0,0],[0.42,0],[0.52,0.04],[0.56,0.12],[0.60,0.6],[0.64,0.98],[0.66,1.04],[0.58,1.04],[0.56,0.98],[0.52,0.20],[0.44,0.14],[0,0.14]].map(p=>new THREE.Vector2(p[0],p[1]));
+  const bodyGeo = new THREE.LatheGeometry(prof, 160); // dense around so displacement reads
+  { // remap V so the outer wall owns most of the texture, then subdivide the wall vertically by rebuilding
+    const vmap = [0, 0.04, 0.08, 0.12, 0.52, 0.88, 0.9, 0.92, 0.94, 0.97, 0.99, 1];
+    const uv = bodyGeo.attributes.uv, n = prof.length - 1;
+    for (let i=0;i<uv.count;i++){ const idx = Math.round(uv.getY(i)*n); uv.setY(i, vmap[Math.max(0,Math.min(n,idx))]); }
+  }
+  // finer wall: build a second lathe with the wall subdivided (so vertex displacement has vertices to move)
+  const fine = [];
+  for (let i=0;i<prof.length-1;i++){ const a = prof[i], b = prof[i+1]; const steps = (i===3||i===4) ? 14 : 1; for (let s=0;s<steps;s++) fine.push(new THREE.Vector2(a.x+(b.x-a.x)*s/steps, a.y+(b.y-a.y)*s/steps)); }
+  fine.push(prof[prof.length-1]);
+  const geo = new THREE.LatheGeometry(fine, 160);
+  { // V: map by cumulative profile index into the same vmap scheme (wall gets 0.12..0.52 .. 0.88)
+    const uv = geo.attributes.uv, n = fine.length - 1;
+    // compute per-profile-point v: points 0..3 -> 0..0.12, wall (3..3+28) -> 0.12..0.88 spread, rest -> 0.88..1
+    const wallStart = 3, wallEnd = 3 + 28;
+    const vOf = (k) => k <= wallStart ? k/wallStart*0.12 : k <= wallEnd ? 0.12 + (k-wallStart)/(wallEnd-wallStart)*0.76 : 0.88 + (k-wallEnd)/(n-wallEnd)*0.12;
+    for (let i=0;i<uv.count;i++){ const k = Math.round(uv.getY(i)*n); uv.setY(i, vOf(k)); }
+    uv.needsUpdate = true;
+  }
+  geo.computeVertexNormals();
+  if (geo.computeTangents) geo.computeTangents(); else geo.setAttribute('tangent', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count*4).fill(0), 4));
+  const body = new THREE.Mesh(geo, bodyMat);
+
+  // toon material for the rest, 3-step gradient map
+  const ramp = new THREE.DataTexture(new Uint8Array([60, 60, 60, 255, 160,160,160,255, 255,255,255,255]), 3, 1, THREE.RGBAFormat); ramp.minFilter = ramp.magFilter = THREE.NearestFilter; ramp.needsUpdate = true;
+  const toon = (color) => new THREE.MeshToonMaterial({ color, gradientMap: ramp });
+  const handleMat = toon(0xf1e8d6);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.075, 18, 36, Math.PI*1.25), handleMat);
+  handle.position.set(0.56, 0.56, 0); handle.rotation.set(0, 0, -Math.PI*0.62);
+  const creature = new THREE.Group(); creature.add(body, handle); creature.position.y = 0.22; scene.add(creature);
+
+  const dark = toon(0x2e2a36);
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), dark); eyeL.position.set(-0.17, 0.62, 0.575);
+  const eyeR = eyeL.clone(); eyeR.position.x = 0.17;
+  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.016, 8, 20, Math.PI), dark); mouth.position.set(0, 0.48, 0.60); mouth.rotation.z = Math.PI;
+  const face = new THREE.Group(); face.add(eyeL, eyeR, mouth); creature.add(face);
+  const legGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.22, 10); const footGeo = new THREE.SphereGeometry(0.075, 14, 10); footGeo.scale(1.3, 0.5, 1);
+  const legs = []; [-0.22, 0.22].forEach(x => { const g = new THREE.Group(); const l = new THREE.Mesh(legGeo, dark); l.position.y = -0.11; const f = new THREE.Mesh(footGeo, dark); f.position.y = -0.22; g.add(l,f); g.position.set(x, 0, 0.1); creature.add(g); legs.push(g); });
+
+  // ground + lights (toon material needs real lights)
+  const hemi = new THREE.HemisphereLight(0xfff3e0, 0xe9d7cf, 0.55); const key = new THREE.DirectionalLight(0xfff1dc, 0.9); scene.add(hemi, key);
+  const groundMat = new THREE.MeshToonMaterial({ color: 0xefe9df, gradientMap: ramp });
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(12, 48), groundMat); ground.rotation.x = -Math.PI/2; scene.add(ground);
+  const poolCanvas = document.createElement('canvas'); poolCanvas.width = poolCanvas.height = 256;
+  { const c = poolCanvas.getContext('2d'); const g = c.createRadialGradient(128,128,10,128,128,128); g.addColorStop(0,'rgba(255,233,196,0.95)'); g.addColorStop(0.5,'rgba(255,226,184,0.4)'); g.addColorStop(1,'rgba(255,226,184,0)'); c.fillStyle = g; c.fillRect(0,0,256,256); }
+  const pool = new THREE.Mesh(new THREE.PlaneGeometry(4.2,4.2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(poolCanvas), transparent: true, depthWrite: false })); pool.rotation.x = -Math.PI/2; pool.position.y = 0.005; pool.visible = false; scene.add(pool);
+  const sparkN = 160, sp = new Float32Array(sparkN*3); for (let i=0;i<sparkN;i++){ sp[i*3]=(Math.random()-0.5)*14; sp[i*3+1]=Math.random()*5; sp[i*3+2]=(Math.random()-0.5)*14; }
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp,3)); const sparks = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffe9c4, size: 0.05, transparent: true, opacity: .85 })); sparks.visible = false; scene.add(sparks);
+
+  // ---------- palettes ----------
+  const clays = {
+    cream:      { clay:0xe9dfc9, shadow:0xa88f86, light:0xfff3df, rim:0xbfd3ff, glaze:0x4f8f7a },
+    celadon:    { clay:0xbfd9cc, shadow:0x7fa391, light:0xf0fff6, rim:0xffe2b8, glaze:0x2f6a5a },
+    indigo:     { clay:0x3f4d8a, shadow:0x22284f, light:0x9fb0ff, rim:0xffd9a8, glaze:0xe9e1d1 },
+    terracotta: { clay:0xd77a53, shadow:0x8e4a33, light:0xffd3b8, rim:0xbfe3ff, glaze:0xf6e7c8 },
+  };
+  function setClay(name){ const c = clays[name]; uni.uClay.value.set(c.clay); uni.uShadow.value.set(c.shadow); uni.uLight.value.set(c.light); uni.uRim.value.set(c.rim); uni.uGlaze.value.set(c.glaze); handleMat.color.set(c.clay);
+    document.querySelectorAll('[data-c]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.c===name))); }
+  const roomBg = new THREE.Color(0xefe9df), spaceBg = new THREE.Color(0x1d2140);
+  function setWorld(space){ scene.background = space ? spaceBg : roomBg; hemi.intensity = space ? 0.2 : 0.55; key.intensity = space ? 0.8 : 0.9; groundMat.color.set(space ? 0x2b2f5e : 0xefe9df); pool.visible = sparks.visible = space;
+    uni.uAmbient.value = space ? 0.15 : 0.35; uni.uLightDir.value.set(0.2, 0.95, 0.25).normalize();
+    document.getElementById('wRoom').setAttribute('aria-pressed', String(!space)); document.getElementById('wSpace').setAttribute('aria-pressed', String(space)); }
+  setClay('cream'); setWorld(false);
+
+  // ---------- interaction ----------
+  let pattern = 'auto', lightMoves = !reduce, dragging = false, carving = false, lastX=0, lastY=0;
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const pokeState = { amt:0, vel:0 };
+  const path = []; let lastStampUV = null, lastT = 0, downT = 0, downUV = null;
+  function hit(ev){ const r = renderer.domElement.getBoundingClientRect(); ndc.set(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1); ray.setFromCamera(ndc, camera); const h = ray.intersectObject(body, false); return h.length ? h[0] : null; }
+  function classify(){
+    const n = path.length; if (n < 6) return 'stripe';
+    let turn = 0, wiggle = 0, pd = null; const from = Math.max(1, n-14);
+    for (let i=from;i<n;i++){ const d = { x: path[i].x-path[i-1].x, y: path[i].y-path[i-1].y }; const m = Math.hypot(d.x,d.y)||1; d.x/=m; d.y/=m; if (pd){ let a = Math.atan2(pd.x*d.y-pd.y*d.x, pd.x*d.x+pd.y*d.y)*180/Math.PI; turn += a; wiggle += Math.abs(a); } pd = d; }
+    const at = Math.abs(turn);
+    if (at > 150) return 'spiral'; if (wiggle > 120 && at < 60) return 'scallop'; if (wiggle > 220) return 'grid';
+    const len = Math.hypot(path[n-1].x-path[from].x, path[n-1].y-path[from].y);
+    if (len > 40 && wiggle < 40) return 'stripe'; return 'leaf';
+  }
+  function carveAt(h, ev){
+    if (!h.uv) return;
+    const now = performance.now();
+    let x = h.uv.x*W, y = (1-h.uv.y)*H;
+    const p = { x, y, t: now };
+    if (lastStampUV){
+      // flow snapping: bend toward "around the cup" (texture x axis)
+      let dx = x - lastStampUV.x, dy = y - lastStampUV.y; if (Math.abs(dx) > W/2) dx -= Math.sign(dx)*W; // seam wrap
+      const len = Math.hypot(dx,dy); if (len < 1) return;
+      const dir = { x: dx/len, y: dy/len }; const around = { x: Math.sign(dir.x)||1, y: 0 };
+      const snap = 0.55; const bx = dir.x*(1-snap)+around.x*snap, by = dir.y*(1-snap)+around.y*snap; const bm = Math.hypot(bx,by);
+      const bdir = { x: bx/bm, y: by/bm };
+      path.push(p);
+      const spacing = 18; if (len < spacing) return;
+      const speed = len / Math.max(1, now - lastT); // px per ms
+      const slow = 1 - Math.min(1, speed / 0.8);
+      const s = 8 + 8*slow;
+      const pat = pattern === 'auto' ? classify() : pattern;
+      const sx = lastStampUV.x + bdir.x*spacing, sy = lastStampUV.y + bdir.y*spacing;
+      stamps[pat](((sx%W)+W)%W, sy, bdir, s);
+      lastStampUV = { x: sx, y: sy }; lastT = now;
+      tick();
+    } else { lastStampUV = { x, y }; lastT = now; path.length = 0; path.push(p); }
+  }
+  // tiny tick sound, synthesized
+  let actx = null; function tick(){ try { actx = actx || new (window.AudioContext||window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.type='sine'; o.frequency.value = 1800 + Math.random()*300; g.gain.setValueAtTime(0.0001, actx.currentTime); g.gain.exponentialRampToValueAtTime(0.06, actx.currentTime+0.004); g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+0.05); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime+0.06); } catch(e){} }
+
+  stage.addEventListener('pointerdown', ev => { stage.setPointerCapture(ev.pointerId); const h = hit(ev); lastX=ev.clientX; lastY=ev.clientY; downT = performance.now();
+    if (h){ carving = true; lastStampUV = null; downUV = h.uv ? { x: h.uv.x*W, y: (1-h.uv.y)*H } : null; carveAt(h, ev); } else dragging = true; });
+  stage.addEventListener('pointermove', ev => { const dx = ev.clientX-lastX, dy = ev.clientY-lastY; lastX=ev.clientX; lastY=ev.clientY;
+    if (dragging){ orbit.theta -= dx*0.008; orbit.phi = Math.min(1.5, Math.max(0.35, orbit.phi - dy*0.006)); }
+    else if (carving){ const h = hit(ev); if (h) carveAt(h, ev); } });
+  const up = () => { if (carving && downUV && performance.now()-downT < 220 && path.length < 3){ stamps.dot(downUV.x, downUV.y, {x:1,y:0}, 10); tick(); // a tap is a dimple, and a small poke
+      uni.uPoke.value.copy(body.worldToLocal(new THREE.Vector3())); pokeState.vel = 2.5; uni.uWob.value = 0.04; }
+    dragging = carving = false; lastStampUV = null; };
+  stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+
+  document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pattern = b.dataset.p; document.querySelectorAll('[data-p]').forEach(x=>x.setAttribute('aria-pressed', String(x===b))); });
+  document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => setClay(b.dataset.c));
+  document.getElementById('gOff').onclick = () => { uni.uGlazeOn.value = 0; press('gOff','gOn','gOff'); };
+  document.getElementById('gOn').onclick = () => { uni.uGlazeOn.value = 1; press('gOff','gOn','gOn'); };
+  document.getElementById('wRoom').onclick = () => setWorld(false); document.getElementById('wSpace').onclick = () => setWorld(true);
+  document.getElementById('tLight').onclick = (e) => { lightMoves = !lightMoves; e.currentTarget.setAttribute('aria-pressed', String(lightMoves)); };
+  document.getElementById('tReset').onclick = () => { height.fill(0.5); upload(); };
+  function press(a,b,on){ [a,b].forEach(id => document.getElementById(id).setAttribute('aria-pressed', String(id===on))); }
+
+  function resize(){ const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/h; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage); resize();
+
+  const clock = new THREE.Clock(); let blinkT = 2.5;
+  function tickFrame(){
+    const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    if (dirty) upload();
+    pokeState.vel += (-70*pokeState.amt - 6*pokeState.vel)*dt; pokeState.amt += pokeState.vel*dt;
+    uni.uAmt.value = Math.max(0, pokeState.amt); uni.uWob.value *= Math.pow(0.08, dt); uni.uTime.value = t;
+    if (lightMoves){ const a = t*0.35; uni.uLightDir.value.set(Math.sin(a)*0.8, 0.75, Math.cos(a)*0.8).normalize(); }
+    key.position.copy(uni.uLightDir.value).multiplyScalar(5);
+    if (!reduce){ creature.position.y = 0.22 + Math.sin(t*2.2)*0.02; creature.rotation.z = Math.sin(t*1.1)*0.03; legs[0].rotation.x = Math.sin(t*2.2)*0.25; legs[1].rotation.x = -Math.sin(t*2.2)*0.25; if (!dragging && !carving) orbit.theta += dt*0.04; sparks.rotation.y = t*0.02; }
+    blinkT -= dt; const s = blinkT < 0.12 ? 0.1 : 1; eyeL.scale.y = eyeR.scale.y = s; if (blinkT < 0) blinkT = 2 + Math.random()*3;
+    placeCamera(); renderer.render(scene, camera); requestAnimationFrame(tickFrame);
+  }
+  tickFrame();
+})();
+</script>

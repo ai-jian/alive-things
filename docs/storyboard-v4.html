@@ -81,11 +81,15 @@ h1 small{ display:block; font-size:18px; color:var(--soft); margin-top:6px; }
     </symbol>
     <!-- zen pattern: a row of scallops in pink following a curve, sized for the cup wall -->
     <symbol id="scallops" viewBox="0 0 90 80" overflow="visible">
-      <g fill="none" stroke="#d0479a" stroke-width="2.2" stroke-linecap="round">
-        <path d="M18,40 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0"/>
-        <path d="M20,52 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0" opacity=".8"/>
+      <!-- relief: a light edge above, a shadow edge below, same clay colour -->
+      <g fill="none" stroke-width="2" stroke-linecap="round">
+        <path d="M18,39 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0" stroke="#fffaf0"/>
+        <path d="M18,41 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0" stroke="#b9a497" opacity=".9"/>
+        <path d="M20,51 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0" stroke="#fffaf0"/>
+        <path d="M20,53 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0 q5,-8 10,0" stroke="#b9a497" opacity=".9"/>
       </g>
-      <g fill="#f2b63c"><circle cx="24" cy="64" r="2.2"/><circle cx="34" cy="66" r="2.2"/><circle cx="44" cy="64" r="2.2"/><circle cx="54" cy="66" r="2.2"/><circle cx="64" cy="64" r="2.2"/></g>
+      <g fill="#b9a497" opacity=".8"><circle cx="24" cy="64" r="2.2"/><circle cx="34" cy="66" r="2.2"/><circle cx="44" cy="64" r="2.2"/><circle cx="54" cy="66" r="2.2"/><circle cx="64" cy="64" r="2.2"/></g>
+      <g fill="#fffaf0"><circle cx="24" cy="63" r="1.2"/><circle cx="34" cy="65" r="1.2"/><circle cx="44" cy="63" r="1.2"/><circle cx="54" cy="65" r="1.2"/><circle cx="64" cy="63" r="1.2"/></g>
     </symbol>
     <symbol id="lampc" viewBox="0 0 90 120" overflow="visible">
       <path d="M20,10 L70,10 L84,50 L6,50 Z" fill="#f2b63c"/><path d="M52,10 L70,10 L84,50 L58,50 Z" fill="#e0a22f"/>
@@ -109,7 +113,7 @@ h1 small{ display:block; font-size:18px; color:var(--soft); margin-top:6px; }
 
 <div class="wrap">
 <header>
-  <h1>Alive Things <small>Storyboard v4 · 2 minutes · 11 shots · gouache cut-out style</small></h1>
+  <h1>Alive Things <small>Storyboard v4.1 · 2 minutes · 11 shots · 3渲2 carved clay, flat cut-out world</small></h1>
   <div class="meta">
     <div>Core<b>a living garden</b></div>
     <div>Entry<b>your own objects</b></div>
@@ -209,10 +213,10 @@ h1 small{ display:block; font-size:18px; color:var(--soft); margin-top:6px; }
     <text x="30" y="166" font-family="Patrick Hand" font-size="13" fill="#ffe9c4" opacity=".8">tick · tick · tick</text>
   </svg><span class="num">5</span><span class="tc">0:32–0:48</span></div>
   <dl class="card">
-    <dd class="title">One finger. One slow line. Scallops grow.</dd>
-    <dt>Shot</dt><dd>Close. A fingertip drags slowly across the cup. Along the path, little scallops appear one by one, each with a soft tick. The line bends itself to follow the curve of the cup. Second line below it. This shot is long and quiet on purpose.</dd>
+    <dd class="title">One finger. One slow line. Scales rise.</dd>
+    <dt>Shot</dt><dd>Close. A fingertip drags slowly across the cup. Along the path, little scales rise out of the clay one by one, each with a soft tick. No colour: the pattern is relief, and the light draws it. The line bends itself to follow the curve of the cup. This shot is long and quiet on purpose.</dd>
     <dt>Text</dt><dd class="vo">"You don't have to know how to draw. Just keep going."</dd>
-    <dt>Build</dt><dd class="build"><b>Zen brush: pattern units along the stroke, flow-line snapping, slow = bigger.</b> Tick sound + light haptic per unit.</dd>
+    <dt>Build</dt><dd class="build"><b>Zen brush carves a height map: pattern units along the stroke, flow-line snapping, slow = deeper.</b> Toon ramp + relief normals. Tick + haptic per unit.</dd>
   </dl>
 </section>
 
@@ -223,17 +227,18 @@ h1 small{ display:block; font-size:18px; color:var(--soft); margin-top:6px; }
     <circle cx="150" cy="100" r="116" fill="url(#pool)"/>
     <use href="#cup" x="66" y="26" width="160" height="142"/>
     <g transform="translate(66,26) scale(1.78,1.775)"><use href="#scallops" width="90" height="80"/></g>
-    <g stroke="#2d4fa3" stroke-width="2.4" stroke-linecap="round" fill="none" opacity=".85"><path d="M110,120 l0,26 M122,118 l0,30 M134,120 l0,26 M146,118 l0,30"/></g>
-    <path d="M178,128 c10,-14 26,-6 20,6 c-6,12 -22,8 -16,-4 c4,-8 14,-6 12,0" fill="none" stroke="#2fb7a3" stroke-width="2.4" stroke-linecap="round"/>
-    <ellipse cx="200" cy="80" rx="22" ry="12" fill="#f3a7b6" opacity=".35"/>
+    <g stroke-width="2" stroke-linecap="round" fill="none"><path d="M109,120 l0,26 M121,118 l0,30 M133,120 l0,26 M145,118 l0,30" stroke="#fffaf0"/><path d="M111,120 l0,26 M123,118 l0,30 M135,120 l0,26 M147,118 l0,30" stroke="#b9a497"/></g>
+    <path d="M178,128 c10,-14 26,-6 20,6 c-6,12 -22,8 -16,-4 c4,-8 14,-6 12,0" fill="none" stroke="#b9a497" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M177,127 c10,-14 26,-6 20,6 c-6,12 -22,8 -16,-4 c4,-8 14,-6 12,0" fill="none" stroke="#fffaf0" stroke-width="1.4" stroke-linecap="round"/>
+    <ellipse cx="200" cy="80" rx="22" ry="12" fill="#fffaf0" opacity=".45"/>
     <use href="#hand" x="212" y="40" width="60" height="80" transform="rotate(100 242 70)"/>
     <text x="30" y="166" font-family="Patrick Hand" font-size="13" fill="#ffe9c4" opacity=".8">a palm of water softens a line · it starts to breathe</text>
   </svg><span class="num">6</span><span class="tc">0:48–0:58</span></div>
   <dl class="card">
     <dd class="title">No eraser. Water instead.</dd>
-    <dt>Shot</dt><dd>A flat palm wipes across one stroke. It doesn't vanish, it blurs into a soft wash. Quick cuts: stripes, a spiral, dots. The cup is warmer now, breathing very slightly, humming a little louder.</dd>
+    <dt>Shot</dt><dd>A flat palm wipes across one carving. It doesn't vanish, it smooths down like wet clay. Quick cuts: ridges, a swirl, dimples. You turn the cup and the light slides across the relief. It is warmer now, breathing very slightly.</dd>
     <dt>Text</dt><dd class="vo">"Nothing is a mistake here."</dd>
-    <dt>Build</dt><dd class="build"><b>Water gesture = blur brush. Six gesture-mapped patterns. Warmth and breathing scale with coverage.</b></dd>
+    <dt>Build</dt><dd class="build"><b>Water gesture = smooth the height map. Six gesture-mapped relief patterns. Warmth and breathing scale with coverage.</b></dd>
   </dl>
 </section>
 
@@ -356,7 +361,8 @@ h1 small{ display:block; font-size:18px; color:var(--soft); margin-top:6px; }
       <li>Passthrough, hands, glow-on-approach</li>
       <li>Capture → inflated mesh (with ready-object fallback)</li>
       <li>Hold-and-open gesture, Focus Mode</li>
-      <li>Zen brush: 6 patterns, flow snapping, water</li>
+      <li>Zen brush carves relief: 6 patterns, flow snapping, water smooths</li>
+      <li>Toon ramp + relief normals (3渲2), one clay colour per creature</li>
       <li>Traits from strokes, wake animation</li>
       <li>Creature brain, whisper bubbles, affinity</li>
       <li>My Space scene, light pools, plant guide</li>

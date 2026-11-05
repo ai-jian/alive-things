@@ -14,9 +14,9 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 ## Decisions
 - **Core loop is the living garden, not a quest.** Hide-and-seek was considered (Nov 5) and demoted to one peeking newcomer in the corner. Reason: a quest leans on music and is linear; the garden is open, emergent, and cheap.
 - **Capture is the entry, not a dependency.** A shelf of ready blank objects (cup, bowl, lamp, book, plant) is always present so the demo never dies on bad lighting.
-- **Objects keep their real look.** The photo is the base texture. Paint is a decal layer on top. Our lighting and shadows unify them. No "everything white" (that idea is gone).
+- **Objects keep their shape and tone, not their photo.** (Changed Nov 5, see art-direction.md.) The photo gives the clay colour; the look is carved clay with a toon ramp.
 - **Art direction: gouache cut-outs.** Flat colour blobs, no outlines, slight hand-cut wobble. References: Pola Mother's Day (flat flowers), Utanomori (painted navy forest, warm accents). Glow is for the world (fireflies, light pools), not for brushes.
-- **Brushes: six patterns picked by the motion itself.** Tap = dot, straight = stripe, wavy = scallop, circle = spiral, flick = leaf, scrub = grid. Strokes snap toward the surface's flow lines. Slow strokes are bigger and more opaque. A tick and a light haptic per unit. A flat palm is "water": it softens, never erases.
+- **Brushes carve relief, they don't colour.** (Changed Nov 5.) Six patterns picked by the motion itself: tap = dimple, straight = ridge, wavy = scale, circle = swirl, flick = leaf, scrub = weave. Strokes snap toward the surface's flow lines. Slow strokes carve deeper. A tick and a light haptic per unit. A flat palm is water: it smooths, never erases. Reason: colour put taste in the user's hands and looked childish; relief under a 3-band toon light can't look ugly and rewards turning the object.
 - **Personality comes from how you painted.** Not random. Slow and dotted → quiet, shy. Loops and speed → playful. Coverage → chatty.
 - **Sound is garnish, not structure.** One ambient hum, Animalese-style syllables pitched by personality, a tick per brush unit. No melodies, no soundtrack dependency.
 - **Hands only.** Everything is a pinch, a pull, or a palm. No menus. Required by the competition.
@@ -25,7 +25,7 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 1. Pinch near the object → Passthrough Camera API grabs one frame + pinch world position.
 2. Segment: MobileSAM/EfficientSAM via Unity Sentis with the pinch point as the prompt. Backup: depth threshold from Depth API. Backup of the backup: GrabCut.
 3. Inflate the mask (Capture/SilhouetteInflator.cs): distance-to-edge → height, front and back sheets, rim stitched.
-4. Project the photo as texture; paint RT on top (Paint/PaintSurface.cs).
+4. Dominant photo colour → clay colour; height RT for carving (Paint/PaintSurface.cs); ToonRelief shader.
 5. Scale from pinch depth and mask width; spawn at the real object, float to the palm.
 6. Interaction SDK grab; JellyPoke for touch; HoldAndOpenGesture for Focus Mode.
 
@@ -36,7 +36,7 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 
 ## Build order (two weeks)
 1. Hands + passthrough + one ready cup with JellyPoke (days 1–3)
-2. HoldAndOpen → FocusMode, ZenBrush with 2 patterns (days 4–6)
+2. HoldAndOpen → FocusMode, ZenBrush with 2 relief patterns + ToonRelief shader on device (days 4–6)
 3. Wake animation, traits from strokes, My Space scene with light pools (days 7–9)
 4. CreatureBrain, whispers, second creature (days 10–11)
 5. Capture pipeline, with the shelf fallback already in (days 12–13)
