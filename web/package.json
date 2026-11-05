@@ -1,0 +1,26 @@
+{
+  "name": "alive-things-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Alive Things: hands-only mixed reality, WebXR build on Meta Immersive Web SDK",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "@iwsdk/core": "1.0.1",
+    "three": "npm:super-three@0.181.0"
+  },
+  "devDependencies": {
+    "@iwsdk/vite-plugin-iwer": "0.2.2",
+    "vite": "7.3.7"
+  },
+  "overrides": {
+    "three": "npm:super-three@0.181.0"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

@@ -24,3 +24,7 @@ Thumbs.db
 .vscode/
 # local
 *.log
+
+# web
+web/node_modules/
+web/dist/
