@@ -18,6 +18,8 @@ References: the ZZAi figure video (blue → green → pink → peach gradients, 
 - Painted areas glow softly in My Space. Clay underneath stays soft-lit.
 - Live proofs: `docs/lookdev-symmetry.html` (first pass: strokes only, six patterns) and `docs/lookdev-gradient.html` (second pass, owner's notes applied: the whole body is gradient-mapped, strokes push up the same gradient; one composite guide = N around the axis × M mandala × mirror, so a front stroke also lands on the back; marks cut to two, a line and a dot, because six patterns were indistinguishable at object scale; no bands, no specular, flat Monument Valley quiet).
 - Owner's taste note (Nov 5): less is more, Monument Valley. Flat, pastel, clean silhouettes, soft gradients, nothing noisy.
+- **Decided Nov 5 (owner):** whole-body gradient is better than strokes-only. Guide default is 2 around × 6 mandala × mirror. Stroke width must vary naturally (slow/deep = thick, fast = thin, tapered ends). No pattern menu: every former option is a gesture or is gone.
+- **Gesture map (third pass, `docs/lookdev-gradient.html`):** fingertip drag = line (width from speed, press depth, taper in); tap = dot; hold still while touching = ink pools and blooms; press-and-hold 0.6 s before moving = set mandala centre (ripple); two fingertips twist = fold 4/6/8/12 (spokes flash); flat palm = water; turn the holding hand = look; open the holding hand = done. Base direction fixed (deep at the bottom). Bleed amount = dwell time. Palette: open question (ink dish on the holding palm vs auto from the object's colour).
 - Unity path: half-float intensity RT + wetness RT, a small diffusion blit each frame while wet, palette lookup in the shader.
 
 ## Option B: carved relief, 3渲2 (agent proposal, kept as an option)

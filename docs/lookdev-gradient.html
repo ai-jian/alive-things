@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;600;700&display=swap">
 <style>
-/* Layout: one 3D stage, pill controls under it. Quiet page; the object is the only loud thing. */
+/* Layout: one 3D stage, almost no controls. Everything is a gesture; the page only keeps palette and world for convenience. */
 :root{ --paper:#f6f2ea; --ink:#2e2a36; --soft:#8a8190; --line:#e2dbd0; --card:#fff; --accent:#3f6fc0;
   --display:'Patrick Hand',"Comic Sans MS",cursive; --body:'Nunito',system-ui,sans-serif; }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --paper:#1b1a20; --ink:#f1ebe2; --soft:#a79fab; --line:#36333e; --card:#26242d; --accent:#9ec5e8; color-scheme:dark } }
@@ -15,6 +15,7 @@ h1{ font-family:var(--display); font-weight:400; font-size:38px; line-height:1; 
 #stage{ position:relative; width:100%; aspect-ratio:16/10; max-width:100%; border-radius:12px; overflow:hidden; background:#1a1b3a; touch-action:none; box-shadow:0 6px 0 var(--line); }
 #stage canvas{ display:block; width:100%; height:100%; }
 #hint{ position:absolute; left:10px; bottom:8px; font-family:var(--display); font-size:15px; color:#f1ebe2; background:rgba(20,18,30,.6); padding:2px 8px; border-radius:6px; pointer-events:none; }
+#guide{ position:absolute; right:10px; top:8px; font-family:var(--display); font-size:15px; color:#f1ebe2; background:rgba(20,18,30,.6); padding:2px 8px; border-radius:6px; pointer-events:none; }
 #fail{ position:absolute; inset:0; display:none; place-items:center; text-align:center; padding:20px; color:#f1ebe2; background:#1a1b3a; }
 .bar{ display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-top:12px; }
 .grp{ display:flex; gap:4px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px; flex-wrap:wrap; }
@@ -22,47 +23,53 @@ h1{ font-family:var(--display); font-weight:400; font-size:38px; line-height:1; 
 button{ font:inherit; font-family:var(--display); font-size:17px; color:var(--ink); background:transparent; border:0; border-radius:999px; padding:4px 12px; cursor:pointer; }
 button:hover{ background:var(--line) } button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px }
 button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
-.notes{ margin-top:22px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; font-size:14px; }
+.notes{ margin-top:22px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; font-size:14px; }
 .notes h2{ font-family:var(--display); font-weight:400; font-size:22px; margin:0 0 4px }
 .notes p{ margin:0 } .notes ul{ margin:0; padding-left:18px }
+table{ border-collapse:collapse; width:100%; font-size:14px; }
+th,td{ text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; min-width:0; }
+th{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--soft); font-weight:600; }
+.gest{ margin-top:22px; overflow-x:auto; }
 </style>
 
 <div class="wrap">
-  <h1>Alive Things, whole-body gradient test</h1>
-  <p class="sub">The whole creature is one gradient. Your strokes push it up the same gradient. One guide: around × mandala × mirror. Two marks: a line and a dot.</p>
+  <h1>Alive Things, gradient + gestures</h1>
+  <p class="sub">Whole-body gradient. Guide is 2 × 6 × mirror by default. No pattern menu: how you move is the only control.</p>
   <div id="stage">
     <div id="fail">3D could not start in this browser. Try a desktop browser or the Quest browser.</div>
-    <div id="hint">drag on the cup to paint · tap for a dot · drag empty space to orbit</div>
+    <div id="guide">guide 2 × 6 × mirror</div>
+    <div id="hint">draw slowly for a thick line, fast for thin · hold still to set the centre · wheel or two-finger twist changes the fold</div>
   </div>
   <div class="bar">
-    <div class="grp"><span class="lbl">Around</span>
-      <button data-a="1" aria-pressed="false">1</button><button data-a="2" aria-pressed="true">2</button><button data-a="3" aria-pressed="false">3</button><button data-a="4" aria-pressed="false">4</button>
-    </div>
-    <div class="grp"><span class="lbl">Mandala</span>
-      <button data-m="1" aria-pressed="false">1</button><button data-m="4" aria-pressed="false">4</button><button data-m="6" aria-pressed="true">6</button><button data-m="8" aria-pressed="false">8</button>
-      <button id="tMirror" aria-pressed="true">mirror</button>
-    </div>
-    <div class="grp"><span class="lbl">Palette</span>
+    <div class="grp"><span class="lbl">Palette (in VR: dip from the holding palm, or auto from the object)</span>
       <button data-pal="dusk" aria-pressed="true">Dusk</button>
       <button data-pal="dawn" aria-pressed="false">Dawn</button>
       <button data-pal="zzai" aria-pressed="false">Blue · pink · peach</button>
       <button data-pal="moss" aria-pressed="false">Moss</button>
     </div>
-    <div class="grp"><span class="lbl">Base</span>
-      <button data-g="up" aria-pressed="true">Deep at the bottom</button>
-      <button data-g="down" aria-pressed="false">Deep at the top</button>
-      <button data-g="flat" aria-pressed="false">Flat</button>
-    </div>
-    <div class="grp"><span class="lbl">Bleed</span>
-      <button data-b="0.0" aria-pressed="false">Dry</button><button data-b="0.5" aria-pressed="true">Wet</button><button data-b="1.0" aria-pressed="false">Soaked</button>
-    </div>
     <div class="grp"><span class="lbl">World</span><button id="wRoom" aria-pressed="false">Room</button><button id="wSpace" aria-pressed="true">My Space</button></div>
-    <div class="grp"><button id="tCenter">Set centre</button><button id="tFace" aria-pressed="false">Face</button><button id="tReset">Clear</button></div>
+    <div class="grp"><button id="tFace" aria-pressed="false">Face</button><button id="tReset">Clear</button></div>
   </div>
+
+  <div class="gest">
+    <table>
+      <thead><tr><th>You do (in the headset)</th><th>Here (mouse / touch)</th><th>It means</th></tr></thead>
+      <tbody>
+        <tr><td>Index fingertip on the surface, move</td><td>Drag on the cup</td><td>A line. Slow = thick and strong, fast = thin and light. Start and end taper on their own. Press deeper = thicker (pen pressure here).</td></tr>
+        <tr><td>Tap</td><td>Click</td><td>A dot</td></tr>
+        <tr><td>Stop moving but keep touching</td><td>Hold the mouse still while drawing</td><td>Ink pools and bleeds out from that spot. The longer you wait, the wider it blooms.</td></tr>
+        <tr><td>Press and hold still before moving (0.6 s)</td><td>Press and hold 0.6 s</td><td>Sets the mandala centre. A ripple confirms. Nothing is drawn.</td></tr>
+        <tr><td>Two fingertips on the surface, twist</td><td>Two-finger twist, or mouse wheel over the stage</td><td>Changes the fold: 4 → 6 → 8 → 12 → 4. Spokes flash briefly.</td></tr>
+        <tr><td>Flat palm wipe</td><td>(not here)</td><td>Water: softens and spreads, never erases</td></tr>
+        <tr><td>Turn the holding hand</td><td>Drag empty space</td><td>Look at another side. The guide already put copies there.</td></tr>
+        <tr><td>Open the holding hand</td><td>(not here)</td><td>Done. It wakes.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <div class="notes">
-    <div><h2>What changed from the last test</h2><ul><li>Whole body is gradient-mapped, not just the strokes</li><li>One composite guide: N around the axis × M mandala × mirror. A stroke on the front also lands on the back.</li><li>Patterns cut to two: a line (drag) and a dot (tap). Width follows slowness.</li><li>No toon bands, no specular, no rim noise. Flat, soft, Monument Valley quiet.</li></ul></div>
-    <div><h2>How colour works</h2><p>A base value runs along the body (bottom to top, or flat). Your strokes add intensity on top. Both go through the same palette, so the marks are always "a warmer version of the body", never a foreign colour.</p></div>
-    <div><h2>Try</h2><ul><li>Dusk, around 2, mandala 6, mirror: one slow S-curve from the centre</li><li>Dawn + Flat: taps only</li><li>Orbit to the back and see the copies</li></ul></div>
+    <div><h2>Decided in this pass</h2><ul><li>Whole-body gradient, strokes push up the same palette</li><li>Guide default 2 around × 6 mandala × mirror; only the fold is adjustable, by twist</li><li>Two marks: line and dot. No pattern menu.</li><li>Options that used to be buttons are gestures or gone: base direction fixed (deep at the bottom), bleed = dwell time</li></ul></div>
+    <div><h2>Still open</h2><ul><li>Palette choice in VR: ink dish on the holding palm vs auto from the captured object's colour</li><li>Whether around-count ever needs changing (currently fixed at 2)</li></ul></div>
   </div>
 </div>
 
@@ -86,16 +93,22 @@ button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
   const heat = new Float32Array(W*H), wet = new Float32Array(W*H), tmp = new Float32Array(W*H), bytes = new Uint8Array(W*H);
   const heatTex = new THREE.DataTexture(bytes, W, H, THREE.RedFormat, THREE.UnsignedByteType);
   heatTex.wrapS = THREE.RepeatWrapping; heatTex.wrapT = THREE.ClampToEdgeWrapping; heatTex.minFilter = heatTex.magFilter = THREE.LinearFilter;
-  let dirty = true, wetBox = null, bleed = 0.5;
+  let dirty = true, wetBox = null; const bleed = 0.55;
   function upload(){ for (let i=0;i<heat.length;i++) bytes[i] = Math.min(255, heat[i]*255) | 0; heatTex.needsUpdate = true; dirty = false; }
   function growBox(x0,y0,x1,y1){ if (!wetBox) wetBox = {x0,y0,x1,y1}; else { wetBox.x0=Math.min(wetBox.x0,x0); wetBox.y0=Math.min(wetBox.y0,y0); wetBox.x1=Math.max(wetBox.x1,x1); wetBox.y1=Math.max(wetBox.y1,y1); } }
-  function addKernel(cx, cy, radius, fn){
+  function addKernel(cx, cy, radius, fn, wetMul){
+    wetMul = wetMul === undefined ? 1 : wetMul;
     const x0 = Math.floor(cx-radius), x1 = Math.ceil(cx+radius), y0 = Math.max(0,Math.floor(cy-radius)), y1 = Math.min(H-1,Math.ceil(cy+radius));
-    for (let y=y0; y<=y1; y++) for (let x=x0; x<=x1; x++){ const v = fn(x-cx, y-cy); if (v <= 0) continue; const i = y*W + (((x % W) + W) % W); heat[i] = Math.min(1, heat[i] + v); wet[i] = Math.min(1, wet[i] + v*2*bleed); }
+    for (let y=y0; y<=y1; y++) for (let x=x0; x<=x1; x++){ const v = fn(x-cx, y-cy); if (v <= 0) continue; const i = y*W + (((x % W) + W) % W); heat[i] = Math.min(1, heat[i] + v); wet[i] = Math.min(1, wet[i] + v*2*bleed*wetMul); }
     growBox(x0-2, y0-2, x1+2, y1+2); dirty = true;
   }
+  function addWet(cx, cy, radius, amount){ // dwell: water only, no ink
+    const x0 = Math.floor(cx-radius), x1 = Math.ceil(cx+radius), y0 = Math.max(0,Math.floor(cy-radius)), y1 = Math.min(H-1,Math.ceil(cy+radius));
+    for (let y=y0; y<=y1; y++) for (let x=x0; x<=x1; x++){ const d = Math.hypot(x-cx, y-cy); if (d > radius) continue; const i = y*W + (((x % W) + W) % W); wet[i] = Math.min(1, wet[i] + amount*(1-d/radius)); }
+    growBox(x0-2, y0-2, x1+2, y1+2);
+  }
   function diffuse(dt){
-    if (!wetBox || bleed <= 0) return; const {x0,y0,x1,y1} = wetBox; let any = false; const k = 0.22*bleed, decay = Math.pow(0.45, dt);
+    if (!wetBox) return; const {x0,y0,x1,y1} = wetBox; let any = false; const k = 0.22*bleed, decay = Math.pow(0.45, dt);
     for (let y=Math.max(1,y0); y<=Math.min(H-2,y1); y++) for (let x=x0; x<=x1; x++){ const xi = ((x % W) + W) % W, i = y*W + xi; const w = wet[i]; if (w < 0.01){ tmp[i] = heat[i]; continue; }
       const l = y*W + ((xi-1+W)%W), r = y*W + ((xi+1)%W), u = i - W, d = i + W; tmp[i] = heat[i] + (heat[l]+heat[r]+heat[u]+heat[d]-4*heat[i])*k*w;
       wet[l] = Math.max(wet[l], w*0.55); wet[r] = Math.max(wet[r], w*0.55); wet[u] = Math.max(wet[u], w*0.55); wet[d] = Math.max(wet[d], w*0.55); any = true; }
@@ -103,7 +116,6 @@ button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
     growBox(x0-1, y0-1, x1+1, y1+1); if (!any) wetBox = null; else dirty = true; if (wetBox && wetBox.x1-wetBox.x0 > W*1.5){ wetBox.x0 = 0; wetBox.x1 = W-1; }
   }
   const gauss = (d, r) => Math.exp(-(d*d)/(2*r*r*0.25));
-  // two marks only
   const marks = {
     line(cx,cy,dir,s,a){ addKernel(cx,cy,s*1.8, (dx,dy)=>{ const al = dx*dir.x+dy*dir.y, ac = -dx*dir.y+dy*dir.x; if (Math.abs(al) > s*1.5) return 0; return a*0.12*gauss(ac, s*0.8); }); },
     dot(cx,cy,dir,s,a){ addKernel(cx,cy,s*1.6, (dx,dy)=> a*0.22*gauss(Math.hypot(dx,dy), s*1.3)); },
@@ -111,27 +123,21 @@ button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
 
   // ---------- composite guide: around × mandala × mirror ----------
   const PX_X = W/(2*Math.PI*0.6), PX_Y = (0.76*H)/0.86, WALL_CY = 0.5*H;
-  let around = 2, mandala = 6, mirror = true, centre = { x: 0, y: WALL_CY }, armCentre = false;
+  const around = 2, mirror = true; let mandala = 6, centre = { x: 0, y: WALL_CY };
+  const folds = [4, 6, 8, 12];
+  function setFold(n){ mandala = n; document.getElementById('guide').textContent = `guide ${around} × ${mandala} × mirror`; spokes(); }
   function symmetric(fn, x, y, dir, s, a){
     let dx = x - centre.x; if (dx > W/2) dx -= W; if (dx < -W/2) dx += W;
     const px = dx/PX_X, py = (y - centre.y)/PX_Y, pdx = dir.x/PX_X, pdy = dir.y/PX_Y, pm = Math.hypot(pdx,pdy)||1;
     const local = [];
-    for (let k=0;k<mandala;k++){
-      const ang = k*2*Math.PI/mandala, c = Math.cos(ang), sn = Math.sin(ang);
+    for (let k=0;k<mandala;k++){ const ang = k*2*Math.PI/mandala, c = Math.cos(ang), sn = Math.sin(ang);
       local.push([px*c - py*sn, px*sn + py*c, (pdx*c - pdy*sn)/pm, (pdx*sn + pdy*c)/pm]);
-      if (mirror) local.push([-px*c - py*sn, -px*sn + py*c, (-pdx*c - pdy*sn)/pm, (-pdx*sn + pdy*c)/pm]);
-    }
-    for (let j=0;j<around;j++){
-      const shift = j*W/around;
-      for (const [lx, ly, ldx, ldy] of local){
-        const cx = centre.x + shift + lx*PX_X, cy = centre.y + ly*PX_Y; if (cy < 4 || cy > H-4) continue;
-        const dm = Math.hypot(ldx*PX_X, ldy*PX_Y)||1;
-        fn(((cx%W)+W)%W, cy, { x: ldx*PX_X/dm, y: ldy*PX_Y/dm }, s, a);
-      }
-    }
+      if (mirror) local.push([-px*c - py*sn, -px*sn + py*c, (-pdx*c - pdy*sn)/pm, (-pdx*sn + pdy*c)/pm]); }
+    for (let j=0;j<around;j++){ const shift = j*W/around;
+      for (const [lx, ly, ldx, ldy] of local){ const cx = centre.x + shift + lx*PX_X, cy = centre.y + ly*PX_Y; if (cy < 4 || cy > H-4) continue; const dm = Math.hypot(ldx*PX_X, ldy*PX_Y)||1; fn(((cx%W)+W)%W, cy, { x: ldx*PX_X/dm, y: ldy*PX_Y/dm }, s, a); } }
   }
 
-  // ---------- palettes (Monument Valley quiet) ----------
+  // ---------- palettes ----------
   const palettes = {
     dusk: [[0.16,0.16,0.42],[0.42,0.30,0.58],[0.76,0.46,0.62],[0.96,0.64,0.60],[1.0,0.84,0.72],[1.0,0.96,0.88]],
     dawn: [[0.10,0.36,0.46],[0.28,0.62,0.66],[0.62,0.84,0.78],[0.90,0.93,0.76],[1.0,0.96,0.80],[1.0,1.0,0.94]],
@@ -139,41 +145,40 @@ button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
     moss: [[0.14,0.22,0.20],[0.26,0.42,0.34],[0.50,0.64,0.44],[0.78,0.80,0.52],[0.96,0.92,0.70],[1.0,0.99,0.90]],
   };
   const palTex = new THREE.DataTexture(new Uint8Array(6*4), 6, 1, THREE.RGBAFormat); palTex.minFilter = palTex.magFilter = THREE.LinearFilter; palTex.wrapS = THREE.ClampToEdgeWrapping;
+  let darkMat;
   function setPalette(name){ const p = palettes[name]; for (let i=0;i<6;i++){ palTex.image.data[i*4]=p[i][0]*255; palTex.image.data[i*4+1]=p[i][1]*255; palTex.image.data[i*4+2]=p[i][2]*255; palTex.image.data[i*4+3]=255; } palTex.needsUpdate = true;
-    darkMat.color.setRGB(p[0][0], p[0][1], p[0][2]); document.querySelectorAll('[data-pal]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.pal===name))); }
+    if (darkMat) darkMat.color.setRGB(p[0][0], p[0][1], p[0][2]); document.querySelectorAll('[data-pal]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.pal===name))); }
 
-  const uni = { uHeat: { value: heatTex }, uPal: { value: palTex }, uBaseDir: { value: 1 }, uBaseLo: { value: 0.10 }, uBaseHi: { value: 0.55 }, uPaint: { value: 1 },
+  const uni = { uHeat: { value: heatTex }, uPal: { value: palTex }, uBaseLo: { value: 0.10 }, uBaseHi: { value: 0.55 }, uPaint: { value: 1 },
     uLightDir: { value: new THREE.Vector3(0.5, 0.8, 0.6).normalize() }, uShade: { value: 0.16 }, uGlow: { value: 0.0 }, uMinY: { value: 0.22 }, uMaxY: { value: 1.26 },
     uPoke: { value: new THREE.Vector3() }, uAmt: { value: 0 }, uWob: { value: 0 }, uTime: { value: 0 } };
   const vert = `
     uniform vec3 uPoke; uniform float uAmt; uniform float uWob; uniform float uTime;
-    varying vec2 vUv; varying vec3 vN; varying float vY; varying vec3 vWorld;
+    varying vec2 vUv; varying vec3 vN; varying vec3 vWorld;
     void main(){ vUv = uv; vec3 p = position;
       float dj = distance(p, uPoke); float fj = smoothstep(0.55, 0.0, dj); p -= normalize(p*vec3(1.0,0.0,1.0)+vec3(0.0001)) * fj * uAmt * 0.34;
       float wj = sin(uTime*9.0 + p.y*5.0) * uWob; p.x *= 1.0+wj; p.z *= 1.0+wj; p.y *= 1.0-wj*0.8;
-      vY = position.y; vN = normalize(normalMatrix * normal); vec4 wp = modelMatrix * vec4(p,1.0); vWorld = wp.xyz; gl_Position = projectionMatrix * viewMatrix * wp; }`;
+      vN = normalize(normalMatrix * normal); vec4 wp = modelMatrix * vec4(p,1.0); vWorld = wp.xyz; gl_Position = projectionMatrix * viewMatrix * wp; }`;
   const frag = `
-    uniform sampler2D uHeat; uniform sampler2D uPal; uniform float uBaseDir, uBaseLo, uBaseHi, uPaint, uShade, uGlow, uMinY, uMaxY; uniform vec3 uLightDir;
-    varying vec2 vUv; varying vec3 vN; varying float vY; varying vec3 vWorld;
+    uniform sampler2D uHeat; uniform sampler2D uPal; uniform float uBaseLo, uBaseHi, uPaint, uShade, uGlow, uMinY, uMaxY; uniform vec3 uLightDir;
+    varying vec2 vUv; varying vec3 vN; varying vec3 vWorld;
     vec3 pal(float t){ return texture2D(uPal, vec2(clamp(t, 0.02, 0.98), 0.5)).rgb; }
     void main(){
       float yy = clamp((vWorld.y - uMinY) / (uMaxY - uMinY), 0.0, 1.0);
-      float base = uBaseDir > 0.5 ? mix(uBaseLo, uBaseHi, yy) : (uBaseDir < -0.5 ? mix(uBaseHi, uBaseLo, yy) : (uBaseLo + uBaseHi) * 0.5);
-      // flat two-tone shading: the shadow side slides DOWN the palette instead of going grey
+      float base = mix(uBaseLo, uBaseHi, yy);
       vec3 N = normalize(vN); vec3 L = normalize((viewMatrix * vec4(uLightDir,0.0)).xyz);
       float lit = smoothstep(-0.25, 0.55, dot(N, L));
-      base -= uShade * (1.0 - lit);
+      base -= uShade * (1.0 - lit);                           // shadow side slides down the palette
       float h = uPaint > 0.5 ? texture2D(uHeat, vUv).r : 0.0;
-      float t = base + h * 0.32;                             // strokes push up the same gradient, never to white
+      float t = base + h * 0.32;
       vec3 col = pal(t);
-      col += pal(min(t + 0.12, 0.95)) * smoothstep(0.0, 0.8, h) * uGlow * 0.25;  // a little lift in the dark
+      col += pal(min(t + 0.12, 0.95)) * smoothstep(0.0, 0.8, h) * uGlow * 0.25;
       gl_FragColor = vec4(col, 1.0);
       #include <colorspace_fragment>
     }`;
   const bodyMat = new THREE.ShaderMaterial({ uniforms: uni, vertexShader: vert, fragmentShader: frag });
   if (!THREE.ShaderChunk.colorspace_fragment) bodyMat.fragmentShader = frag.replace('#include <colorspace_fragment>', '#include <encodings_fragment>');
-  const handleUni = Object.assign({}, uni, { uPaint: { value: 0 } }); // shares everything but has no paint lookup
-  const handleMat = new THREE.ShaderMaterial({ uniforms: handleUni, vertexShader: vert, fragmentShader: bodyMat.fragmentShader });
+  const handleMat = new THREE.ShaderMaterial({ uniforms: Object.assign({}, uni, { uPaint: { value: 0 } }), vertexShader: vert, fragmentShader: bodyMat.fragmentShader });
 
   // ---------- cup ----------
   const prof = [[0,0],[0.42,0],[0.52,0.04],[0.56,0.12],[0.60,0.6],[0.64,0.98],[0.66,1.04],[0.58,1.04],[0.56,0.98],[0.52,0.20],[0.44,0.14],[0,0.14]].map(p=>new THREE.Vector2(p[0],p[1]));
@@ -184,14 +189,34 @@ button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
   const body = new THREE.Mesh(geo, bodyMat);
   const handle = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.075, 18, 36, Math.PI*1.25), handleMat); handle.position.set(0.56, 0.56, 0); handle.rotation.set(0, 0, -Math.PI*0.62);
   const creature = new THREE.Group(); creature.add(body, handle); creature.position.y = 0.22; scene.add(creature);
-  const darkMat = new THREE.MeshBasicMaterial({ color: 0x2a2a6b });
+  darkMat = new THREE.MeshBasicMaterial({ color: 0x2a2a6b });
   const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), darkMat); eyeL.position.set(-0.17, 0.62, 0.575); const eyeR = eyeL.clone(); eyeR.position.x = 0.17;
   const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.016, 8, 20, Math.PI), darkMat); mouth.position.set(0, 0.48, 0.60); mouth.rotation.z = Math.PI;
   const face = new THREE.Group(); face.add(eyeL, eyeR, mouth); face.visible = false; creature.add(face);
   const legGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.22, 10); const footGeo = new THREE.SphereGeometry(0.075, 14, 10); footGeo.scale(1.3, 0.5, 1);
   const legs = []; [-0.22, 0.22].forEach(x => { const g = new THREE.Group(); const l = new THREE.Mesh(legGeo, darkMat); l.position.y = -0.11; const f = new THREE.Mesh(footGeo, darkMat); f.position.y = -0.22; g.add(l,f); g.position.set(x, 0, 0.1); creature.add(g); legs.push(g); });
 
-  // world: flat ground disc in a palette-adjacent colour, pool, sparks
+  // ripple (centre set) and spokes (fold change): transient rings on the surface
+  const fxMat = new THREE.MeshBasicMaterial({ color: 0xfff1dc, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false });
+  const ripple = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.075, 48), fxMat); ripple.visible = false; scene.add(ripple);
+  let rippleT = 0;
+  function showRipple(point, normal){ ripple.position.copy(point).addScaledVector(normal, 0.005); ripple.lookAt(point.clone().add(normal)); ripple.visible = true; rippleT = 1; }
+  const spokeMat = new THREE.LineBasicMaterial({ color: 0xfff1dc, transparent: true, opacity: 0 });
+  let spokeLines = null, spokeT = 0;
+  function spokes(){
+    if (spokeLines){ scene.remove(spokeLines); spokeLines.geometry.dispose(); }
+    // draw the fold as short radial lines around the centre, in texture space mapped to the cup surface
+    const pts = []; const u0 = centre.x / W, v0 = 1 - centre.y / H;
+    for (let k=0;k<mandala;k++){ const ang = k*2*Math.PI/mandala; for (let r=0.25; r<=1; r+=0.25){ const du = Math.cos(ang)*0.06*r, dv = Math.sin(ang)*0.10*r; pts.push(surfacePoint(u0+du, v0+dv)); } }
+    const segs = []; for (let i=0;i<pts.length;i+=4){ for (let j=0;j<3;j++){ segs.push(pts[i+j], pts[i+j+1]); } }
+    const g = new THREE.BufferGeometry().setFromPoints(segs); spokeLines = new THREE.LineSegments(g, spokeMat); scene.add(spokeLines); spokeT = 1;
+  }
+  function surfacePoint(u, v){ // wall band: v 0.12..0.88 → y 0.12..0.98, radius ~ lerp(0.56,0.64)
+    const yy = 0.12 + (Math.min(0.88, Math.max(0.12, v)) - 0.12)/0.76*0.86, r = 0.565 + (yy-0.12)/0.86*0.075 + 0.01;
+    const ang = u*Math.PI*2; return new THREE.Vector3(Math.sin(ang)*r, yy + 0.22, Math.cos(ang)*r);
+  }
+
+  // world
   const groundMat = new THREE.MeshBasicMaterial({ color: 0x23245a }); const ground = new THREE.Mesh(new THREE.CircleGeometry(12, 64), groundMat); ground.rotation.x = -Math.PI/2; scene.add(ground);
   const poolCanvas = document.createElement('canvas'); poolCanvas.width = poolCanvas.height = 256; { const c = poolCanvas.getContext('2d'); const g = c.createRadialGradient(128,128,10,128,128,128); g.addColorStop(0,'rgba(255,230,200,0.75)'); g.addColorStop(0.5,'rgba(255,220,190,0.25)'); g.addColorStop(1,'rgba(255,220,190,0)'); c.fillStyle = g; c.fillRect(0,0,256,256); }
   const pool = new THREE.Mesh(new THREE.PlaneGeometry(4.4,4.4), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(poolCanvas), transparent: true, depthWrite: false })); pool.rotation.x = -Math.PI/2; pool.position.y = 0.005; scene.add(pool);
@@ -202,48 +227,73 @@ button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
     document.getElementById('wRoom').setAttribute('aria-pressed', String(!space)); document.getElementById('wSpace').setAttribute('aria-pressed', String(space)); }
   setPalette('dusk'); setWorld(true);
 
-  // starter mark so the first frame shows the idea: one slow S from the centre
-  (function seed(){ for (let i=0;i<14;i++){ const t = i/13; const ang = -0.4 + t*1.2; symmetric(marks.line, centre.x + 6 + t*78, centre.y - 2 - t*26 + 14*Math.sin(t*4), {x:Math.cos(ang), y:-Math.sin(ang)*0.4}, 10 + 6*t, 0.5 + 0.5*t); } upload(); })();
+  // starter mark with a natural taper: thin → thick → thin
+  (function seed(){ for (let i=0;i<16;i++){ const t = i/15; const taper = Math.sin(t*Math.PI); const ang = -0.4 + t*1.2; symmetric(marks.line, centre.x + 6 + t*80, centre.y - 2 - t*26 + 14*Math.sin(t*4), {x:Math.cos(ang), y:-Math.sin(ang)*0.4}, 5 + 12*taper, 0.4 + 0.6*taper); } upload(); })();
 
-  // ---------- interaction ----------
-  let dragging = false, painting = false, lastX=0, lastY=0; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const pokeState = { amt:0, vel:0 }; let lastStamp = null, lastT = 0, downT = 0, downUV = null, moved = 0;
+  // ---------- gestures ----------
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const pokeState = { amt:0, vel:0 };
+  const pointers = new Map();           // active pointers for twist
+  let dragging = false, painting = false, lastX=0, lastY=0;
+  let lastStamp = null, lastT = 0, downT = 0, downUV = null, moved = 0, strokeLen = 0, smoothSpeed = 0, lastMoveT = 0, pressTimer = null, pressDone = false, dwellAcc = 0, twistAngle0 = null, twistAcc = 0;
   function hit(ev){ const r = renderer.domElement.getBoundingClientRect(); ndc.set(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1); ray.setFromCamera(ndc, camera); const h = ray.intersectObject(body, false); return h.length ? h[0] : null; }
-  function paintAt(h){
+  function paintAt(h, ev){
     if (!h.uv) return; const now = performance.now(); const x = h.uv.x*W, y = (1-h.uv.y)*H;
-    if (armCentre){ centre = { x, y }; armCentre = false; document.getElementById('hint').textContent = 'centre set'; }
-    if (!lastStamp){ lastStamp = { x, y }; lastT = now; return; }
-    let dx = x - lastStamp.x, dy = y - lastStamp.y; if (Math.abs(dx) > W/2) dx -= Math.sign(dx)*W; const len = Math.hypot(dx,dy); const spacing = 7; if (len < spacing) return;
-    const speed = len / Math.max(1, now - lastT), slow = 1 - Math.min(1, speed / 0.8);
-    const s = 8 + 10*slow, a = 0.35 + 0.65*slow, dir = { x: dx/len, y: dy/len };
+    if (!lastStamp){ lastStamp = { x, y }; lastT = now; lastMoveT = now; smoothSpeed = 0; strokeLen = 0; return; }
+    let dx = x - lastStamp.x, dy = y - lastStamp.y; if (Math.abs(dx) > W/2) dx -= Math.sign(dx)*W; const len = Math.hypot(dx,dy); const spacing = 6; if (len < spacing) return;
+    if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; }  // moved: it's a stroke, not a centre press
+    const speed = len / Math.max(1, now - lastT); smoothSpeed = smoothSpeed*0.6 + speed*0.4; lastMoveT = now;
+    const slow = 1 - Math.min(1, smoothSpeed / 0.9);
+    const taperIn = Math.min(1, strokeLen / 28);                               // thin start
+    const pressure = (ev && ev.pointerType === 'pen' && ev.pressure > 0) ? 0.5 + ev.pressure : 1;
+    const width = (4 + 12*slow) * (0.35 + 0.65*taperIn) * pressure;           // natural: slow = thick, fast = thin
+    const a = (0.3 + 0.7*slow) * (0.4 + 0.6*taperIn);
+    const dir = { x: dx/len, y: dy/len };
     const sx = lastStamp.x + dir.x*spacing, sy = lastStamp.y + dir.y*spacing;
-    symmetric(marks.line, ((sx%W)+W)%W, sy, dir, s, a); lastStamp = { x: sx, y: sy }; lastT = now; moved += spacing; tick();
+    symmetric(marks.line, ((sx%W)+W)%W, sy, dir, width, a); lastStamp = { x: sx, y: sy }; lastT = now; moved += spacing; strokeLen += spacing; tick();
   }
   let actx = null; function tick(){ try { actx = actx || new (window.AudioContext||window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.type='sine'; o.frequency.value = 1400 + Math.random()*300; g.gain.setValueAtTime(0.0001, actx.currentTime); g.gain.exponentialRampToValueAtTime(0.04, actx.currentTime+0.004); g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+0.06); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime+0.07); } catch(e){} }
-  stage.addEventListener('pointerdown', ev => { stage.setPointerCapture(ev.pointerId); const h = hit(ev); lastX=ev.clientX; lastY=ev.clientY; downT = performance.now(); moved = 0;
-    if (h){ painting = true; lastStamp = null; downUV = h.uv ? { x: h.uv.x*W, y: (1-h.uv.y)*H } : null; paintAt(h); } else dragging = true; });
-  stage.addEventListener('pointermove', ev => { const dx = ev.clientX-lastX, dy = ev.clientY-lastY; lastX=ev.clientX; lastY=ev.clientY;
-    if (dragging){ orbit.theta -= dx*0.008; orbit.phi = Math.min(1.5, Math.max(0.35, orbit.phi - dy*0.006)); } else if (painting){ const h = hit(ev); if (h) paintAt(h); } });
-  const up = () => { if (painting && downUV && performance.now()-downT < 250 && moved < 10){ symmetric(marks.dot, downUV.x, downUV.y, {x:1,y:0}, 10, 1.0); tick(); uni.uPoke.value.copy(body.worldToLocal(new THREE.Vector3())); pokeState.vel = 2.0; uni.uWob.value = 0.03; }
-    dragging = painting = false; lastStamp = null; };
+  function pointerAngle(){ const ps = [...pointers.values()]; if (ps.length < 2) return null; return Math.atan2(ps[1].y - ps[0].y, ps[1].x - ps[0].x); }
+  stage.addEventListener('pointerdown', ev => {
+    stage.setPointerCapture(ev.pointerId); pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pointers.size === 2){ twistAngle0 = pointerAngle(); twistAcc = 0; painting = false; dragging = false; lastStamp = null; if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; } return; }
+    const h = hit(ev); lastX=ev.clientX; lastY=ev.clientY; downT = performance.now(); moved = 0; pressDone = false; dwellAcc = 0;
+    if (h){ painting = true; lastStamp = null; downUV = h.uv ? { x: h.uv.x*W, y: (1-h.uv.y)*H } : null; paintAt(h, ev);
+      const hp = h.point.clone(), hn = h.face.normal.clone().transformDirection(body.matrixWorld);
+      pressTimer = setTimeout(() => { // held still: set the centre
+        if (!painting || moved > 0) return; pressDone = true; if (downUV) centre = { x: downUV.x, y: downUV.y }; showRipple(hp, hn); document.getElementById('hint').textContent = 'centre set'; }, 600);
+    } else dragging = true;
+  });
+  stage.addEventListener('pointermove', ev => {
+    if (pointers.has(ev.pointerId)) pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pointers.size === 2 && twistAngle0 !== null){ const a = pointerAngle(); let d = a - twistAngle0; while (d > Math.PI) d -= 2*Math.PI; while (d < -Math.PI) d += 2*Math.PI; twistAcc += d; twistAngle0 = a;
+      const step = Math.PI/5; while (twistAcc > step){ twistAcc -= step; stepFold(1); } while (twistAcc < -step){ twistAcc += step; stepFold(-1); } return; }
+    const dx = ev.clientX-lastX, dy = ev.clientY-lastY; lastX=ev.clientX; lastY=ev.clientY;
+    if (dragging){ orbit.theta -= dx*0.008; orbit.phi = Math.min(1.5, Math.max(0.35, orbit.phi - dy*0.006)); }
+    else if (painting && !pressDone){ const h = hit(ev); if (h) paintAt(h, ev); }
+  });
+  const up = (ev) => { pointers.delete(ev.pointerId); if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
+    if (painting && !pressDone && downUV && performance.now()-downT < 250 && moved < 8){ symmetric(marks.dot, downUV.x, downUV.y, {x:1,y:0}, 9, 1.0); tick(); uni.uPoke.value.copy(body.worldToLocal(new THREE.Vector3())); pokeState.vel = 2.0; uni.uWob.value = 0.03; }
+    dragging = painting = false; lastStamp = null; twistAngle0 = null; };
   stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
-  const pressGroup = (sel, attr, val) => document.querySelectorAll(sel).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[attr]===val)));
-  document.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { around = +b.dataset.a; pressGroup('[data-a]','a',b.dataset.a); });
-  document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { mandala = +b.dataset.m; pressGroup('[data-m]','m',b.dataset.m); });
+  function stepFold(dirn){ const i = folds.indexOf(mandala); setFold(folds[(i + dirn + folds.length) % folds.length]); }
+  stage.addEventListener('wheel', ev => { ev.preventDefault(); stepFold(ev.deltaY > 0 ? 1 : -1); }, { passive: false });
+
   document.querySelectorAll('[data-pal]').forEach(b => b.onclick = () => setPalette(b.dataset.pal));
-  document.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { uni.uBaseDir.value = b.dataset.g==='up' ? 1 : b.dataset.g==='down' ? -1 : 0; pressGroup('[data-g]','g',b.dataset.g); });
-  document.querySelectorAll('[data-b]').forEach(b => b.onclick = () => { bleed = +b.dataset.b; pressGroup('[data-b]','b',b.dataset.b); });
-  document.getElementById('tMirror').onclick = (e) => { mirror = !mirror; e.currentTarget.setAttribute('aria-pressed', String(mirror)); };
-  document.getElementById('tCenter').onclick = () => { armCentre = true; document.getElementById('hint').textContent = 'touch the cup where the centre should be'; };
   document.getElementById('tFace').onclick = (e) => { face.visible = !face.visible; e.currentTarget.setAttribute('aria-pressed', String(face.visible)); };
   document.getElementById('tReset').onclick = () => { heat.fill(0); wet.fill(0); wetBox = null; upload(); };
   document.getElementById('wRoom').onclick = () => setWorld(false); document.getElementById('wSpace').onclick = () => setWorld(true);
   function resize(){ const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/h; camera.updateProjectionMatrix(); } new ResizeObserver(resize).observe(stage); resize();
+
   const clock = new THREE.Clock(); let blinkT = 2.5, acc = 0;
   function frame(){ const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    // dwell: still finger keeps feeding water so the ink blooms outward
+    if (painting && !pressDone && lastStamp && performance.now() - lastMoveT > 150){ dwellAcc += dt; const r = 10 + Math.min(30, dwellAcc*25); addWet(lastStamp.x, lastStamp.y, r, dt*1.5); dirty = true; }
     acc += dt; if (acc > 1/30){ diffuse(acc); acc = 0; } if (dirty) upload();
     pokeState.vel += (-70*pokeState.amt - 6*pokeState.vel)*dt; pokeState.amt += pokeState.vel*dt; uni.uAmt.value = Math.max(0, pokeState.amt); uni.uWob.value *= Math.pow(0.08, dt); uni.uTime.value = t;
-    if (!reduce){ creature.position.y = 0.22 + Math.sin(t*2.2)*0.02; legs[0].rotation.x = Math.sin(t*2.2)*0.25; legs[1].rotation.x = -Math.sin(t*2.2)*0.25; if (!dragging && !painting) orbit.theta += dt*0.03; sparks.rotation.y = t*0.02; }
+    if (rippleT > 0){ rippleT -= dt*1.6; const k = 1 - Math.max(0, rippleT); ripple.scale.setScalar(1 + k*4); fxMat.opacity = Math.max(0, rippleT)*0.9; if (rippleT <= 0) ripple.visible = false; }
+    if (spokeT > 0){ spokeT -= dt*0.8; spokeMat.opacity = Math.max(0, spokeT)*0.8; }
+    if (!reduce){ creature.position.y = 0.22 + Math.sin(t*2.2)*0.02; legs[0].rotation.x = Math.sin(t*2.2)*0.25; legs[1].rotation.x = -Math.sin(t*2.2)*0.25; if (!dragging && !painting && pointers.size === 0) orbit.theta += dt*0.03; sparks.rotation.y = t*0.02; }
     blinkT -= dt; const s = blinkT < 0.12 ? 0.1 : 1; eyeL.scale.y = eyeR.scale.y = s; if (blinkT < 0) blinkT = 2 + Math.random()*3;
     placeCamera(); renderer.render(scene, camera); requestAnimationFrame(frame); }
   frame();

@@ -10,7 +10,7 @@ One line: *Pick up a cup. Be quiet for ten minutes. It comes alive.*
 4. `docs/design-notes.md` — decision log with reasons, capture pipeline, two-week build order.
 
 ## Repo map
-- `docs/lookdev-gradient.html` — Option A, current pass: whole-body gradient, composite guide (around × mandala × mirror), two marks. Open in a browser; loads three.js 0.152.2 from cdnjs.
+- `docs/lookdev-gradient.html` — Option A, current pass: whole-body gradient, guide 2 × 6 × mirror, natural stroke width, all options as gestures (table on the page). Open in a browser; loads three.js 0.152.2 from cdnjs.
 - `docs/lookdev-symmetry.html` — Option A, first pass: strokes only, six patterns (owner found them indistinguishable at this scale).
 - `docs/lookdev-relief.html` — Option B proof: carve relief, clays, glaze, moving toon light.
 - `docs/lookdev.html` — first colour-paint test. Kept for the lighting and jelly reference only.
@@ -30,7 +30,7 @@ No scene file is committed yet. First scene to make: a passthrough scene with ha
 ## Conventions
 - Hands only. No controllers, no menus, no 2D UI except the trait tag and whisper bubbles.
 - No outlines anywhere. Flat cut-out world. Creature surface look is the open decision above.
-- The brush always has the composite symmetry guide on (around × mandala × mirror). Keep marks few; the object is small. Owner's taste: Monument Valley, less is more. Personality is derived from how the user drew, never random (`CreatureTraits.FromStrokes`).
+- The brush always has the composite symmetry guide on, default 2 around × 6 mandala × mirror. Two marks only (line, dot). No pattern menu, no option buttons: every control is a gesture (see the table in `docs/lookdev-gradient.html` and art-direction.md). Owner's taste: Monument Valley, less is more. Personality is derived from how the user drew, never random (`CreatureTraits.FromStrokes`).
 - Sound is garnish: hum, ticks, chirps. No melodies.
 - Scripts: namespace `AliveThings.<Area>`, one class per file, short XML summary on top saying what the thing is for.
 - Keep the shelf fallback working at all times. Capture is an entry, not a dependency.
@@ -43,6 +43,6 @@ No scene file is committed yet. First scene to make: a passthrough scene with ha
 
 ## State as of 2026-11-05
 - Done: PRD, storyboard v4.1, three look tests, Unity skeleton with 13 starter scripts (not yet compiled in Unity; expect small fixes). `PaintSurface`/`ZenBrush` currently stamp a signed height field; for Option A the same RT holds intensity and the shader does a palette lookup instead of relief. Symmetry is not yet in `ZenBrush`; add it as a wrapper around `PlaceUnit` (see `symmetric()` in `docs/lookdev-symmetry.html`).
-- Open: art direction A vs B. Owner decides.
+- Open: art direction A vs B formally, but owner has confirmed whole-body gradient (A) reads best so far. Palette picking gesture in VR still open.
 - Next: open the project locally, install Meta SDK, make the first scene, get `JellyPoke` and `ZenBrush` with symmetry working on device with a ready cup.
 - Not started: capture pipeline (Sentis model, mask → `SilhouetteInflator`), My Space scene art, sounds.
