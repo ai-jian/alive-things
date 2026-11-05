@@ -11,7 +11,7 @@ export function saveAll(list) { try { localStorage.setItem(KEY, JSON.stringify(l
 /** serialize a creature-bearing cup */
 export function serialize(cup, extra = {}) {
   const { W, H } = cup.paint;
-  const rec = { id: cup.id || (cup.id = 'c' + Date.now().toString(36)), kind: cup.kind || 'cup', dominant: cup.dominant ? cup.dominant.getHex() : 0xeee0c6, traits: cup.traits, paint: { w: W >> 1, h: H >> 1, data: b64.enc(downsample(cup.paint.heat, W, H)) }, bornAt: cup.bornAt || Date.now(), ...extra };
+  const rec = { id: cup.id || (cup.id = 'c' + Date.now().toString(36)), kind: cup.kind || 'cup', dominant: cup.dominant ? cup.dominant.getHex() : 0xeee0c6, paletteName: cup.paletteName || null, traits: cup.traits, paint: { w: W >> 1, h: H >> 1, data: b64.enc(downsample(cup.paint.heat, W, H)) }, bornAt: cup.bornAt || Date.now(), ...extra };
   if (cup.kind === 'thing' && cup.shape) rec.shape = { w: cup.shape.w, h: cup.shape.h, width: cup.shape.width, height: cup.shape.height, mask: b64.enc(cup.shape.mask) };
   return rec;
 }

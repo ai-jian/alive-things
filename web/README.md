@@ -21,11 +21,12 @@ One-time: repository Settings → Pages → Source: **GitHub Actions**.
 - **Room.** `immersive-ar` with hand tracking, plane detection, anchors. A cup waits on the detected table (or in front of you after 4 s). It glows when a hand comes near. Pinch to grab.
 - **Capture.** Pinch in the air, hold, trace around any real object, release: the loop is inflated into a soft thing at real size and place. On a headset with camera access the colour inside the loop becomes its palette (IWSDK camera feature; OculusBrowser only). Fallback: a soft default colour.
 - **Brush.** Fingertip on the surface: line (slow/deep = thick, tapered), tap = dot, hold still = bloom, press-and-hold 0.6 s = move the mandala centre, two fingertips twist = fold 4/6/8/12. Guide 2 × 6 × mirror (traced things: 1 × 6 × mirror, front and back share the pattern). Whole-body gradient from the object's own colour.
-- **Focus.** Hold it, pinch beside it with the other hand and pull: warm dark fog, hum, halo. Open the holding hand: it wakes, with a face, feet and a two-word personality grown from how you drew.
+- **Studio.** Pinch the object: it grows in your hand. Let go: it floats up in front of you as a big canvas (about 30 cm) while the room fades to warm dark fog and a hum comes up. It slowly turns to show its back; painting pauses the turn. Pinch it and lower it below chest height: it shrinks back to real size, lands on the table and wakes, with a face, arms, feet and a two-word personality grown from how you drew.
 - **My Space.** A doorway disc appears beside the awake creature; set it down there. Tabletop garden: painted dome, hills, fireflies, a light pool per creature, needs-based free will (wander, approach, whisper, nap, look at you), wordless whisper cards in its palette, chirps, a hanging plant that speaks one line at milestones. Touch the home disc to go back; a fresh cup waits on the table.
 - **Come back.** Creatures persist in localStorage (paint at half resolution, traced shapes as masks).
 - **Hints.** One soft card above the object that advances on what you actually did, then fades.
-- **Emulator keys (desktop):** `t` demo trace, `f` focus, `w` wake, `g` garden.
+- **Landing.** Outside XR the page shows the live garden with your creatures (or a painted demo cup) under a drifting camera; the words sit on top.
+- **Emulator keys (desktop):** `t` demo trace, `f` studio in/out, `w` wake, `g` garden.
 
 ## Files
 - `src/main.js` world, cup entity, systems

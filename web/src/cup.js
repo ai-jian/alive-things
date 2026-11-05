@@ -2,7 +2,7 @@
 // surface model (radius as a function of height) so the brush never needs raycasts.
 import { Group, Mesh, LatheGeometry, TorusGeometry, Vector2, Vector3, ShaderMaterial, Color } from 'three';
 import { PaintLayer } from './paint.js';
-import { paletteFromColor } from './palette.js';
+import { paletteFromColor, namedPalette } from './palette.js';
 
 // profile in "cup units" (height 1.04). Wall is points 3..5.
 const PROFILE = [[0, 0], [0.42, 0], [0.52, 0.04], [0.56, 0.12], [0.60, 0.6], [0.64, 0.98], [0.66, 1.04], [0.58, 1.04], [0.56, 0.98], [0.52, 0.20], [0.44, 0.14], [0, 0.14]];
@@ -49,7 +49,7 @@ const frag = /* glsl */`
 
 export function gradientShader() { return { vert, frag }; }
 
-export function makeCup({ dominant = new Color(0.93, 0.88, 0.78), heightMetres = 0.09 } = {}) {
+export function makeCup({ palette = 'dusk', dominant = null, heightMetres = 0.09 } = {}) {
   const scale = heightMetres / 1.04;
   const circumference = 2 * Math.PI * ((WALL_R0 + WALL_R1) / 2) * scale;
   const wallHeight = (WALL_Y1 - WALL_Y0) * scale / (V1 - V0);     // metres per full V unit
@@ -68,7 +68,7 @@ export function makeCup({ dominant = new Color(0.93, 0.88, 0.78), heightMetres =
 
   const uniforms = {
     uHeat: { value: paint.texture }, uPaint: { value: 1 }, uBaseLo: { value: 0.10 }, uBaseHi: { value: 0.55 }, uShade: { value: 0.16 }, uGlow: { value: 0 }, uUnder: { value: 0 },
-    uLightDir: { value: new Vector3(0.5, 0.8, 0.6).normalize() }, uPal: { value: paletteFromColor(dominant) },
+    uLightDir: { value: new Vector3(0.5, 0.8, 0.6).normalize() }, uPal: { value: dominant ? paletteFromColor(dominant) : namedPalette(palette) },
     uPoke: { value: new Vector3() }, uAmt: { value: 0 }, uWob: { value: 0 }, uTime: { value: 0 },
   };
   const bodyMat = new ShaderMaterial({ uniforms, vertexShader: vert, fragmentShader: frag });
@@ -80,8 +80,8 @@ export function makeCup({ dominant = new Color(0.93, 0.88, 0.78), heightMetres =
 
   const poke = { amt: 0, vel: 0 };
   const cup = {
-    kind: 'cup', group, body, handle, paint, uniforms, scale, dominant,
-    setDominant(c) { cup.dominant = c; uniforms.uPal.value = paletteFromColor(c); },
+    kind: 'cup', group, body, handle, paint, uniforms, scale, dominant, paletteName: dominant ? null : palette, heightMetres,
+    setDominant(c) { cup.dominant = c; cup.paletteName = null; uniforms.uPal.value = paletteFromColor(c); },
     setGlow(g) { uniforms.uGlow.value = g; },
     /** Analytic surface model in cup units: returns {u, v, depth, onWall} for a point in the cup's local space. */
     surface(localPt) {

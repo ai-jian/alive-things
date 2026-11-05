@@ -8,6 +8,16 @@ import { makeThing } from './thing.js';
 import { dominantColor } from './palette.js';
 
 const HOLD = 0.35, MIN_POINTS = 12, MIN_LENGTH = 0.12, MAX_POINTS = 600;
+
+/** resample a closed loop evenly, then round it (Chaikin ×2) so finger jitter becomes a soft silhouette */
+function smoothLoop(poly, N = 72) {
+  const n = poly.length; const seg = []; let total = 0;
+  for (let i = 0; i < n; i++) { const a = poly[i], b = poly[(i + 1) % n]; const d = Math.hypot(b[0] - a[0], b[1] - a[1]); seg.push(d); total += d; }
+  let out = []; let acc = 0, i = 0, next = 0; const step = total / N;
+  while (out.length < N) { while (acc + seg[i] < next && out.length < N) { acc += seg[i]; i = (i + 1) % n; } const a = poly[i], b = poly[(i + 1) % n]; const t = seg[i] > 0 ? (next - acc) / seg[i] : 0; out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); next += step; }
+  for (let k = 0; k < 2; k++) { const nx = []; for (let j = 0; j < out.length; j++) { const p = out[j], q = out[(j + 1) % out.length]; nx.push([p[0] * 0.75 + q[0] * 0.25, p[1] * 0.75 + q[1] * 0.25], [p[0] * 0.25 + q[0] * 0.75, p[1] * 0.25 + q[1] * 0.75]); } out = nx; }
+  return out;
+}
 const head = new Vector3(), tmp = new Vector3(), n = new Vector3(), u = new Vector3(), v = new Vector3();
 const UP = new Vector3(0, 1, 0);
 
@@ -55,10 +65,10 @@ export function makeTraceSystem(world, active, hands, sound, events, onThing) {
       const c = new Vector3(); for (const p of pts) c.add(p); c.multiplyScalar(1 / pts.length);
       n.copy(head).sub(c).normalize(); if (Math.abs(n.dot(UP)) > 0.9) n.set(0, 0, 1);
       u.crossVectors(UP, n).normalize(); v.crossVectors(n, u).normalize();
-      const poly = pts.map(p => { tmp.copy(p).sub(c); return [tmp.dot(u), tmp.dot(v)]; });
+      const poly = smoothLoop(pts.map(p => { tmp.copy(p).sub(c); return [tmp.dot(u), tmp.dot(v)]; }));
       const r = rasterizePolygon(poly, 96, 0.05);
       if (r.width < 0.03 || r.height < 0.03) return;
-      const geo = inflateMask(r.mask, r.w, r.h, r.width, r.height, 0.55);
+      const geo = inflateMask(r.mask, r.w, r.h, r.width, r.height, 0.45);
       if (!geo) return;
       const dominant = this.sampleColour(pts, poly, r) || new Color().setHSL(Math.random(), 0.35, 0.6);
       const thing = makeThing({ geometry: geo, dominant, width: r.width, height: r.height, sides: sidesAt(r.mask, r.w, r.h, 0.5) });
@@ -92,7 +102,7 @@ export function makeTraceSystem(world, active, hands, sound, events, onThing) {
       const fwd = new Vector3(0, 0, -1).applyQuaternion(headObj.getWorldQuaternion(this.line.quaternion.clone())); fwd.y = 0; fwd.normalize(); this.line.quaternion.identity();
       const c = head.clone().addScaledVector(fwd, 0.45); c.y -= 0.25; c.x += 0.15;
       const right = new Vector3(-fwd.z, 0, fwd.x); const pts = [];
-      for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2; const rr = 0.045 * (1 + 0.18 * Math.sin(a * 3) + 0.08 * Math.cos(a * 5)); pts.push(c.clone().addScaledVector(right, Math.cos(a) * rr).addScaledVector(UP, Math.sin(a) * rr * 1.2)); }
+      for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2; const rr = 0.045 * (1 + 0.10 * Math.sin(a * 2) + 0.04 * Math.cos(a * 3)); pts.push(c.clone().addScaledVector(right, Math.cos(a) * rr).addScaledVector(UP, Math.sin(a) * rr * 1.2)); }
       this.build(pts);
     }
   }

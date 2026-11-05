@@ -1,15 +1,15 @@
-// In-XR guidance: one soft card floating above the cup, facing the player, that advances with what
+// In-XR guidance: one soft card floating above the object, facing the player, that advances with what
 // the player has actually done. No menus, no arrows, one sentence at a time. Fades out when the basics are learned.
 import { createSystem } from '@iwsdk/core';
 import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, Vector3 } from 'three';
 
 const STEPS = [
-  { key: 'touch',  text: 'Touch it with one fingertip.\nDraw slowly.', done: ev => ev.strokes >= 1 },
+  { key: 'grab',   text: 'Reach for it.\nPinch to pick it up.', done: ev => ev.grabbed },
+  { key: 'float',  text: 'Let go.\nIt comes to you.', done: ev => ev.studioFloat, timeout: 20 },
+  { key: 'touch',  text: 'Touch it with one fingertip.\nDraw slowly.', done: ev => ev.strokes >= 1, timeout: 60 },
   { key: 'dwell',  text: 'Now stop moving, but keep touching.\nWatch the ink bloom.', done: ev => ev.dwell, timeout: 20 },
-  { key: 'grab',   text: 'Pinch to pick it up.\nTurn it. Your strokes went round.', done: ev => ev.grabbed, timeout: 25 },
-  { key: 'focus',  text: 'Hold it. Pinch beside it with\nyour other hand and pull away.', done: ev => ev.focused, timeout: 30 },
-  { key: 'draw2',  text: 'Just you and the cup now.\nDraw slowly. Hold still to bloom.', done: ev => ev.strokes >= 4, timeout: 40 },
-  { key: 'release',text: 'When it feels done,\nopen your hand.', done: ev => ev.awake, timeout: 60 },
+  { key: 'centre', text: 'Press and hold to move the centre.\nTwist two fingertips to change the fold.', done: ev => ev.centreSet || ev.foldChanged, timeout: 25 },
+  { key: 'down',   text: 'When it feels done, pinch it\nand set it down on the table.', done: ev => ev.awake, timeout: 90 },
   { key: 'door',   text: 'A doorway opened beside it.\nSet it down there when you are ready.', done: ev => ev.inSpace, timeout: 60 },
   { key: 'trace',  text: 'Pinch in the air and hold, then trace\naround anything on your desk.', done: ev => ev.traced, timeout: 45 },
   { key: 'bye',    text: 'It learned you while you drew.\nStay as long as you like.', done: () => false, timeout: 7 },
@@ -48,7 +48,6 @@ export function makeHintSystem(active, events) {
     }
     update(delta) {
       const presenting = this.renderer.xr.isPresenting;
-      // only teach inside XR (or the emulator); the landing page covers the browser
       if (presenting && !this.started) { this.started = true; this.stepT = 0; }
       const s = STEPS[this.step];
       if (this.started && s) {
@@ -60,10 +59,13 @@ export function makeHintSystem(active, events) {
         }
       }
       const cup = active.cup; if (!cup) return;
-      // place above the cup, face the player
+      // above the object, scaled with it, facing the player
       const headObj = presenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
-      cup.group.getWorldPosition(target); target.y += 0.115;
+      cup.group.getWorldPosition(target);
+      const grow = cup.group.scale.x / (cup.scale || 1); const h = (cup.heightMetres || 0.09) * grow;
+      target.y += h * 1.15 + 0.03;
       this.card.mesh.position.lerp(target, 1 - Math.pow(0.001, delta));
+      this.card.mesh.scale.setScalar(Math.max(1, Math.min(2.2, 0.6 + grow * 0.35)));
       this.card.mesh.lookAt(head);
       const want = this.started && this.visibleWanted && STEPS[this.step] && !events.inSpace ? 1 : 0;
       this.alpha += (want - this.alpha) * Math.min(1, delta * 3);

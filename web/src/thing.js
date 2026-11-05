@@ -22,7 +22,7 @@ export function makeThing({ geometry, dominant = new Color(0.9, 0.86, 0.78), wid
   const poke = { amt: 0, vel: 0 };
   const bb = geometry.boundingBox; const radius = Math.max(width, height);
   const thing = {
-    kind: 'thing', group, body, handle: null, paint, uniforms, scale: 1, dominant, creature: null, traits: null, _acc: 0,
+    kind: 'thing', group, body, handle: null, paint, uniforms, scale: 1, dominant, paletteName: null, heightMetres: height, creature: null, traits: null, _acc: 0,
     // where a face and feet go, in metres: front of the puffy body, bottom edge
     // where a face, arms and feet go: arms at the silhouette's sides at shoulder height, face on the front, feet at the bottom
     wakeFit: (() => { const unit = height / 1.04; const hw = sides ? Math.max(0.5 - sides[0], sides[1] - 0.5) * width / unit : (width / 2) / unit; return { unit, halfWidth: Math.max(0.2, hw - 0.03), offset: [0, -height / 2, Math.min(width, height) * 0.55 * 0.5 - 0.575 * unit] }; })(),

@@ -52,7 +52,13 @@ export function makeBrushSystem(active, events, hands, sound) {
       const grabbed = active.entity && active.entity.hasComponent(Grabbed); if (grabbed) events.grabbed = true;
       // a hand coming close makes it glow a little, like it noticed you
       let near = Infinity; cup.group.getWorldPosition(tmpB); for (const side of ['left', 'right']) near = Math.min(near, hands.tip[side].distanceTo(tmpB));
-      const wantGlow = near < 0.12 && !events.inSpace ? 0.35 * (1 - near / 0.12) : 0; cup.approachGlow = (cup.approachGlow || 0) + (wantGlow - (cup.approachGlow || 0)) * Math.min(1, delta * 4);
+      const wantGlow = near < 0.14 && !events.inSpace ? 0.35 * (1 - near / 0.14) : 0; cup.approachGlow = (cup.approachGlow || 0) + (wantGlow - (cup.approachGlow || 0)) * Math.min(1, delta * 4);
+      // on the table it notices you: turns a little toward the nearest hand and leans in
+      if (!grabbed && !cup.inStudio && !events.inSpace && !cup.creature) {
+        let nearest = null; for (const side of ['left', 'right']) if (hands.tip[side].distanceTo(tmpB) === near) nearest = hands.tip[side];
+        if (nearest && near < 0.25) { const local = cup.group.worldToLocal(tmpA.copy(nearest)); const yaw = Math.atan2(local.x, local.z); cup.group.rotation.y += yaw * 0.35 * Math.min(1, delta * 3); }
+        cup.group.rotation.x += ((-0.12 * (cup.approachGlow || 0) / 0.35) - cup.group.rotation.x) * Math.min(1, delta * 4);
+      }
       if (cup.spawnT !== undefined && cup.spawnT < 1) { cup.spawnT = Math.min(1, cup.spawnT + delta * 1.5); const k = cup.spawnT; const s = k < 0.7 ? k / 0.7 * 1.12 : 1.12 - (k - 0.7) / 0.3 * 0.12; cup.group.scale.setScalar(Math.max(0.001, s)); cup.group.position.y += delta * 0.02 * (1 - k); }
       const touches = [];
       for (const side of ['left', 'right', 'mouse']) {
@@ -62,10 +68,11 @@ export function makeBrushSystem(active, events, hands, sound) {
         const local = cup.body.worldToLocal(tmpA.copy(h.tipWorld));
         const s = cup.surface(local);
         // a hand that is pinching is holding the cup, not painting
-        const touching = (side === 'mouse' || !this.pinching[side]) && s.onWall && s.gap < TOUCH / cup.scale && s.gap > -0.5;
+        const touching = (side === 'mouse' || !this.pinching[side]) && s.onWall && s.gap < TOUCH / cup.group.scale.x && s.gap > -0.5;
         if (touching) touches.push({ side, s, local: local.clone() });
         this._handStep(h, touching, s, local, time, delta);
       }
+      cup.touching = touches.length > 0;
       // two fingertips on the wall: twist changes the fold
       if (touches.length === 2) {
         const a = touches[0].local, b = touches[1].local;
@@ -96,11 +103,11 @@ export function makeBrushSystem(active, events, hands, sound) {
       }
       if (h.pressDone) return;
       const speedPx = len / Math.max(delta, 1e-4);                       // px per second
-      const speedM = speedPx / cup.paint.pxX;                            // metres per second along the surface
+      const speedM = speedPx / cup.paint.pxX * (cup.group.scale.x / (cup.scale || 1));   // hand speed in metres, however big the canvas is
       h.smoothSpeed = h.smoothSpeed * 0.6 + speedM * 0.4; h.lastMoveT = time; this.stats.speedAccum += speedM; this.stats.speedSamples++; this.stats.touchTime += delta;
       const slow = 1 - Math.min(1, h.smoothSpeed / 0.5);
       const taperIn = Math.min(1, h.strokeLen / 28);
-      const press = 0.6 + 0.8 * Math.min(1, s.depth * cup.scale / MAX_DEPTH);
+      const press = 0.6 + 0.8 * Math.min(1, s.depth * cup.group.scale.x / MAX_DEPTH);
       const width = (4 + 12 * slow) * (0.35 + 0.65 * taperIn) * press;
       const a = (0.3 + 0.7 * slow) * (0.4 + 0.6 * taperIn);
       const dir = { x: dx / len, y: dy / len };

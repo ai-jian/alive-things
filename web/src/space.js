@@ -13,6 +13,15 @@ import { inflateMask, sidesAt } from './inflate.js';
 
 const head = new Vector3(), tmp = new Vector3();
 
+/** a painted mandala for the landing demo: one slow S-curve through the symmetry guide, like the look test */
+function seedStrokes(cup) {
+  const P = cup.paint; P.setCentreUV(0, 0.5);
+  for (let i = 0; i < 16; i++) { const t = i / 15; const taper = Math.sin(t * Math.PI); const ang = -0.4 + t * 1.2; const x = P.centre.x + 6 + t * 80, y = P.centre.y - 2 - t * 26 + 14 * Math.sin(t * 4);
+    P.line(x / P.W, 1 - y / P.H, { x: Math.cos(ang), y: -Math.sin(ang) * 0.4 }, 5 + 12 * taper, 0.4 + 0.6 * taper); }
+  for (let i = 0; i < 3; i++) P.dot(0.1 + i * 0.04, 0.42, 7, 0.8);
+  P.wetBox = null; P.wet.fill(0); P.upload();
+}
+
 function radialTexture(inner, outer) { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const g = x.createRadialGradient(128, 128, 6, 128, 128, 128); g.addColorStop(0, inner); g.addColorStop(0.55, outer); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); return new CanvasTexture(c); }
 
 function flatDisc(tex, size, blending) { const m = new Mesh(new PlaneGeometry(size, size), new MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, blending: blending || AdditiveBlending })); m.rotation.x = -Math.PI / 2; return m; }
@@ -79,6 +88,23 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.restored = false;
       window.addEventListener('keydown', (e) => { if (e.key === 'g') this.toggle(); });
     }
+    /** landing page: the live garden (your creatures, or a painted demo cup) under a drifting camera, outside XR */
+    showcase() {
+      if (this.showcasing) return; this.showcasing = true;
+      this.enterSpace();
+      if (this.residents.length === 0) {
+        const cup = makeCup({ palette: 'dusk', heightMetres: 0.09 }); seedStrokes(cup);
+        cup.traits = { curious: .6, sleepy: .3, social: .6, playful: .5, shy: .1 };
+        cup.creature = wakeCup(cup, { traits: cup.traits, dark: cup.uniforms.uPal.value[0].getHex() }); cup.creature.pop = 1; cup.creature.parts.scale.setScalar(1);
+        this.adopt(cup, { persist: false, showcase: true }); this.demo = cup;
+      }
+      this.orbitT = 0; this.home.visible = this.homeCard.mesh.visible = false; this.plantCard.mesh.visible = false;
+    }
+    clearShowcase() {
+      if (!this.showcasing) return; this.showcasing = false; this.home.visible = this.homeCard.mesh.visible = true;
+      if (this.demo) { const i = this.residents.indexOf(this.demo); if (i >= 0) { this.residents.splice(i, 1); this.brains.splice(i, 1); const p = this.pools.splice(i, 1)[0]; this.group.remove(p.pool, p.beam); } this.group.remove(this.demo.group); this.demo = null; }
+      this.leave();
+    }
     toggle() { if (this.inSpace) this.leave(); else { const cup = getActiveCup(); if (cup && cup.creature && !cup.inSpace) { this.enterSpace(cup); this.onAdopted && this.onAdopted(cup); } else this.enterSpace(); } }
     say(line) { this.plantCard.draw(line); this.plantT = 4.5; }
     placeGarden() {
@@ -99,13 +125,13 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
     leave() { this.wantIn = false; this.inSpace = false; events.inSpace = false; sound.setHum(0); }
     rebuild(rec) {
       let cup = null;
-      if (rec.kind === 'thing' && rec.shape) { const sh = decodeMask(rec); const geo = inflateMask(sh.mask, sh.w, sh.h, sh.width, sh.height, 0.55); if (geo) { cup = makeThing({ geometry: geo, dominant: new Color(rec.dominant), width: sh.width, height: sh.height, sides: sidesAt(sh.mask, sh.w, sh.h, 0.5) }); cup.shape = sh; } }
-      if (!cup) cup = makeCup({ dominant: new Color(rec.dominant), heightMetres: 0.09 });
+      if (rec.kind === 'thing' && rec.shape) { const sh = decodeMask(rec); const geo = inflateMask(sh.mask, sh.w, sh.h, sh.width, sh.height, 0.45); if (geo) { cup = makeThing({ geometry: geo, dominant: new Color(rec.dominant), width: sh.width, height: sh.height, sides: sidesAt(sh.mask, sh.w, sh.h, 0.5) }); cup.shape = sh; } }
+      if (!cup) cup = makeCup({ palette: rec.paletteName || 'dusk', dominant: rec.paletteName ? null : new Color(rec.dominant), heightMetres: 0.09 });
       cup.id = rec.id; cup.traits = rec.traits; cup.dominant = new Color(rec.dominant); cup.bornAt = rec.bornAt; restorePaint(cup, rec);
       cup.creature = wakeCup(cup, { traits: rec.traits, dark: cup.uniforms.uPal.value[0].getHex() }); cup.creature.pop = 1; cup.creature.parts.scale.setScalar(cup.wakeFit ? cup.wakeFit.unit : 1);
       return cup;
     }
-    adopt(cup) {
+    adopt(cup, opts = {}) {
       // move the cup into the garden group at a free spot
       // hand the object over from the ECS to the garden: the transform system owns entity objects, so release it first
       if (cup.entity) { try { cup.entity.dispose({ disposeResources: false }); } catch (e) { try { cup.entity.destroy(); } catch (e2) {} } cup.entity = null; }
@@ -117,12 +143,20 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       const beam = new Mesh(new CylinderGeometry(0.02, 0.075, 0.3, 24, 1, true), new MeshBasicMaterial({ map: this.beamTex, transparent: true, opacity: 0, depthWrite: false, side: DoubleSide, blending: AdditiveBlending })); beam.position.y = 0.15; this.group.add(beam);
       this.pools.push({ pool, beam, cup, grow: 0 });
       const brain = new Brain(cup, { group: this.group, radius: this.radius }, sound); this.brains.push(brain); this.residents.push(cup);
-      upsert(serialize(cup));
+      if (opts.persist !== false) upsert(serialize(cup)); else cup.noPersist = true;
+      if (opts.showcase) return;
       if (this.residents.length === 1) this.say('it looks a little lonely out here.');
       if (this.residents.length === 3 && !this.partyDone) { this.partyDone = true; this.say('you brought friends!'); for (const b of this.brains) b.enter('look', 3); sound.wake(1.2); }
     }
     update(delta, time) {
-      const headObj = this.renderer.xr.isPresenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
+      const presenting = this.renderer.xr.isPresenting;
+      if (this.showcasing && !presenting) {
+        // slow drift around the garden, looking at its first resident
+        this.orbitT += delta; const a = -0.35 + Math.sin(this.orbitT * 0.12) * 0.45;
+        const c = this.group.position; const r = 0.5; this.camera.position.set(c.x + Math.sin(a) * r, c.y + 0.2 + Math.sin(this.orbitT * 0.2) * 0.02, c.z + Math.cos(a) * r);
+        const focus = this.residents[0] ? this.residents[0].group.getWorldPosition(new Vector3()) : c.clone(); focus.y += 0.04; this.camera.lookAt(focus); this.camera.updateMatrixWorld();
+      }
+      const headObj = presenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
       const cup = getActiveCup();
       // doorway appears on the table once the cup is awake and set down
       const awake = cup && cup.creature && !cup.inSpace && cup.entity; const grabbed = !!(cup && cup.entity && cup.entity.hasComponent(Grabbed));
@@ -138,6 +172,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       const target = this.wantIn ? 1 : 0; this.fade += (target - this.fade) * Math.min(1, delta * 1.2);
       const f = this.fade; this.dome.material.opacity = f; this.floor.material.opacity = f; this.hills.children.forEach(m => m.material.opacity = f * 0.9);
       this.home.material.opacity = f * 0.8; this.homeCard.mat.opacity = f * 0.9; this.plantCard.mat.opacity = Math.min(f, this.plantT > 0 ? Math.min(1, this.plantT) : 0);
+      if (this.showcasing) { this.home.visible = this.homeCard.mesh.visible = false; }
       if (f < 0.01 && !this.wantIn && this.group.visible) this.group.visible = false;
       // the room's object stays in the room while you are in the garden
       if (cup && !cup.inSpace) cup.group.visible = f < 0.6;
@@ -160,7 +195,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       // touching the home disc with a fingertip leaves
       for (const h of ['left', 'right']) { const t = this.group.worldToLocal(hands.tip[h].clone()); if (t.distanceTo(this.home.position) < 0.05) { this.leave(); break; } }
       // periodic save
-      if (time - this.lastSave > 10) { this.lastSave = time; for (const c of this.residents) upsert(serialize(c)); }
+      if (time - this.lastSave > 10) { this.lastSave = time; for (const c of this.residents) if (!c.noPersist) upsert(serialize(c)); }
     }
   }
   return SpaceSystem;
