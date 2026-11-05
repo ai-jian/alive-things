@@ -86,7 +86,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       const cup = getActiveCup(); const headObj = this.renderer.xr.isPresenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
       const y = cup ? cup.group.position.y : head.y - 0.4;
       const fwd = tmp.set(0, 0, -1).applyQuaternion(headObj.getWorldQuaternion(this.group.quaternion)); fwd.y = 0; fwd.normalize(); this.group.quaternion.identity();
-      this.group.position.copy(head).addScaledVector(fwd, 0.5); this.group.position.y = y;
+      this.group.position.copy(head).addScaledVector(fwd, 0.6); this.group.position.y = y;
       this.group.rotation.y = Math.atan2(fwd.x, fwd.z) + Math.PI;
       this.dome.position.set(0, head.y - y, 0);
     }
@@ -111,7 +111,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       if (cup.entity) { try { cup.entity.dispose({ disposeResources: false }); } catch (e) { try { cup.entity.destroy(); } catch (e2) {} } cup.entity = null; }
       if (cup.group.parent !== this.group) { cup.group.parent && cup.group.parent.remove(cup.group); this.group.add(cup.group); }
       cup.inSpace = true;
-      const a = Math.random() * Math.PI * 2, r = 0.12 + Math.random() * 0.22; cup.group.position.set(Math.cos(a) * r, 0.002, Math.sin(a) * r); cup.group.rotation.set(0, Math.random() * Math.PI * 2, 0);
+      const a = Math.PI + (Math.random() - 0.5) * Math.PI * 1.2, r = 0.1 + Math.random() * 0.22; cup.group.position.set(Math.cos(a) * r, 0.002, Math.sin(a) * r); cup.group.rotation.set(0, Math.random() * Math.PI * 2, 0);
       cup.setGlow(0.6); cup.uniforms.uUnder.value = 0.8; cup.uniforms.uShade.value = 0.12; cup.uniforms.uLightDir.value.set(0.15, 1.0, 0.25).normalize();
       const pool = flatDisc(this.poolTex, 1); pool.scale.setScalar(0.001); this.group.add(pool);
       const beam = new Mesh(new CylinderGeometry(0.02, 0.075, 0.3, 24, 1, true), new MeshBasicMaterial({ map: this.beamTex, transparent: true, opacity: 0, depthWrite: false, side: DoubleSide, blending: AdditiveBlending })); beam.position.y = 0.15; this.group.add(beam);

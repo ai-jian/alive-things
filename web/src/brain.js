@@ -14,7 +14,8 @@ export class Brain {
     this.pickWander();
   }
   pos() { return this.cup.group.position; }
-  pickWander() { const r = Math.sqrt(Math.random()) * this.garden.radius * 0.85; const a = Math.random() * Math.PI * 2; this.target.set(Math.cos(a) * r, this.pos().y, Math.sin(a) * r); }
+  // local +z is toward the player: keep the wandering in the far two thirds so nobody ends up under your nose
+  pickWander() { const r = Math.sqrt(Math.random()) * this.garden.radius * 0.85; const a = Math.random() * Math.PI * 2; this.target.set(Math.cos(a) * r, this.pos().y, Math.min(Math.sin(a) * r, this.garden.radius * 0.15)); }
   decide(all) {
     const n = this.need; this.partner = null;
     const top = Math.max(n.explore, n.rest, n.company, n.play);
@@ -33,6 +34,7 @@ export class Brain {
     const yaw = Math.atan2(tmp.x, tmp.z); this.cup.group.rotation.y += ((yaw - this.cup.group.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 5);
     // stay on the disc
     const r = Math.hypot(this.pos().x, this.pos().z); if (r > this.garden.radius * 0.95) { this.pos().x *= 0.98; this.pos().z *= 0.98; }
+    if (this.pos().z > this.garden.radius * 0.2) this.pos().z = this.garden.radius * 0.2;
     return false;
   }
   update(dt, all, head) {
