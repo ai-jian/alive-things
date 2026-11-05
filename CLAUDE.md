@@ -5,13 +5,14 @@ One line: *Pick up a cup. Be quiet for ten minutes. It comes alive.*
 
 ## Read these first, in order
 1. `docs/PRD.md` — goals, core loop, feature list with priorities and acceptance, risks, milestones.
-2. `docs/art-direction.md` — carved clay, 3渲2 toon relief. Colour brushes are dead. Don't bring them back.
+2. `docs/art-direction.md` — **open decision** between A (bleed + palette, owner's preference) and B (carved relief). What is agreed regardless: radial symmetry guide, motion-picked patterns, no outlines. Do not decide this for the owner.
 3. `docs/storyboard-v4.html` (or the .png) — the 2-minute demo video. **This is the scope.** If a feature is not in a shot, don't build it.
 4. `docs/design-notes.md` — decision log with reasons, capture pipeline, two-week build order.
 
 ## Repo map
-- `docs/lookdev-relief.html` — live three.js proof of the art direction (carve, clays, glaze, light). Open in a browser; loads three.js 0.152.2 from cdnjs.
-- `docs/lookdev.html` — older colour-paint look test. Kept for the lighting and jelly reference only.
+- `docs/lookdev-symmetry.html` — Option A proof: radial symmetry guide, ink bleed, palette-mapped colour. Open in a browser; loads three.js 0.152.2 from cdnjs.
+- `docs/lookdev-relief.html` — Option B proof: carve relief, clays, glaze, moving toon light.
+- `docs/lookdev.html` — first colour-paint test. Kept for the lighting and jelly reference only.
 - `unity/` — Unity 2022.3 LTS project. URP. Scripts under `Assets/AliveThings/Scripts/`, grouped: Creature, Interaction, Paint, Capture, World. Shader includes under `Assets/AliveThings/Shaders/`.
 
 ## Unity setup (local machine)
@@ -27,8 +28,8 @@ No scene file is committed yet. First scene to make: a passthrough scene with ha
 
 ## Conventions
 - Hands only. No controllers, no menus, no 2D UI except the trait tag and whisper bubbles.
-- No outlines anywhere. Flat cut-out world, carved-clay creatures, three-band toon light.
-- Personality is derived from carving, never random (`CreatureTraits.FromStrokes`).
+- No outlines anywhere. Flat cut-out world. Creature surface look is the open decision above.
+- The brush always has a radial symmetry guide on. Personality is derived from how the user drew, never random (`CreatureTraits.FromStrokes`).
 - Sound is garnish: hum, ticks, chirps. No melodies.
 - Scripts: namespace `AliveThings.<Area>`, one class per file, short XML summary on top saying what the thing is for.
 - Keep the shelf fallback working at all times. Capture is an entry, not a dependency.
@@ -40,6 +41,7 @@ No scene file is committed yet. First scene to make: a passthrough scene with ha
 - When something can't be verified here (no headset, no Unity), say so plainly in the handoff instead of claiming it works.
 
 ## State as of 2026-11-05
-- Done: PRD, art direction, storyboard v4.1, two look tests, Unity skeleton with 13 starter scripts (not yet compiled in Unity; expect small fixes).
-- Next: open the project locally, install Meta SDK, make the first scene, get `JellyPoke` and `ZenBrush` working on device with a ready cup.
+- Done: PRD, storyboard v4.1, three look tests, Unity skeleton with 13 starter scripts (not yet compiled in Unity; expect small fixes). `PaintSurface`/`ZenBrush` currently stamp a signed height field; for Option A the same RT holds intensity and the shader does a palette lookup instead of relief. Symmetry is not yet in `ZenBrush`; add it as a wrapper around `PlaceUnit` (see `symmetric()` in `docs/lookdev-symmetry.html`).
+- Open: art direction A vs B. Owner decides.
+- Next: open the project locally, install Meta SDK, make the first scene, get `JellyPoke` and `ZenBrush` with symmetry working on device with a ready cup.
 - Not started: capture pipeline (Sentis model, mask → `SilhouetteInflator`), My Space scene art, sounds.

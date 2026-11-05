@@ -1,35 +1,34 @@
-# Art direction: carved clay, 3渲2
+# Art direction: OPEN, two options on the table
 
-Decided 2026-11-05. Supersedes the "paint colour on the photo" direction in design-notes.
+Status 2026-11-05: **not decided.** The owner (ai-jian) decides after seeing both look tests on a real screen. Agents: do not pick one, do not change the storyboard's look, do not remove either option.
 
-## The idea in one line
-You don't colour the object. You carve it. The light does the colouring.
+## What is already agreed (independent of the option)
+- Drawing is for people who can't draw. The system guarantees the result looks good; the user supplies path and rhythm.
+- **Radial symmetry guide**, like Procreate's drawing guide: one stroke becomes N mirrored strokes (N = 4, 6, 8, 12), optionally mirrored across the axis too. This is the thing that makes zen doodling feel good and it closes any stroke into a pleasing whole. On a 3D object it can sit on the front as a mandala (centre placed by touch) or wrap around the object's axis.
+- Six pattern units picked by the motion itself (tap, straight, wavy, circle, flick, scrub).
+- Strokes snap gently toward the object's flow lines. Slow strokes count more.
+- No eraser. A flat palm is water (softens / smooths).
+- No outlines anywhere. World is flat gouache cut-outs (Pola, Utanomori references). Glow lives in the world (fireflies, light pools), not in a brush.
+- Hands only. No menus.
 
-## Why
-- Flat colour strokes looked like a kid's app and put taste in the user's hands. Carving removes colour from the user entirely. Nothing the user does can look ugly, because the only things that change are height and light.
-- Turning the object in your hands becomes the way you look at your own work: the relief only reads as the light slides over it. That makes the "hold and turn" gesture meaningful.
-- It matches the quiet, wabi-sabi, zen-doodle intent: celadon incised patterns, Wedgwood jasperware, Japanese kogo boxes.
+## Option A: bleed + palette (owner's current preference)
+References: the ZZAi figure video (blue → green → pink → peach gradients, soft bleeding, mirrored patterns, black ground), the pastel pointillist trees, the 烛吉 glowing objects.
+- The user paints **intensity**, not colour. Fresh strokes bleed outward like wet ink for a second or two.
+- A palette gradient maps intensity to colour: thin = deep, layered = hot and light. Palettes are curated (four to six). Nothing the user does can clash.
+- Painted areas glow softly in My Space. Clay underneath stays soft-lit.
+- Live proof: `docs/lookdev-symmetry.html` (symmetry guide, bleed, palettes, patterns).
+- Unity path: half-float intensity RT + wetness RT, a small diffusion blit each frame while wet, palette lookup in the shader.
 
-## The look
-- **Creature:** one clay colour per creature (cream, celadon, indigo, terracotta, a few more). Three-band toon ramp (shadow, mid, light) with soft edges, one hard specular dot, a cool rim light on the shadow side. Grooves darken, ridges lighten (cheap height occlusion). Optional "glaze": a second colour pools only in the grooves.
-- **Captured objects:** the photo becomes the clay colour (dominant colour, lightly desaturated) and a very light posterised tint, not a full texture. The object still reads as "your cup" by its shape, handle, proportions, and tone.
-- **World:** flat gouache cut-outs, no outlines, slight hand-cut wobble. Room is passthrough. Focus is warm dark fog with a single pool of light. My Space is painted navy with warm light pools, fireflies, soft hills.
-- **Patterns (relief, picked by motion):** tap = dimple, straight = ridge, wavy = fish scale, circle = swirl groove, flick = leaf with a vein, scrub = weave. Slow strokes carve deeper.
-- **Water gesture:** a flat palm smooths the relief like wet clay. Never erases.
+## Option B: carved relief, 3渲2 (agent proposal, kept as an option)
+- The user carves height instead of colour; a three-band toon ramp and relief normals let the light draw the pattern; one clay colour per creature, optional glaze in grooves.
+- Live proof: `docs/lookdev-relief.html`.
+- Unity path: `Shaders/ToonRelief.hlsl`, `Paint/PaintSurface.cs` height mode.
 
-## Rendering recipe (Unity, URP)
-1. Height map: half-float RenderTexture, 0 = flat, signed. `Paint/PaintSurface.cs` stamps kernels with additive blending; `Smooth()` blurs a disc.
-2. Vertex displacement from the height map along the normal (0.003 m to start). Capture meshes are dense; ready-made objects are subdivided.
-3. Normal from height gradient, blended into the mesh normal: `HeightToNormal` in `Shaders/ToonRelief.hlsl`.
-4. Lighting: `ToonRelief` in the same file. One directional light direction (the focus spotlight in Focus Mode, the pool light in My Space).
-5. Jelly deformation still runs in the vertex stage: `Shaders/JellyDeform.hlsl`.
-6. Face, feet, handle: URP toon ramp material with the same clay colour.
+## Not either/or
+Both options read the same input (a scalar field painted with the same symmetric brush). A could use the field as colour and B as height; a mix (colour bleed + a little relief) is possible later. Decide the look first, then the mix.
 
-## Proof
-`docs/lookdev-relief.html` is a live three.js version of this recipe: carve by dragging, four clays, glaze toggle, moving light, room vs My Space. Open it in any browser.
-
-## Kill list
-- Pink/blue/yellow colour brushes (gone)
-- "Everything white" (gone earlier)
-- Outlines on anything
-- Neon as a brush (glow stays in the world: fireflies, pools)
+## Kill list (agreed)
+- Flat pink/blue/yellow colour strokes picked by the user
+- "Everything white"
+- Outlines
+- Neon as a brush
