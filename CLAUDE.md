@@ -22,7 +22,7 @@ One line: *Pick up a cup. Be quiet for ten minutes. It comes alive.*
 3. Package Manager → My Assets → **Meta XR All-in-One SDK** (Asset Store, free). Import. Run Meta → Tools → Project Setup Tool → Fix All.
 4. XR Plug-in Management → Android → Oculus. Build target Android, ARM64, IL2CPP, Vulkan or GLES3.
 5. Hand tracking: subclass `Interaction/HandInput.cs` with OVRHand/OVRSkeleton. `MouseHandInput` already lets scenes run in the editor with a mouse.
-6. Creature material: URP **Unlit** Shader Graph. Vertex stage: Custom Function from `Shaders/JellyDeform.hlsl`. Fragment: Sample Texture 2D `_IntensityTex` (R) → Custom Function `GradientSurface` from `Shaders/GradientSurface.hlsl`. Expose `_IntensityTex`, `_MinY`, `_MaxY`, `_BaseLo` (0.10), `_BaseHi` (0.55), `_Shade` (0.16), `_Glow` (0 room / 1 My Space), `_Pal0`..`_Pal5`, `_PokePos`, `_PokeAmt`, `_Wobble`. `PaletteFromObject` and `JellyPoke` fill these through a MaterialPropertyBlock. Use the same graph on handle, feet and face with intensity 0 so the body is one gradient.
+6. Creature material: make a material from **`AliveThings/GradientSurface`** (`Shaders/GradientSurface.shader`, hand-written URP, no Shader Graph wiring). `PaletteFromObject`, `PaintSurface` and `JellyPoke` fill its properties through MaterialPropertyBlocks. Handle, feet and face use a second material from the same shader with `_UsePaint = 0`. The `.hlsl` files next to it are the shared functions (also usable from a Shader Graph Custom Function node if ever wanted).
 7. Materials for `PaintSurface`: one from `Shaders/Stamp.shader`, one from `Shaders/Diffuse.shader`. Assign both in the inspector. The creature mesh needs a MeshCollider (non-convex is fine) for the brush raycasts.
 
 No scene file is committed yet. First scene to make: a passthrough scene with hands, one ready cup (lathe mesh, MeshCollider) with `PaletteFromObject`, `PaintSurface` + `ZenBrush`, `JellyPoke`, and `HoldAndOpenGesture` → `FocusMode`. Test order in the editor with `MouseHandInput`: see the gradient, draw a line (symmetry copies appear), tap a dot, hold still to bloom, long-press to move the centre.
@@ -34,6 +34,12 @@ No scene file is committed yet. First scene to make: a passthrough scene with ha
 - Sound is garnish: hum, ticks, chirps. No melodies.
 - Scripts: namespace `AliveThings.<Area>`, one class per file, short XML summary on top saying what the thing is for.
 - Keep the shelf fallback working at all times. Capture is an entry, not a dependency.
+
+## Letting an agent drive the Unity Editor (MCP)
+A cloud session cannot reach a local Editor. Run Claude Code **on the machine that has Unity**, inside this repo, with a Unity MCP configured:
+- Community, most used: CoplayDev "MCP for Unity" (Unity package via Package Manager git URL + a local Python server; then `claude mcp add` per their README). Creates GameObjects, adds components, sets fields, makes materials, reads the Console, enters Play mode, screenshots.
+- Official route (Unity 6+): Unity CLI `unity mcp` (seen in one 2026 write-up; verify against Unity docs).
+With either, an agent can build the first scene and fix compile errors itself; the owner only needs to wear the headset. Shader Graph nodes can't be edited over MCP, which is why the surface shader is hand-written.
 
 ## Working rules for agents
 - Branch off `main`, push the branch, don't open a PR unless asked.
