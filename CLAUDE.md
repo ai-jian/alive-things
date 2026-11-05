@@ -10,7 +10,8 @@ One line: *Pick up a cup. Be quiet for ten minutes. It comes alive.*
 4. `docs/design-notes.md` — decision log with reasons, capture pipeline, two-week build order.
 
 ## Repo map
-- `docs/lookdev-symmetry.html` — Option A proof: radial symmetry guide, ink bleed, palette-mapped colour. Open in a browser; loads three.js 0.152.2 from cdnjs.
+- `docs/lookdev-gradient.html` — Option A, current pass: whole-body gradient, composite guide (around × mandala × mirror), two marks. Open in a browser; loads three.js 0.152.2 from cdnjs.
+- `docs/lookdev-symmetry.html` — Option A, first pass: strokes only, six patterns (owner found them indistinguishable at this scale).
 - `docs/lookdev-relief.html` — Option B proof: carve relief, clays, glaze, moving toon light.
 - `docs/lookdev.html` — first colour-paint test. Kept for the lighting and jelly reference only.
 - `unity/` — Unity 2022.3 LTS project. URP. Scripts under `Assets/AliveThings/Scripts/`, grouped: Creature, Interaction, Paint, Capture, World. Shader includes under `Assets/AliveThings/Shaders/`.
@@ -29,7 +30,7 @@ No scene file is committed yet. First scene to make: a passthrough scene with ha
 ## Conventions
 - Hands only. No controllers, no menus, no 2D UI except the trait tag and whisper bubbles.
 - No outlines anywhere. Flat cut-out world. Creature surface look is the open decision above.
-- The brush always has a radial symmetry guide on. Personality is derived from how the user drew, never random (`CreatureTraits.FromStrokes`).
+- The brush always has the composite symmetry guide on (around × mandala × mirror). Keep marks few; the object is small. Owner's taste: Monument Valley, less is more. Personality is derived from how the user drew, never random (`CreatureTraits.FromStrokes`).
 - Sound is garnish: hum, ticks, chirps. No melodies.
 - Scripts: namespace `AliveThings.<Area>`, one class per file, short XML summary on top saying what the thing is for.
 - Keep the shelf fallback working at all times. Capture is an entry, not a dependency.

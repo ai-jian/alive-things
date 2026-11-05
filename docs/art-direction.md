@@ -16,7 +16,8 @@ References: the ZZAi figure video (blue → green → pink → peach gradients, 
 - The user paints **intensity**, not colour. Fresh strokes bleed outward like wet ink for a second or two.
 - A palette gradient maps intensity to colour: thin = deep, layered = hot and light. Palettes are curated (four to six). Nothing the user does can clash.
 - Painted areas glow softly in My Space. Clay underneath stays soft-lit.
-- Live proof: `docs/lookdev-symmetry.html` (symmetry guide, bleed, palettes, patterns).
+- Live proofs: `docs/lookdev-symmetry.html` (first pass: strokes only, six patterns) and `docs/lookdev-gradient.html` (second pass, owner's notes applied: the whole body is gradient-mapped, strokes push up the same gradient; one composite guide = N around the axis × M mandala × mirror, so a front stroke also lands on the back; marks cut to two, a line and a dot, because six patterns were indistinguishable at object scale; no bands, no specular, flat Monument Valley quiet).
+- Owner's taste note (Nov 5): less is more, Monument Valley. Flat, pastel, clean silhouettes, soft gradients, nothing noisy.
 - Unity path: half-float intensity RT + wetness RT, a small diffusion blit each frame while wet, palette lookup in the shader.
 
 ## Option B: carved relief, 3渲2 (agent proposal, kept as an option)
