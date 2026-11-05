@@ -31,6 +31,12 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 - Whispers became a spatial wordless language with call and response; arms grow from the object's sides.
 - Storyboard v5 documents the shots; v4 is history.
 
+## Nov 6, late: the garden becomes a floating island (owner)
+- Reason, in the owner's words: start from a god view, see from far away that small creatures are playing and chatting on it; hold the floating island, scale it up with a gesture, and go inside at the creatures' own size to explore. Reference: a Softfield-style soft island (lavender to dusk, glowing orb, magenta mushroom tree, soft blobs and reeds).
+- Built: mini island (36%) hovering over the door disc; one hand moves, two hands scale and turn; past 2.4× it animates to 6× with the eye at creature height and a dusk sky dome; push hands together below 3× to come out. Inside, one-hand pinch drags the world.
+- Same seated 2 ft rule: nothing asks you to walk; you move the world, not yourself.
+- A pinch on or near the island never starts a trace; both hands pinching cancels a pending trace.
+
 ## Technical path for "real object → thing in your hand"
 1. Pinch near the object → Passthrough Camera API grabs one frame + pinch world position.
 2. Segment: MobileSAM/EfficientSAM via Unity Sentis with the pinch point as the prompt. Backup: depth threshold from Depth API. Backup of the backup: GrabCut.

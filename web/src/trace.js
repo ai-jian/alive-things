@@ -31,7 +31,7 @@ export function makeTraceSystem(world, active, hands, sound, events, onThing) {
       this.line.geometry.setAttribute('position', new BufferAttribute(new Float32Array(MAX_POINTS * 3), 3)); this.line.geometry.setDrawRange(0, 0); this.line.frustumCulled = false; this.line.visible = false; this.scene.add(this.line);
       this.tip = new Sprite(new SpriteMaterial({ map: glowTex(), transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending })); this.tip.scale.setScalar(0.03); this.scene.add(this.tip);
       this.cameraEntity = null; this.useCamera = /OculusBrowser/i.test(navigator.userAgent);
-      hands.on('pinchstart', (h) => { if (this.tracing) return; const cup = active.cup; if (cup) { cup.group.getWorldPosition(tmp); if (hands.tip[h].distanceTo(tmp) < 0.2) return; } this.pending = { hand: h, at: hands.tip[h].clone(), t: 0 }; });
+      hands.on('pinchstart', (h) => { if (this.tracing || events.inSpace) return; if (events.island && hands.tip[h].distanceTo(events.island.pos) < events.island.r) return; const cup = active.cup; if (cup) { cup.group.getWorldPosition(tmp); if (hands.tip[h].distanceTo(tmp) < 0.2) return; } this.pending = { hand: h, at: hands.tip[h].clone(), t: 0 }; });
       hands.on('pinchend', (h) => { if (this.pending && this.pending.hand === h) this.pending = null; if (this.tracing && this.tracing.hand === h) this.finish(); });
       window.addEventListener('keydown', (e) => { if (e.key === 't') this.demoTrace(); });
     }
@@ -41,6 +41,8 @@ export function makeTraceSystem(world, active, hands, sound, events, onThing) {
     }
     update(delta) {
       const headObj = this.renderer.xr.isPresenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
+      // both hands pinching is an island gesture, never a trace
+      if (this.pending && hands.pinching.left && hands.pinching.right) this.pending = null;
       if (this.pending) {
         this.pending.t += delta;
         if (hands.tip[this.pending.hand].distanceTo(this.pending.at) > 0.03) { this.pending = null; }

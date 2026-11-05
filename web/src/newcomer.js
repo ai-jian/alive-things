@@ -70,12 +70,13 @@ export class Newcomer {
    * @param {number} fade            garden fade 0..1
    * @returns {'caught'|null}
    */
-  update(dt, time, headLocal, headFwdLocal, tipsLocal, pinching, fade) {
+  update(dt, time, headLocal, headFwdLocal, tipsLocal, pinching, fade, scale = 1) {
     const cup = this.cup; if (!cup) return null;
     const pos = cup.group.position;
     // how close the nearest hand is, and whether a pinch closed right on it
     let near = Infinity, caughtBy = -1;
-    for (let i = 0; i < tipsLocal.length; i++) { const d = tipsLocal[i].distanceTo(pos); near = Math.min(near, d); if (pinching[i] && d < 0.06 && this.p > 0.45) caughtBy = i; }
+    // distances in real metres, so it behaves the same on the small island over the table and when you are inside
+    for (let i = 0; i < tipsLocal.length; i++) { const d = tipsLocal[i].distanceTo(pos) * scale; near = Math.min(near, d); if (pinching[i] && d < Math.max(0.05, 0.06 * scale) && this.p > 0.45) caughtBy = i; }
     if (caughtBy >= 0) { this.state = 'caught'; return 'caught'; }
     // being stared at: the head looks straight at it
     toIt.copy(pos).sub(headLocal).normalize();
@@ -90,7 +91,7 @@ export class Newcomer {
         if (this.peeks === 1 && this.onFirstPeek) this.onFirstPeek(); }
     } else if (this.state === 'peeking') {
       // shy: a long stare or a slow hand sends it back; a fast pinch can still catch it
-      if (this.stare > 1.1 || near < 0.12 || this.timer <= 0) { this.state = 'hidden'; this.timer = 4 + Math.random() * 5; this.stare = 0; }
+      if (this.stare > 1.1 || near < Math.max(0.1, 0.12 * Math.min(scale, 2)) || this.timer <= 0) { this.state = 'hidden'; this.timer = 4 + Math.random() * 5; this.stare = 0; }
     }
     const want = this.state === 'peeking' ? 1 : 0;
     const speed = want > this.p ? 1.6 : 5;                        // eases out, darts back

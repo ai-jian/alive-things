@@ -10,7 +10,7 @@ const STEPS = [
   { key: 'dwell',  text: 'Now stop moving, but keep touching.\nWatch the ink bloom.', done: ev => ev.dwell, timeout: 20 },
   { key: 'centre', text: 'Press and hold to move the centre.\nTwist two fingertips to change the fold.', done: ev => ev.centreSet || ev.foldChanged, timeout: 25 },
   { key: 'down',   text: 'When it feels done, pinch it\nand set it down on the table.', done: ev => ev.awake, timeout: 90 },
-  { key: 'door',   text: 'A doorway opened beside it.\nSet it down there when you are ready.', done: ev => ev.inSpace, timeout: 60 },
+  { key: 'door',   text: 'A glowing disc opened beside it.\nSet it down there when you are ready.', done: ev => ev.adopted, timeout: 60 },
   { key: 'trace',  text: 'Pinch in the air and hold, then trace\naround anything on your desk.', done: ev => ev.traced, timeout: 45 },
   { key: 'bye',    text: 'It learned you while you drew.\nStay as long as you like.', done: () => false, timeout: 7 },
 ];

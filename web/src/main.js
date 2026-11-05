@@ -29,7 +29,7 @@ const world = await World.create(document.getElementById('app'), {
 });
 
 // What the player has done so far. The hint card advances on these; traits will read them later.
-const events = { strokes: 0, dwell: false, grabbed: false, centreSet: false, foldChanged: false, focused: false, studioFloat: false, awake: false, traced: false, inSpace: false, newcomerCaught: false };
+const events = { strokes: 0, dwell: false, grabbed: false, centreSet: false, foldChanged: false, focused: false, studioFloat: false, awake: false, traced: false, inSpace: false, newcomerCaught: false, adopted: false, islandOpen: false };
 const hands = new Hands(world);
 const sound = new Sound();
 
