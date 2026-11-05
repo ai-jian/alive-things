@@ -30,3 +30,5 @@ One-time: repository Settings → Pages → Source: **GitHub Actions**.
 
 ## Not yet
 Focus mode (room fade), wake animation and traits, My Space, creature brain, whispers, trace-to-capture, camera colour (IWSDK has a `camera` feature; verify on device), sounds beyond the tick.
+
+Deployed at https://ai-jian.github.io/alive-things/ (GitHub Pages, source: GitHub Actions).
