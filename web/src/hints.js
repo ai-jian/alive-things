@@ -6,17 +6,19 @@ import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, 
 const STEPS = [
   { key: 'touch',  text: 'Touch the cup with one fingertip.\nDraw slowly.', done: ev => ev.strokes >= 1 },
   { key: 'dwell',  text: 'Now stop moving, but keep touching.\nWatch the ink bloom.', done: ev => ev.dwell, timeout: 20 },
-  { key: 'grab',   text: 'Pinch to pick it up.\nTurn it. Your strokes went all the way round.', done: ev => ev.grabbed, timeout: 25 },
-  { key: 'centre', text: 'Press and hold to move the centre.\nTwist two fingertips to change the fold.', done: ev => ev.centreSet || ev.foldChanged, timeout: 25 },
-  { key: 'bye',    text: 'That is all there is.\nStay as long as you like.', done: () => false, timeout: 6 },
+  { key: 'grab',   text: 'Pinch to pick it up.\nTurn it. Your strokes went round.', done: ev => ev.grabbed, timeout: 25 },
+  { key: 'focus',  text: 'Hold it. Pinch beside it with\nyour other hand and pull away.', done: ev => ev.focused, timeout: 30 },
+  { key: 'draw2',  text: 'Just you and the cup now.\nDraw slowly. Hold still to bloom.', done: ev => ev.strokes >= 4, timeout: 40 },
+  { key: 'release',text: 'When it feels done,\nopen your hand.', done: ev => ev.awake, timeout: 60 },
+  { key: 'bye',    text: 'It learned you while you drew.\nStay as long as you like.', done: () => false, timeout: 7 },
 ];
 
-function makeCard() {
+export function makeCard() {
   const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 384;
   const ctx = canvas.getContext('2d');
   const tex = new CanvasTexture(canvas); tex.colorSpace = SRGBColorSpace; tex.anisotropy = 4;
   const mat = new MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false });
-  const mesh = new Mesh(new PlaneGeometry(0.24, 0.09), mat);
+  const mesh = new Mesh(new PlaneGeometry(0.16, 0.06), mat);
   mesh.renderOrder = 10;
   function draw(text) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -34,7 +36,7 @@ function makeCard() {
 
 const head = new Vector3(), target = new Vector3();
 
-export function makeHintSystem(cup, events) {
+export function makeHintSystem(active, events) {
   class HintSystem extends createSystem({}, {}) {
     init() {
       this.card = makeCard(); this.scene.add(this.card.mesh);
@@ -54,9 +56,10 @@ export function makeHintSystem(cup, events) {
           if (STEPS[this.step]) this.card.draw(STEPS[this.step].text); else this.visibleWanted = false;
         }
       }
+      const cup = active.cup; if (!cup) return;
       // place above the cup, face the player
       const headObj = presenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
-      cup.group.getWorldPosition(target); target.y += 0.14;
+      cup.group.getWorldPosition(target); target.y += 0.115;
       this.card.mesh.position.lerp(target, 1 - Math.pow(0.001, delta));
       this.card.mesh.lookAt(head);
       const want = this.started && this.visibleWanted && STEPS[this.step] ? 1 : 0;

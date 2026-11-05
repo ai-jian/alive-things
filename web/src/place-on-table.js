@@ -5,10 +5,12 @@ import { Vector3, Quaternion } from 'three';
 
 const head = new Vector3(), planePos = new Vector3(), toHead = new Vector3(), tmpQ = new Quaternion();
 
-export function makePlacementSystem(cup, { fallbackAfter = 4 } = {}) {
+export function makePlacementSystem(active, { fallbackAfter = 4 } = {}) {
   class PlacementSystem extends createSystem({ planes: { required: [XRPlane] } }, {}) {
-    init() { this.placed = false; this.t = 0; }
+    init() { this.placed = false; this.t = 0; this.lastCup = null; this.spot = null; }
     update(delta) {
+      const cup = active.cup; if (!cup) return;
+      if (cup !== this.lastCup) { this.lastCup = cup; if (this.spot) { cup.group.position.copy(this.spot); return; } this.placed = false; }
       if (this.placed) return;
       this.t += delta;
       const presenting = this.renderer.xr.isPresenting;
@@ -31,14 +33,14 @@ export function makePlacementSystem(cup, { fallbackAfter = 4 } = {}) {
         toHead.copy(head).sub(planePos); toHead.y = 0; toHead.normalize();
         cup.group.position.copy(planePos).addScaledVector(toHead, Math.min(0.3, planePos.distanceTo(head) * 0.4));
         cup.group.position.y = best.y + 0.002;
-        this.placed = true;
+        this.placed = true; this.spot = cup.group.position.clone();
       } else if (this.t > fallbackAfter) {
         // no table found: in front of the face, a little below the eyes (a seated desk). Closer and higher on desktop so it is in view.
         const fwd = new Vector3(0, 0, -1).applyQuaternion(headObj.getWorldQuaternion(tmpQ)); fwd.y = 0; if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1); fwd.normalize();
         const ahead = presenting ? 0.5 : 0.6, below = presenting ? 0.4 : 0.25;
         cup.group.quaternion.identity();
         cup.group.position.copy(head).addScaledVector(fwd, ahead); cup.group.position.y = head.y - below;
-        this.placed = true;
+        this.placed = true; this.spot = cup.group.position.clone();
       }
     }
   }

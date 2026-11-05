@@ -75,8 +75,8 @@ export function makeCup({ dominant = new Color(0.93, 0.88, 0.78), heightMetres =
 
   const poke = { amt: 0, vel: 0 };
   const cup = {
-    group, body, handle, paint, uniforms, scale,
-    setDominant(c) { uniforms.uPal.value = paletteFromColor(c); },
+    group, body, handle, paint, uniforms, scale, dominant,
+    setDominant(c) { cup.dominant = c; uniforms.uPal.value = paletteFromColor(c); },
     setGlow(g) { uniforms.uGlow.value = g; },
     /** Analytic surface model in cup units: returns {u, v, depth, onWall} for a point in the cup's local space. */
     surface(localPt) {
