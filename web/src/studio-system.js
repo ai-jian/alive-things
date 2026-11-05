@@ -36,7 +36,7 @@ export function makeStudioSystem(active, hands, sound, events, brushStats, getTa
       if (this.mode === 'table' && grabbed && !cup.creature && !events.inSpace) this.enterStudio();
 
       if (this.mode === 'studio') {
-        anchor.copy(head).addScaledVector(fwd, 0.42); anchor.y = head.y - 0.1;
+        anchor.copy(head).addScaledVector(fwd, 0.45); anchor.y = head.y - 0.14;
         const s = cup.group.scale.x, want = this.bigScale;
         if (grabbed) {
           // growing in the hand; setting it down (below chest height) finishes
@@ -46,7 +46,8 @@ export function makeStudioSystem(active, hands, sound, events, brushStats, getTa
           cup.group.scale.setScalar(s + (want - s) * Math.min(1, delta * 3));
           cup.group.position.lerp(anchor, 1 - Math.pow(0.02, delta));
           // face the player, with a slow turntable so the back gets its turn; painting pauses the turn
-          look.copy(head); look.y = cupPos.y; const q = cup.group.quaternion.clone(); cup.group.lookAt(look); cup.group.rotateY(Math.PI + this.turn); const target = cup.group.quaternion.clone(); cup.group.quaternion.copy(q).slerp(target, Math.min(1, delta * 2.5));
+          // Object3D.lookAt points local +z at the target, and the face lives at +z: so no extra half turn
+          look.copy(head); look.y = cupPos.y; const q = cup.group.quaternion.clone(); cup.group.lookAt(look); cup.group.rotateY(this.turn); const target = cup.group.quaternion.clone(); cup.group.quaternion.copy(q).slerp(target, Math.min(1, delta * 2.5));
           if (!cup.touching) this.turn += delta * 0.12; if (this.turn > Math.PI * 2) this.turn -= Math.PI * 2;
           if (!this.settled && cupPos.distanceTo(anchor) < 0.03) { this.settled = true; events.studioFloat = true; }
         }
@@ -65,7 +66,7 @@ export function makeStudioSystem(active, hands, sound, events, brushStats, getTa
       const cup = active.cup; if (!cup || this.mode === 'studio' || cup.creature) return;
       this.mode = 'studio'; this.settled = false; this.turn = 0;
       this.baseScale = cup.group.scale.x; this.tableSpot = cup.group.position.clone();
-      const h = cup.heightMetres || 0.09; this.bigScale = this.baseScale * Math.max(2.5, Math.min(7, 0.3 / h));   // about 30 cm tall in front of you
+      const h = cup.heightMetres || 0.09; this.bigScale = this.baseScale * Math.max(2.5, Math.min(7, 0.26 / h));   // about 26 cm tall in front of you
       events.focused = true; sound.tick(1.4, 0.05);
     }
     finish(fromKey) {

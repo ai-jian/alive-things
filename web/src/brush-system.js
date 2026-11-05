@@ -5,7 +5,7 @@ import { Vector3, Vector2, Raycaster } from 'three';
 
 const TOUCH = 0.012;        // m: how close a fingertip must be to the wall to count as touching
 const MAX_DEPTH = 0.02;     // m: press this deep for full width
-const LONG_PRESS = 0.6;     // s
+const LONG_PRESS = 0.9;     // s
 const DWELL = 0.15;         // s
 const SPACING_PX = 7;
 
@@ -90,18 +90,22 @@ export function makeBrushSystem(active, events, hands, sound) {
       const x = s.u * cup.paint.W, y = (1 - s.v) * cup.paint.H;
       if (!h.down) {
         h.down = true; h.pressDone = false; h.counted = false; h.downT = h.lastMoveT = time; h.strokeLen = 0; h.smoothSpeed = 0; h.moved = 0;
+        h.downWorld = (h.downWorld || new Vector3()).copy(h.tipWorld); h.moveMax = 0;
         h.lastU = s.u; h.lastV = s.v; h.lastX = x; h.lastY = y; h.downU = s.u; h.downV = s.v;
         cup.pokeAt(local);
         return;
       }
+      h.moveMax = Math.max(h.moveMax || 0, h.tipWorld.distanceTo(h.downWorld));
       let dx = x - h.lastX, dy = y - h.lastY; if (dx > cup.paint.W / 2) dx -= cup.paint.W; if (dx < -cup.paint.W / 2) dx += cup.paint.W;
       const len = Math.hypot(dx, dy);
       if (len < SPACING_PX) {
-        if (!h.pressDone && h.strokeLen === 0 && time - h.downT > LONG_PRESS) { h.pressDone = true; cup.paint.setCentreUV(s.u, s.v); events.centreSet = true; this.tick(0.6); }
+        // a long press means the fingertip really stayed put in space, whatever the canvas scale
+        if (!h.pressDone && h.strokeLen === 0 && h.moveMax < 0.004 && time - h.downT > LONG_PRESS) { h.pressDone = true; cup.paint.setCentreUV(s.u, s.v); events.centreSet = true; this.tick(0.6); }
         else if (!h.pressDone && h.strokeLen > 0 && time - h.lastMoveT > DWELL) { const r = 10 + Math.min(30, (time - h.lastMoveT) * 25); cup.paint.water(h.lastU, h.lastV, r, delta * 1.5); this.stats.dwellTime += delta; if (time - h.lastMoveT > 0.6) events.dwell = true; }
         return;
       }
-      if (h.pressDone) return;
+      // a held press that then travels becomes a stroke: the centre stays where it was set, painting starts here
+      if (h.pressDone) { if (h.moveMax > 0.012) { h.pressDone = false; h.lastX = x; h.lastY = y; h.lastU = s.u; h.lastV = s.v; h.lastMoveT = time; } return; }
       const speedPx = len / Math.max(delta, 1e-4);                       // px per second
       const speedM = speedPx / cup.paint.pxX * (cup.group.scale.x / (cup.scale || 1));   // hand speed in metres, however big the canvas is
       h.smoothSpeed = h.smoothSpeed * 0.6 + speedM * 0.4; h.lastMoveT = time; this.stats.speedAccum += speedM; this.stats.speedSamples++; this.stats.touchTime += delta;

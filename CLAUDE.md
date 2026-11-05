@@ -15,11 +15,11 @@ The rules accept **IWSDK / WebXR entries by link**. WebXR (three.js + Meta Immer
 
 ## The interaction, as built (Nov 6)
 1. **Room.** A cup sits on the detected table. When a hand comes near it glows, turns toward the hand and leans in.
-2. **Pinch** it: it lifts and grows in the hand. **Let go:** it floats up to an anchor 42 cm ahead, about 30 cm tall, the room fades to warm fog, a hum rises. It slowly turns to show its back; touching pauses the turn.
-3. **Draw** with a fingertip: line (slow/deep = thick, tapered), tap = dot, hold still = bloom, press-and-hold = move the mandala centre, two fingertips twist = fold 4/6/8/12, flat palm = soften. Guide 2 × 6 × mirror. Strokes are a tint of the object's own gradient.
+2. **Pinch** it: it lifts and grows in the hand. **Let go:** it floats up to an anchor 45 cm ahead and 14 cm below the eyes, about 26 cm tall, the room fades to warm fog, a hum rises. It slowly turns to show its back; touching pauses the turn.
+3. **Draw** with a fingertip: line (slow/deep = thick, tapered), tap = dot, hold still = bloom, press-and-hold 0.9 s (fingertip still in space, not in texture pixels) = move the mandala centre, two fingertips twist = fold 4/6/8/12, flat palm = soften. Guide 2 × 6 × mirror. Strokes are a tint of the object's own gradient.
 4. **Pinch it and lower it** below chest height: it shrinks to real size, lands on the table, wakes (face, arms, feet, two-word trait tag from the stroke stats).
 5. **Doorway** disc appears beside it; set it on the disc → the garden. Home disc to return; a fresh cup waits.
-6. **Trace:** pinch in the air, hold 0.35 s, trace around any real object, release → a smooth inflated thing at real size and place; it then behaves like the cup.
+6. **Trace:** pinch in the air, hold 0.35 s, trace around any real object, release → the loop is smoothed (resample + Chaikin) and inflated from the curve itself (`inflatePolygon`: rim snapped to the outline, exact-distance heights, Laplacian smoothing, shared rim vertices), a soft thing at real size and place; it then behaves like the cup. Saved as the polygon (tiny); old mask saves still rebuild.
 Removed on Nov 6: the hold-with-one-hand-pull-with-the-other gesture (`focus-system.js`); replaced by `studio-system.js`.
 
 ## Repo map

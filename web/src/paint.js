@@ -63,7 +63,6 @@ export class PaintLayer {
       this.heat[i] = Math.min(1, this.heat[i] + v); this.wet[i] = Math.min(1, this.wet[i] + v * 2 * this.bleed);
     }
     this._grow(x0 - 2, y0 - 2, x1 + 2, y1 + 2); this.dirty = true;
-    this.coverage = Math.min(1, this.coverage + (radius * radius * 2.5) / (W * H));   // one unit ≈ its own footprint
   }
   _wet(cx, cy, radius, amount) {
     const { W, H } = this;
@@ -90,7 +89,12 @@ export class PaintLayer {
     if (this.wetBox && this.wetBox.x1 - this.wetBox.x0 > W * 1.5) { this.wetBox.x0 = 0; this.wetBox.x1 = W - 1; }
   }
 
-  upload() { if (!this.dirty) return; const { heat, bytes } = this; for (let i = 0; i < heat.length; i++) bytes[i] = Math.min(255, heat[i] * 255) | 0; this.texture.needsUpdate = true; this.dirty = false; }
+  upload() {
+    if (!this.dirty) return; const { heat, bytes } = this; let painted = 0, samples = 0;
+    for (let i = 0; i < heat.length; i++) { bytes[i] = Math.min(255, heat[i] * 255) | 0; if ((i & 15) === 0) { samples++; if (heat[i] > 0.04) painted++; } }
+    this.coverage = samples ? painted / samples : 0;   // measured share of the surface that carries ink
+    this.texture.needsUpdate = true; this.dirty = false;
+  }
 }
 
 const gauss = (d, r) => Math.exp(-(d * d) / (2 * r * r * 0.25));
