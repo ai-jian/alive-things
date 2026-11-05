@@ -1,0 +1,314 @@
+<title>Alive Things Look Test</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;600;700&display=swap">
+<style>
+/* Layout: one 3D stage on top, a single row of soft pill controls under it. Everything else is quiet. */
+:root{ --paper:#fbf7ef; --ink:#3b3340; --soft:#8a8190; --line:#e4dccf; --card:#fff; --accent:#4b7fcf;
+  --display:'Patrick Hand',"Comic Sans MS",cursive; --body:'Nunito',system-ui,sans-serif; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --paper:#1f1c22; --ink:#f1ebe2; --soft:#a79fab; --line:#3a343f; --card:#2a262f; --accent:#9ec5e8; color-scheme:dark } }
+:root[data-theme="dark"]{ --paper:#1f1c22; --ink:#f1ebe2; --soft:#a79fab; --line:#3a343f; --card:#2a262f; --accent:#9ec5e8; color-scheme:dark }
+body{ background:var(--paper); color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:24px 48px; }
+.wrap{ max-width:1000px; margin:0 auto; }
+h1{ font-family:var(--display); font-weight:400; font-size:38px; line-height:1; margin:0 0 4px; }
+.sub{ color:var(--soft); margin:0 0 14px; }
+#stage{ position:relative; width:100%; aspect-ratio:16/10; max-width:100%; border-radius:12px; overflow:hidden; border:2px solid var(--ink); box-shadow:4px 4px 0 var(--line); background:#f6efe4; touch-action:none; }
+#stage canvas{ display:block; width:100%; height:100%; }
+#hint{ position:absolute; left:10px; bottom:8px; font-family:var(--display); font-size:15px; color:#3b3340; background:rgba(255,253,248,.8); padding:2px 8px; border-radius:6px; pointer-events:none; }
+#fail{ position:absolute; inset:0; display:none; place-items:center; text-align:center; padding:20px; color:#3b3340; background:#f6efe4; }
+.bar{ display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-top:12px; }
+.grp{ display:flex; gap:4px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px; }
+.grp span.lbl{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--soft); padding:0 6px 0 8px; }
+button{ font:inherit; font-family:var(--display); font-size:17px; color:var(--ink); background:transparent; border:0; border-radius:999px; padding:4px 12px; cursor:pointer; }
+button:hover{ background:var(--line) } button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px }
+button[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+.sw{ width:26px; height:26px; padding:0; border:2px solid transparent; }
+.sw[aria-pressed="true"]{ border-color:var(--ink); background:var(--c) }
+.notes{ margin-top:22px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; font-size:14px; }
+.notes h2{ font-family:var(--display); font-weight:400; font-size:22px; margin:0 0 4px }
+.notes p{ margin:0 } .notes ul{ margin:0; padding-left:18px }
+</style>
+
+<div class="wrap">
+  <h1>Alive Things, look test</h1>
+  <p class="sub">A real lit cup, not a sketch. Drag to turn. Poke it. Paint it. Switch the world.</p>
+
+  <div id="stage">
+    <div id="fail">3D could not start in this browser. Try a desktop browser or the Quest browser.</div>
+    <div id="hint">drag empty space to orbit · tap the cup</div>
+  </div>
+
+  <div class="bar">
+    <div class="grp"><span class="lbl">Touch</span>
+      <button id="mPoke" aria-pressed="true">Poke</button>
+      <button id="mPaint" aria-pressed="false">Paint</button>
+    </div>
+    <div class="grp" id="paintGrp"><span class="lbl">Brush</span>
+      <button id="bDot" aria-pressed="true">Dot</button>
+      <button id="bBloom" aria-pressed="false">Blossom</button>
+      <button class="sw" data-c="#f4a6b8" style="--c:#f4a6b8;background:#f4a6b8" aria-pressed="true" aria-label="pink"></button>
+      <button class="sw" data-c="#9ec5e8" style="--c:#9ec5e8;background:#9ec5e8" aria-pressed="false" aria-label="blue"></button>
+      <button class="sw" data-c="#b7d9a3" style="--c:#b7d9a3;background:#b7d9a3" aria-pressed="false" aria-label="green"></button>
+      <button class="sw" data-c="#f6d77a" style="--c:#f6d77a;background:#f6d77a" aria-pressed="false" aria-label="yellow"></button>
+      <button class="sw" data-c="#f08a5d" style="--c:#f08a5d;background:#f08a5d" aria-pressed="false" aria-label="orange"></button>
+    </div>
+    <div class="grp"><span class="lbl">World</span>
+      <button id="wRoom" aria-pressed="true">Room</button>
+      <button id="wSpace" aria-pressed="false">My Space</button>
+    </div>
+    <div class="grp">
+      <button id="tFace" aria-pressed="true">Face</button>
+      <button id="tReset">Clear paint</button>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div><h2>What this proves</h2><p>Soft lighting on a kept-texture object reads as cozy, not clinical. The jelly dent is a vertex shader, no physics. Paint is a decal canvas over the photo texture. All three port straight to Unity.</p></div>
+    <div><h2>What it doesn't show</h2><ul><li>Bloom and depth of field (easy in Unity URP)</li><li>Passthrough behind the object</li><li>Hand models</li></ul></div>
+    <div><h2>Try</h2><ul><li>Blossom brush, then poke it hard</li><li>My Space, then orbit low to see the light pool</li></ul></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.152.2/three.min.js"></script>
+<script>
+(function(){
+  if(!window.THREE){ document.getElementById('fail').style.display='grid'; return; }
+  const stage = document.getElementById('stage');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- renderer / scene ----------
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias:true }); } catch(e){ document.getElementById('fail').style.display='grid'; return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  if ('outputColorSpace' in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace; else renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1.6, 0.1, 50);
+  const orbit = { theta: 0.55, phi: 1.15, r: 5.2, target: new THREE.Vector3(0, 0.75, 0) };
+  function placeCamera(){
+    camera.position.set(
+      orbit.target.x + orbit.r * Math.sin(orbit.phi) * Math.sin(orbit.theta),
+      orbit.target.y + orbit.r * Math.cos(orbit.phi),
+      orbit.target.z + orbit.r * Math.sin(orbit.phi) * Math.cos(orbit.theta));
+    camera.lookAt(orbit.target);
+  }
+
+  // ---------- lights ----------
+  const hemi = new THREE.HemisphereLight(0xfff3e0, 0xf3c9d2, 0.9);
+  const key = new THREE.DirectionalLight(0xfff1dc, 1.6); key.position.set(2.5, 5, 2.5); key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024); key.shadow.radius = 6; key.shadow.bias = -0.0008; key.shadow.normalBias = 0.02;
+  const fill = new THREE.DirectionalLight(0xf6b9c9, 0.6); fill.position.set(-3, 2, 1);
+  const rim = new THREE.DirectionalLight(0xa9cdf0, 0.8); rim.position.set(0, 3, -4);
+  const spot = new THREE.SpotLight(0xfff6e6, 0, 12, 0.55, 0.9, 1); spot.position.set(0, 5, 0); spot.castShadow = true; spot.shadow.mapSize.set(1024,1024); spot.shadow.radius = 8; spot.shadow.bias = -0.002; spot.shadow.normalBias = 0.03;
+  spot.target.position.set(0,0,0);
+  scene.add(hemi, key, fill, rim, spot, spot.target);
+
+  // ---------- ground ----------
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0xf6efe4, roughness: 1 });
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(12, 48), groundMat);
+  ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+  // light pool for My Space
+  const poolCanvas = document.createElement('canvas'); poolCanvas.width = poolCanvas.height = 256;
+  { const c = poolCanvas.getContext('2d'); const g = c.createRadialGradient(128,128,10,128,128,128);
+    g.addColorStop(0,'rgba(255,244,222,0.95)'); g.addColorStop(0.5,'rgba(255,236,210,0.45)'); g.addColorStop(1,'rgba(255,230,200,0)');
+    c.fillStyle = g; c.fillRect(0,0,256,256); }
+  const pool = new THREE.Mesh(new THREE.PlaneGeometry(4.2,4.2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(poolCanvas), transparent: true, depthWrite: false }));
+  pool.rotation.x = -Math.PI/2; pool.position.y = 0.005; pool.visible = false; scene.add(pool);
+
+  // sparkles for My Space
+  const sparkN = 160, sparkPos = new Float32Array(sparkN*3);
+  for (let i=0;i<sparkN;i++){ sparkPos[i*3]=(Math.random()-0.5)*14; sparkPos[i*3+1]=Math.random()*5; sparkPos[i*3+2]=(Math.random()-0.5)*14; }
+  const sparkGeo = new THREE.BufferGeometry(); sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos,3));
+  const sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ color: 0xfff3d6, size: 0.05, transparent: true, opacity: 0.85 }));
+  sparks.visible = false; scene.add(sparks);
+
+  // ---------- paint texture (the "photo" plus doodles) ----------
+  const W = 1024, H = 512;
+  const tex = document.createElement('canvas'); tex.width = W; tex.height = H; const tc = tex.getContext('2d');
+  function basePhoto(){
+    // stand-in for the captured photo: warm ceramic with a faint printed band
+    const g = tc.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,'#efe7d8'); g.addColorStop(0.5,'#f7f1e4'); g.addColorStop(1,'#eadfcf');
+    tc.fillStyle = g; tc.fillRect(0,0,W,H);
+    tc.fillStyle = 'rgba(120,100,90,0.10)'; tc.fillRect(0, H*0.50, W, 10); tc.fillRect(0, H*0.86, W, 8);
+    // tiny speckle so it reads as a real material
+    tc.fillStyle = 'rgba(90,70,60,0.06)';
+    for (let i=0;i<900;i++){ tc.fillRect(Math.random()*W, Math.random()*H, 2, 2); }
+  }
+  function zenDoodle(){
+    tc.strokeStyle = '#d0479a'; tc.lineWidth = 5; tc.lineCap = 'round';
+    for (let k=0;k<6;k++){
+      const x0 = 80 + k*160, y0 = H*0.64 + (k%2?26:-26);
+      tc.beginPath();
+      for (let t=0;t<=1.001;t+=0.02){
+        const a = t*Math.PI*4, r = 18 + 34*t;
+        const x = x0 + Math.cos(a)*r*1.3, y = y0 + Math.sin(a)*r*0.8;
+        t===0 ? tc.moveTo(x,y) : tc.lineTo(x,y);
+      }
+      tc.stroke();
+      // a leaf off the end
+      tc.beginPath(); tc.moveTo(x0+60,y0+10); tc.quadraticCurveTo(x0+110,y0-30,x0+140,y0+20); tc.quadraticCurveTo(x0+100,y0+30,x0+60,y0+10); tc.stroke();
+    }
+    // a few dots
+    [['#f4a6b8',140,270],['#9ec5e8',420,250],['#f6d77a',700,280],['#b7d9a3',900,260],['#f08a5d',300,430],['#9ec5e8',620,440]].forEach(d=>dot(d[1],d[2],11,d[0]));
+  }
+  function dot(x,y,r,color){ tc.fillStyle = color; tc.beginPath(); tc.arc(x,y,r,0,Math.PI*2); tc.fill(); }
+  function blossom(x,y,color){
+    for (let i=0;i<5;i++){ const a = i/5*Math.PI*2 + Math.random()*0.3; dot(x+Math.cos(a)*11, y+Math.sin(a)*11, 8, color); }
+    dot(x,y,5,'#f6d77a');
+  }
+  basePhoto(); zenDoodle();
+  const paintTex = new THREE.CanvasTexture(tex); paintTex.anisotropy = 4;
+  if ('colorSpace' in paintTex) paintTex.colorSpace = THREE.SRGBColorSpace; else paintTex.encoding = THREE.sRGBEncoding;
+
+  // ---------- cup: lathe body, torus handle, jelly shader ----------
+  const prof = [[0,0],[0.42,0],[0.52,0.04],[0.56,0.12],[0.60,0.6],[0.64,0.98],[0.66,1.04],[0.58,1.04],[0.56,0.98],[0.52,0.20],[0.44,0.14],[0,0.14]].map(p=>new THREE.Vector2(p[0],p[1]));
+  const bodyGeo = new THREE.LatheGeometry(prof, 64); bodyGeo.computeVertexNormals();
+  // remap V so the outer wall (profile points 3..5) owns most of the texture
+  { const vmap = [0, 0.04, 0.08, 0.12, 0.52, 0.88, 0.9, 0.92, 0.94, 0.97, 0.99, 1];
+    const uv = bodyGeo.attributes.uv, n = prof.length - 1;
+    for (let i = 0; i < uv.count; i++){ const idx = Math.round(uv.getY(i) * n); uv.setY(i, vmap[Math.max(0, Math.min(n, idx))]); }
+    uv.needsUpdate = true; }
+  const jelly = { uPoke: { value: new THREE.Vector3(0,0,0) }, uAmt: { value: 0 }, uWob: { value: 0 }, uTime: { value: 0 } };
+  function jellify(mat){
+    mat.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, jelly);
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nuniform vec3 uPoke; uniform float uAmt; uniform float uWob; uniform float uTime;')
+        .replace('#include <begin_vertex>', `#include <begin_vertex>
+          float dj = distance(transformed, uPoke);
+          float fj = smoothstep(0.55, 0.0, dj);
+          transformed -= normalize(transformed * vec3(1.0,0.0,1.0) + vec3(0.0001)) * fj * uAmt * 0.34;
+          float wj = sin(uTime*9.0 + transformed.y*5.0) * uWob;
+          transformed.x *= 1.0 + wj; transformed.z *= 1.0 + wj; transformed.y *= 1.0 - wj*0.8;`);
+    };
+    mat.customProgramCacheKey = () => 'jelly';
+  }
+  const bodyMat = new THREE.MeshPhysicalMaterial({ map: paintTex, roughness: 0.42, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.35, sheen: 0.4, sheenColor: new THREE.Color(0xffe7ee) });
+  jellify(bodyMat);
+  const body = new THREE.Mesh(bodyGeo, bodyMat); body.castShadow = true; body.receiveShadow = true;
+  const handleMat = new THREE.MeshPhysicalMaterial({ color: 0xf3ecdf, roughness: 0.45, clearcoat: 0.5, clearcoatRoughness: 0.35 });
+  jellify(handleMat);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.075, 18, 36, Math.PI*1.25), handleMat);
+  handle.position.set(0.56, 0.56, 0); handle.rotation.set(0, 0, -Math.PI*0.62); handle.castShadow = true;
+
+  const creature = new THREE.Group(); creature.add(body, handle); scene.add(creature);
+  creature.position.y = 0.22;
+
+  // face
+  const face = new THREE.Group();
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x3b3340, roughness: 0.5 });
+  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 12), eyeMat); eyeL.position.set(-0.17, 0.62, 0.575);
+  const eyeR = eyeL.clone(); eyeR.position.x = 0.17;
+  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.016, 8, 20, Math.PI), eyeMat); mouth.position.set(0, 0.48, 0.60); mouth.rotation.set(0, 0, Math.PI);
+  const cheekMat = new THREE.MeshStandardMaterial({ color: 0xf4a6b8, roughness: 0.9 });
+  const cheekL = new THREE.Mesh(new THREE.CircleGeometry(0.05, 16), cheekMat); cheekL.position.set(-0.3, 0.5, 0.52); cheekL.rotation.y = -0.5;
+  const cheekR = cheekL.clone(); cheekR.position.x = 0.3; cheekR.rotation.y = 0.5;
+  face.add(eyeL, eyeR, mouth, cheekL, cheekR); creature.add(face);
+
+  // limbs
+  const limbMat = new THREE.MeshStandardMaterial({ color: 0x3b3340, roughness: 0.6 });
+  const legGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.22, 10);
+  const footGeo = new THREE.SphereGeometry(0.075, 14, 10); footGeo.scale(1.3, 0.5, 1);
+  const legs = [];
+  [-0.22, 0.22].forEach(x => { const g = new THREE.Group(); const l = new THREE.Mesh(legGeo, limbMat); l.position.y = -0.11; const f = new THREE.Mesh(footGeo, limbMat); f.position.y = -0.22; g.add(l, f); g.position.set(x, 0, 0.1); g.castShadow = true; creature.add(g); legs.push(g); });
+  const armGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.3, 10);
+  const armL = new THREE.Mesh(armGeo, limbMat); armL.position.set(-0.68, 0.55, 0); armL.rotation.z = 1.2; creature.add(armL);
+  const armR = new THREE.Mesh(armGeo, limbMat); armR.position.set(0.95, 0.75, 0); armR.rotation.z = -0.9; creature.add(armR);
+
+  // ---------- world toggle ----------
+  const roomBg = new THREE.Color(0xf6efe4), spaceBg = new THREE.Color(0x221f2c);
+  function setWorld(space){
+    scene.background = space ? spaceBg : roomBg;
+    hemi.intensity = space ? 0.35 : 0.9; key.intensity = space ? 0.15 : 1.6; fill.intensity = space ? 0.1 : 0.6; rim.intensity = space ? 0.5 : 0.8;
+    spot.intensity = space ? 22 : 0;
+    groundMat.color.set(space ? 0x2b2838 : 0xf6efe4);
+    pool.visible = space; sparks.visible = space;
+    renderer.toneMappingExposure = space ? 1.0 : 1.05;
+    document.getElementById('wRoom').setAttribute('aria-pressed', String(!space));
+    document.getElementById('wSpace').setAttribute('aria-pressed', String(space));
+  }
+  setWorld(false);
+
+  // ---------- interaction ----------
+  let mode = 'poke', brush = 'dot', color = '#f4a6b8';
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let dragging = false, painting = false, lastX = 0, lastY = 0, moved = 0;
+  const pokeState = { amt: 0, vel: 0 };
+  function hit(ev){
+    const r = renderer.domElement.getBoundingClientRect();
+    ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const h = ray.intersectObject(body, false);
+    return h.length ? h[0] : null;
+  }
+  function paintAt(h){
+    if (!h.uv) return;
+    const x = h.uv.x * W, y = (1 - h.uv.y) * H;
+    brush === 'dot' ? dot(x, y, 10 + Math.random()*4, color) : blossom(x, y, color);
+    paintTex.needsUpdate = true;
+  }
+  stage.addEventListener('pointerdown', ev => {
+    stage.setPointerCapture(ev.pointerId);
+    const h = hit(ev); lastX = ev.clientX; lastY = ev.clientY; moved = 0;
+    if (h && mode === 'poke'){
+      jelly.uPoke.value.copy(body.worldToLocal(h.point.clone()));
+      pokeState.vel = 5.0; jelly.uWob.value = 0.07;
+    } else if (h && mode === 'paint'){ painting = true; paintAt(h); }
+    else dragging = true;
+  });
+  stage.addEventListener('pointermove', ev => {
+    const dx = ev.clientX - lastX, dy = ev.clientY - lastY; lastX = ev.clientX; lastY = ev.clientY; moved += Math.abs(dx)+Math.abs(dy);
+    if (dragging){ orbit.theta -= dx * 0.008; orbit.phi = Math.min(1.5, Math.max(0.35, orbit.phi - dy * 0.006)); }
+    else if (painting){ const h = hit(ev); if (h) paintAt(h); }
+  });
+  const stop = () => { dragging = false; painting = false; };
+  stage.addEventListener('pointerup', stop); stage.addEventListener('pointercancel', stop);
+
+  function press(ids, on){ ids.forEach(id => document.getElementById(id).setAttribute('aria-pressed', String(id === on))); }
+  document.getElementById('mPoke').onclick = () => { mode='poke'; press(['mPoke','mPaint'],'mPoke'); hint('tap the cup to poke it'); };
+  document.getElementById('mPaint').onclick = () => { mode='paint'; press(['mPoke','mPaint'],'mPaint'); hint('drag on the cup to paint'); };
+  document.getElementById('bDot').onclick = () => { brush='dot'; press(['bDot','bBloom'],'bDot'); };
+  document.getElementById('bBloom').onclick = () => { brush='bloom'; press(['bDot','bBloom'],'bBloom'); };
+  document.querySelectorAll('.sw').forEach(b => b.onclick = () => { color = b.dataset.c; document.querySelectorAll('.sw').forEach(x => x.setAttribute('aria-pressed', String(x===b))); });
+  document.getElementById('wRoom').onclick = () => setWorld(false);
+  document.getElementById('wSpace').onclick = () => setWorld(true);
+  document.getElementById('tFace').onclick = (e) => { face.visible = !face.visible; e.currentTarget.setAttribute('aria-pressed', String(face.visible)); };
+  document.getElementById('tReset').onclick = () => { basePhoto(); paintTex.needsUpdate = true; };
+  function hint(t){ document.getElementById('hint').textContent = t; }
+
+  // ---------- resize ----------
+  function resize(){ const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage); resize();
+
+  // ---------- loop ----------
+  const clock = new THREE.Clock(); let blinkT = 2.5;
+  function tick(){
+    const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+    // spring for the poke
+    const k = 70, c = 6;
+    pokeState.vel += (-k * pokeState.amt - c * pokeState.vel) * dt;
+    pokeState.amt += pokeState.vel * dt;
+    jelly.uAmt.value = Math.max(0, pokeState.amt);
+    jelly.uWob.value *= Math.pow(0.08, dt);
+    jelly.uTime.value = t;
+    if (!reduce){
+      creature.position.y = 0.22 + Math.sin(t * 2.2) * 0.02;
+      creature.rotation.z = Math.sin(t * 1.1) * 0.03;
+      legs[0].rotation.x = Math.sin(t * 2.2) * 0.25; legs[1].rotation.x = -Math.sin(t * 2.2) * 0.25;
+      armL.rotation.z = 1.2 + Math.sin(t * 2.2) * 0.15; armR.rotation.z = -0.9 - Math.sin(t * 2.2) * 0.15;
+      if (!dragging) orbit.theta += dt * 0.05;
+      sparks.position.y = Math.sin(t * 0.3) * 0.2; sparks.rotation.y = t * 0.02;
+    }
+    // blink
+    blinkT -= dt; const s = blinkT < 0.12 ? 0.1 : 1; eyeL.scale.y = eyeR.scale.y = s; if (blinkT < 0) blinkT = 2 + Math.random() * 3;
+    placeCamera();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+</script>
