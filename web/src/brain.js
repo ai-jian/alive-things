@@ -10,7 +10,7 @@ export class Brain {
     this.need = { explore: Math.random() * 0.3, rest: 0, company: Math.random() * 0.3, play: 0 };
     this.state = 'idle'; this.timer = 1 + Math.random() * 2; this.target = new Vector3(); this.partner = null; this.affinity = new Map();
     this.speed = 0.04 * (1 - 0.5 * this.t.sleepy) + 0.03 * this.t.playful;   // m/s, tabletop scale
-    this.whisper = makeWhisper(); garden.group.add(this.whisper.mesh); this.whisperT = 0;
+    this.whisper = makeWhisper(); garden.group.add(this.whisper.mesh); this.whisperT = 0; this.turn = false; this.said = 0;
     this.pickWander();
   }
   pos() { return this.cup.group.position; }
@@ -44,20 +44,29 @@ export class Brain {
     this.timer -= dt; if (this.timer <= 0) this.decide(all);
     switch (this.state) {
       case 'wander': if (this.moveToward(this.target, dt, 0.01)) this.timer = 0; break;
-      case 'approach': if (!this.partner) { this.timer = 0; break; } if (this.moveToward(this.partner.pos(), dt, 0.09)) { this.enter('whisper', 3 + Math.random() * 2); this.partner.invite(this); this.bond(this.partner, 0.2); n.company = 0; } break;
+      case 'approach': if (!this.partner) { this.timer = 0; break; } if (this.moveToward(this.partner.pos(), dt, 0.09)) { this.enter('whisper', 4 + Math.random() * 3); this.turn = true; this.said = 0; this.whisperT = 0.3; this.partner.invite(this); this.bond(this.partner, 0.2); n.company = 0; } break;
       case 'whisper': if (this.partner) { tmp2.copy(this.partner.pos()).sub(this.pos()); const yaw = Math.atan2(tmp2.x, tmp2.z); this.cup.group.rotation.y += ((yaw - this.cup.group.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 4); }
-        this.whisperT -= dt; if (this.whisperT <= 0) { this.whisperT = 0.9 + Math.random() * 0.6; this.whisper.say(this.cup); this.sound.chirp(0.8 + 0.8 * t.playful - 0.2 * t.sleepy, 1 + Math.round(t.social)); } break;
+        this.whisperT -= dt;
+        if (this.turn && this.whisperT <= 0) {
+          // speak, then hand the turn to the partner after the phrase
+          const world = this.garden.group.localToWorld(this.pos().clone()); world.y += 0.05;
+          const len = this.sound.whisper({ pitch: 0.85 + 0.6 * t.playful - 0.25 * t.sleepy + 0.1 * t.curious, speed: 0.8 + 0.6 * t.playful - 0.3 * t.sleepy, syllables: 2 + Math.round(t.social * 4) - (t.shy > 0.5 ? 1 : 0), volume: 0.03 + 0.03 * (1 - t.shy), question: this.said % 2 === 0, pos: world });
+          this.whisper.say(this.cup); this.said++;
+          if (this.cup.creature) this.cup.creature.talkT = len;
+          this.turn = false; if (this.partner) { this.partner.turn = true; this.partner.whisperT = len + 0.25 + Math.random() * 0.3; }
+          this.whisperT = len + 1.5;
+        } break;
       case 'look': if (head) { tmp2.copy(head).sub(this.pos()); const yaw = Math.atan2(tmp2.x, tmp2.z); this.cup.group.rotation.y += ((yaw - this.cup.group.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 3); } break;
       default: break;
     }
     if (this.cup.creature) { this.cup.creature.napping = this.state === 'nap'; }
     // whisper card placement + fade
-    const w = this.whisper; w.alpha += (((this.state === 'whisper') ? 1 : 0) - w.alpha) * Math.min(1, dt * 4); w.mat.opacity = w.alpha; w.mesh.visible = w.alpha > 0.02;
+    const w = this.whisper; const talking = this.state === 'whisper' && this.cup.creature && this.cup.creature.talkT > 0; w.alpha += ((talking ? 1 : 0) - w.alpha) * Math.min(1, dt * 5); w.mat.opacity = w.alpha; w.mesh.visible = w.alpha > 0.02;
     if (w.mesh.visible) { w.mesh.position.copy(this.pos()); w.mesh.position.y += 0.1; if (head) w.mesh.lookAt(head); }
     // nap pose
     this.cup.group.rotation.x += (((this.state === 'nap') ? 0.18 : 0) - this.cup.group.rotation.x) * Math.min(1, dt * 2);
   }
-  invite(from) { this.partner = from; this.enter('whisper', 3 + Math.random() * 2); this.bond(from, 0.2); this.need.company = 0; }
+  invite(from) { this.partner = from; this.enter('whisper', 4 + Math.random() * 3); this.turn = false; this.said = 1; this.bond(from, 0.2); this.need.company = 0; }
   poke(dir) { if (this.t.shy > 0.5) { this.enter('idle', 1.2); this.cup.group.position.addScaledVector(dir.clone().setY(0).normalize(), -0.015); } else { this.enter('idle', 0.8); this.need.play = 0; } }
 }
 

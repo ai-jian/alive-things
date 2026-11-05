@@ -3,7 +3,7 @@
 // the loop becomes its palette. No computer vision, nothing to fail.
 import { createSystem, OneHandGrabbable, CameraSource, CameraUtils } from '@iwsdk/core';
 import { Line, BufferGeometry, BufferAttribute, LineBasicMaterial, Vector3, Color, Sprite, SpriteMaterial, CanvasTexture, AdditiveBlending } from 'three';
-import { rasterizePolygon, inflateMask } from './inflate.js';
+import { rasterizePolygon, inflateMask, sidesAt } from './inflate.js';
 import { makeThing } from './thing.js';
 import { dominantColor } from './palette.js';
 
@@ -61,7 +61,7 @@ export function makeTraceSystem(world, active, hands, sound, events, onThing) {
       const geo = inflateMask(r.mask, r.w, r.h, r.width, r.height, 0.55);
       if (!geo) return;
       const dominant = this.sampleColour(pts, poly, r) || new Color().setHSL(Math.random(), 0.35, 0.6);
-      const thing = makeThing({ geometry: geo, dominant, width: r.width, height: r.height });
+      const thing = makeThing({ geometry: geo, dominant, width: r.width, height: r.height, sides: sidesAt(r.mask, r.w, r.h, 0.5) });
       thing.shape = { w: r.w, h: r.h, width: r.width, height: r.height, mask: r.mask };
       thing.spawnT = 0;
       // place at the real spot, front toward the player; the bbox centre is offset from the centroid by the margin

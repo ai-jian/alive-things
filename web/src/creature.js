@@ -1,6 +1,16 @@
 // What a cup becomes when you let go: eyes, a mouth, feet, a personality grown from how you drew.
 // Visual layer only here; the My Space brain drives movement later.
-import { Group, Mesh, SphereGeometry, TorusGeometry, CylinderGeometry, CircleGeometry, MeshBasicMaterial, Vector3 } from 'three';
+import { Group, Mesh, SphereGeometry, TorusGeometry, CylinderGeometry, CircleGeometry, MeshBasicMaterial, Vector3, TubeGeometry, QuadraticBezierCurve3 } from 'three';
+
+/** a short curved arm rooted at the object's side; the group pivots at the shoulder */
+function makeArm(side, root, ink) {
+  const s = side;
+  const curve = new QuadraticBezierCurve3(new Vector3(0, 0, 0), new Vector3(s * 0.16, -0.02, 0.1), new Vector3(s * 0.22, -0.2, 0.17));
+  const tube = new Mesh(new TubeGeometry(curve, 10, 0.026, 8, false), ink);
+  const hand = new Mesh(new SphereGeometry(0.042, 10, 8), ink); hand.position.copy(curve.getPoint(1));
+  const g = new Group(); g.add(tube, hand); g.position.copy(root); g.userData.side = s; g.rotation.z = s * -0.15;
+  return g;
+}
 
 /** Personality from stroke stats. Never random. Mirrors unity/.../CreatureTraits.cs. */
 export function traitsFromStats(s) {
@@ -40,13 +50,14 @@ export function wakeCup(cup, { traits, dark }) {
     const foot = new Mesh(new SphereGeometry(0.075, 12, 8), ink); foot.scale.set(1.3, 0.5, 1); foot.position.y = -0.22;
     g.add(leg, foot); g.position.set(x, 0, 0.1); limbs.add(g); legs.push(g);
   }
-  const armL = new Mesh(new CylinderGeometry(0.025, 0.025, 0.3, 8), ink); armL.position.set(-(hw + 0.06), 0.55, 0); armL.rotation.z = 1.2;
-  const armR = armL.clone(); armR.position.set(hw + (cup.handle ? 0.35 : 0.06), cup.handle ? 0.72 : 0.55, 0); armR.rotation.z = -0.9;
-  limbs.add(armL, armR);
+  // arms grow from the sides, at mid height (below the handle on a cup)
+  const armL = makeArm(-1, new Vector3(-hw, 0.52, 0.05), ink);
+  const armR = makeArm(1, new Vector3(hw, cup.handle ? 0.32 : 0.52, 0.05), ink);
+  limbs.add(armL, armR); const arms = [armL, armR];
   const parts = new Group(); parts.add(face, limbs); parts.scale.setScalar(0.001); parts.position.set(fit.offset[0], fit.offset[1], fit.offset[2]); cup.group.add(parts);
 
   const c = {
-    traits, parts, legs, eyeL, eyeR, awake: true, t: 0, pop: 0, blinkT: 2 + Math.random() * 2, walking: false, lookTarget: null,
+    traits, parts, legs, arms, eyeL, eyeR, awake: true, t: 0, pop: 0, blinkT: 2 + Math.random() * 2, walking: false, napping: false, talkT: 0, lookTarget: null,
     update(dt, headWorld) {
       c.t += dt;
       // pop in with a little overshoot
@@ -55,6 +66,17 @@ export function wakeCup(cup, { traits, dark }) {
       c.blinkT -= dt; const ey = c.blinkT < 0.12 ? 0.1 : 1; eyeL.scale.y = eyeR.scale.y = ey; if (c.blinkT < 0) c.blinkT = 2 + Math.random() * 3 + traits.sleepy * 2;
       // feet
       const f = c.walking ? 9 : 0; for (let i = 0; i < legs.length; i++) legs[i].rotation.x = f ? Math.sin(c.t * f + i * Math.PI) * 0.4 : 0;
+      // arms: breathe at rest, swing when walking, lift and wave a little while talking, droop when napping
+      if (c.talkT > 0) c.talkT -= dt;
+      for (let i = 0; i < arms.length; i++) {
+        const a = arms[i], s = a.userData.side;
+        let z = s * -0.15 + Math.sin(c.t * 1.6 + i) * 0.04;
+        if (c.walking) z += Math.sin(c.t * 9 + i * Math.PI) * 0.35 * s;
+        if (c.talkT > 0) z += s * -(0.55 + Math.sin(c.t * 7 + i * 1.3) * 0.2) * (0.6 + 0.4 * traits.playful);
+        if (c.napping) z = s * 0.25;
+        a.rotation.z += (z - a.rotation.z) * Math.min(1, dt * 8);
+        a.rotation.x = c.talkT > 0 ? Math.sin(c.t * 6 + i) * 0.15 : 0;
+      }
       // glance at the player sometimes (curious ones more)
       if (headWorld) { const local = cup.group.worldToLocal(head.copy(headWorld)); const want = Math.atan2(local.x, local.z); const amt = 0.15 + 0.25 * traits.curious; face.rotation.y += ((Math.max(-0.6, Math.min(0.6, want)) * amt) - face.rotation.y) * Math.min(1, dt * 2); }
     },

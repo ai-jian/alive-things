@@ -9,7 +9,7 @@ import { makeCup } from './cup.js';
 import { wakeCup } from './creature.js';
 import { loadAll, upsert, serialize, restorePaint, decodeMask } from './store.js';
 import { makeThing } from './thing.js';
-import { inflateMask } from './inflate.js';
+import { inflateMask, sidesAt } from './inflate.js';
 
 const head = new Vector3(), tmp = new Vector3();
 
@@ -99,7 +99,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
     leave() { this.wantIn = false; this.inSpace = false; events.inSpace = false; sound.setHum(0); }
     rebuild(rec) {
       let cup = null;
-      if (rec.kind === 'thing' && rec.shape) { const sh = decodeMask(rec); const geo = inflateMask(sh.mask, sh.w, sh.h, sh.width, sh.height, 0.55); if (geo) { cup = makeThing({ geometry: geo, dominant: new Color(rec.dominant), width: sh.width, height: sh.height }); cup.shape = sh; } }
+      if (rec.kind === 'thing' && rec.shape) { const sh = decodeMask(rec); const geo = inflateMask(sh.mask, sh.w, sh.h, sh.width, sh.height, 0.55); if (geo) { cup = makeThing({ geometry: geo, dominant: new Color(rec.dominant), width: sh.width, height: sh.height, sides: sidesAt(sh.mask, sh.w, sh.h, 0.5) }); cup.shape = sh; } }
       if (!cup) cup = makeCup({ dominant: new Color(rec.dominant), heightMetres: 0.09 });
       cup.id = rec.id; cup.traits = rec.traits; cup.dominant = new Color(rec.dominant); cup.bornAt = rec.bornAt; restorePaint(cup, rec);
       cup.creature = wakeCup(cup, { traits: rec.traits, dark: cup.uniforms.uPal.value[0].getHex() }); cup.creature.pop = 1; cup.creature.parts.scale.setScalar(cup.wakeFit ? cup.wakeFit.unit : 1);
@@ -149,6 +149,8 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.plant.rotation.z = Math.sin(time * 0.7) * 0.05; this.plantCard.mesh.position.copy(this.plant.position); this.plantCard.mesh.position.y += 0.09; this.plantCard.mesh.lookAt(this.group.worldToLocal(head.clone()));
       if (this.plantT > 0) this.plantT -= delta;
       this.homeCard.mesh.position.copy(this.home.position); this.homeCard.mesh.position.y += 0.05; this.homeCard.mesh.lookAt(this.group.worldToLocal(head.clone()));
+      // the ear is where the head is
+      { const q = headObj.getWorldQuaternion(this.group.quaternion.clone()); const fwd = new Vector3(0, 0, -1).applyQuaternion(q); const up = new Vector3(0, 1, 0).applyQuaternion(q); sound.setListener(head, fwd, up); }
       // brains
       const headLocal = this.group.worldToLocal(head.clone());
       for (const b of this.brains) b.update(delta, this.brains, headLocal);

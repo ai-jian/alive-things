@@ -7,7 +7,7 @@ import { gradientShader } from './cup.js';
 
 const ray = new Raycaster(), origin = new Vector3(), dir = new Vector3(), centre = new Vector3();
 
-export function makeThing({ geometry, dominant = new Color(0.9, 0.86, 0.78), width = 0.1, height = 0.1 }) {
+export function makeThing({ geometry, dominant = new Color(0.9, 0.86, 0.78), width = 0.1, height = 0.1, sides = null }) {
   const paint = new PaintLayer({ circumference: width, wallHeight: height });
   paint.around = 1;                                   // front and back sheets share UVs already
   paint.setCentreUV(0.5, 0.5);
@@ -24,7 +24,8 @@ export function makeThing({ geometry, dominant = new Color(0.9, 0.86, 0.78), wid
   const thing = {
     kind: 'thing', group, body, handle: null, paint, uniforms, scale: 1, dominant, creature: null, traits: null, _acc: 0,
     // where a face and feet go, in metres: front of the puffy body, bottom edge
-    wakeFit: { unit: height / 1.04, halfWidth: (width / 2) / (height / 1.04), offset: [0, -height / 2, Math.min(width, height) * 0.55 * 0.5 - 0.575 * (height / 1.04)] },
+    // where a face, arms and feet go: arms at the silhouette's sides at shoulder height, face on the front, feet at the bottom
+    wakeFit: (() => { const unit = height / 1.04; const hw = sides ? Math.max(0.5 - sides[0], sides[1] - 0.5) * width / unit : (width / 2) / unit; return { unit, halfWidth: Math.max(0.2, hw - 0.03), offset: [0, -height / 2, Math.min(width, height) * 0.55 * 0.5 - 0.575 * unit] }; })(),
     setDominant(c) { thing.dominant = c; uniforms.uPal.value = paletteFromColor(c); },
     setGlow(g) { uniforms.uGlow.value = g; },
     /** touch model: cast from outside toward the centre through the point; gap = signed distance along that ray */

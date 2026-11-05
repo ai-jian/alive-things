@@ -45,6 +45,14 @@ export function inflateMask(mask, w, h, worldWidth, worldHeight, thickness = 0.5
   return geo;
 }
 
+/** where the sides of the silhouette are at a given height fraction (0 = bottom, 1 = top): [leftFrac, rightFrac] of width */
+export function sidesAt(mask, w, h, heightFrac) {
+  const row = Math.max(0, Math.min(h - 1, Math.round((1 - heightFrac) * (h - 1))));
+  let l = -1, r = -1; for (let x = 0; x < w; x++) if (mask[row * w + x]) { if (l < 0) l = x; r = x; }
+  if (l < 0) return [0.5, 0.5];
+  return [l / w, (r + 1) / w];
+}
+
 /** polygon (array of [x,y] in metres, any winding) → mask grid of g×g over its bbox with a margin. */
 export function rasterizePolygon(poly, g = 96, margin = 0.06) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
