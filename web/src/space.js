@@ -2,7 +2,7 @@
 // Opaque dome around the player, a garden disc at table height, light pools, fireflies, a hanging plant that
 // speaks in one-line cards, a doorway disc on the table to go in and a door home to come back.
 import { createSystem, Grabbed, OneHandGrabbable } from '@iwsdk/core';
-import { Group, Mesh, SphereGeometry, CircleGeometry, PlaneGeometry, MeshBasicMaterial, BackSide, Points, BufferGeometry, BufferAttribute, PointsMaterial, Sprite, SpriteMaterial, CanvasTexture, Vector3, Color, AdditiveBlending, LatheGeometry, Vector2, DoubleSide, ShapeGeometry, Shape } from 'three';
+import { Group, Mesh, SphereGeometry, CircleGeometry, PlaneGeometry, CylinderGeometry, MeshBasicMaterial, BackSide, Points, BufferGeometry, BufferAttribute, PointsMaterial, Sprite, SpriteMaterial, CanvasTexture, Vector3, Color, AdditiveBlending, LatheGeometry, Vector2, DoubleSide, ShapeGeometry, Shape, SRGBColorSpace } from 'three';
 import { Brain } from './brain.js';
 import { makeCard } from './hints.js';
 import { makeCup } from './cup.js';
@@ -15,15 +15,17 @@ const head = new Vector3(), tmp = new Vector3();
 
 function radialTexture(inner, outer) { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const g = x.createRadialGradient(128, 128, 6, 128, 128, 128); g.addColorStop(0, inner); g.addColorStop(0.55, outer); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); return new CanvasTexture(c); }
 
+function flatDisc(tex, size, blending) { const m = new Mesh(new PlaneGeometry(size, size), new MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, blending: blending || AdditiveBlending })); m.rotation.x = -Math.PI / 2; return m; }
+
 function makeDome() {
   const geo = new SphereGeometry(5, 32, 24); const col = new Float32Array(geo.attributes.position.count * 3); const top = new Color(0x0f1030), horizon = new Color(0x2b2f5e), low = new Color(0x1d2140);
   for (let i = 0; i < geo.attributes.position.count; i++) { const y = geo.attributes.position.getY(i) / 5; const c = y > 0 ? top.clone().lerp(horizon, 1 - y) : horizon.clone().lerp(low, -y); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
   geo.setAttribute('color', new BufferAttribute(col, 3));
   return new Mesh(geo, new MeshBasicMaterial({ vertexColors: true, side: BackSide, transparent: true, opacity: 0, depthWrite: false }));
 }
-function makeHills(radius) {
-  const g = new Group(); const mat = new MeshBasicMaterial({ color: 0x3a3f78, transparent: true, opacity: 0.9, side: DoubleSide });
-  for (let i = 0; i < 7; i++) { const sh = new Shape(); const w = 0.16 + Math.random() * 0.18, h = 0.04 + Math.random() * 0.07; sh.moveTo(-w, 0); sh.quadraticCurveTo(-w * 0.4, h * 1.6, 0.05, h); sh.quadraticCurveTo(w * 0.5, h * 0.8, w, 0); sh.lineTo(-w, 0);
+function makeHills(radius, colour = 0x3a3f78, scale = 1) {
+  const g = new Group(); const mat = new MeshBasicMaterial({ color: colour, transparent: true, opacity: 0.9, side: DoubleSide, depthWrite: false });
+  for (let i = 0; i < 7; i++) { const sh = new Shape(); const w = (0.16 + Math.random() * 0.18) * scale, h = (0.04 + Math.random() * 0.07) * scale; sh.moveTo(-w, 0); sh.quadraticCurveTo(-w * 0.4, h * 1.6, 0.05, h); sh.quadraticCurveTo(w * 0.5, h * 0.8, w, 0); sh.lineTo(-w, 0);
     const m = new Mesh(new ShapeGeometry(sh), mat); const a = i / 7 * Math.PI * 2 + Math.random() * 0.4; m.position.set(Math.cos(a) * radius * 1.05, 0, Math.sin(a) * radius * 1.05); m.lookAt(0, 0, 0); m.rotateY(Math.PI); g.add(m); }
   return g;
 }
@@ -32,6 +34,8 @@ function makePlant() {
   const leafMat = new MeshBasicMaterial({ color: 0xa9d38f, side: DoubleSide }); const leaf = (rx, ry, rot) => { const sh = new Shape(); sh.moveTo(0, 0); sh.quadraticCurveTo(0.05, 0.04, 0.0, 0.11); sh.quadraticCurveTo(-0.05, 0.04, 0, 0); const m = new Mesh(new ShapeGeometry(sh), leafMat); m.position.y = 0.045; m.rotation.set(rx, ry, rot); return m; };
   g.add(pot, leaf(0, 0, 0.5), leaf(0, 1.2, -0.4), leaf(0, 2.4, 0.3), leaf(0, 3.6, -0.5), leaf(0, 4.8, 0.2));
   const ink = new MeshBasicMaterial({ color: 0x2e2a36 }); const e1 = new Mesh(new SphereGeometry(0.004, 8, 6), ink); e1.position.set(-0.01, 0.028, 0.036); const e2 = e1.clone(); e2.position.x = 0.01; g.add(e1, e2);
+  const smile = new Mesh(new LatheGeometry([new Vector2(0.007, 0), new Vector2(0.009, 0)], 12, 0, Math.PI), ink); smile.rotation.set(Math.PI / 2, 0, Math.PI); smile.position.set(0, 0.02, 0.037); g.add(smile);
+  const glow = new Sprite(new SpriteMaterial({ map: radialTexture('rgba(255,236,205,0.6)', 'rgba(255,236,205,0.12)'), transparent: true, depthWrite: false, blending: AdditiveBlending })); glow.scale.setScalar(0.22); glow.position.y = 0.05; g.add(glow);
   const string = new Mesh(new PlaneGeometry(0.002, 0.5), new MeshBasicMaterial({ color: 0xc9c8e6 })); string.position.y = 0.045 + 0.25; g.add(string);
   return g;
 }
@@ -43,18 +47,34 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.radius = 0.45;
       const g = this.group = new Group(); g.visible = false; this.scene.add(g);
       this.dome = makeDome(); g.add(this.dome);
-      this.floor = new Mesh(new CircleGeometry(this.radius, 64), new MeshBasicMaterial({ color: 0x23245a, transparent: true, opacity: 0 })); this.floor.rotation.x = -Math.PI / 2; g.add(this.floor);
+      const floorTex = radialTexture('rgba(96,98,170,1)', 'rgba(44,46,104,1)'); floorTex.colorSpace = SRGBColorSpace;
+      this.floor = new Mesh(new CircleGeometry(this.radius * 1.15, 64), new MeshBasicMaterial({ map: floorTex, transparent: true, opacity: 0, depthWrite: false })); this.floor.rotation.x = -Math.PI / 2; g.add(this.floor);
+      // a wide soft haze under everything so the table edge melts into the dark
+      this.haze = new Mesh(new CircleGeometry(this.radius * 2.6, 48), new MeshBasicMaterial({ map: radialTexture('rgba(60,62,130,0.55)', 'rgba(40,42,100,0.15)'), transparent: true, opacity: 0, depthWrite: false })); this.haze.rotation.x = -Math.PI / 2; this.haze.position.y = -0.003; g.add(this.haze);
       this.hills = makeHills(this.radius); g.add(this.hills);
+      this.hillsFar = makeHills(this.radius * 1.9, 0x2a2e63, 1.7); g.add(this.hillsFar);
       const dotTex = radialTexture('rgba(255,240,210,1)', 'rgba(255,240,210,0.35)');
-      const n = 160, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 3; pos[i * 3 + 1] = Math.random() * 1.6 - 0.3; pos[i * 3 + 2] = (Math.random() - 0.5) * 3; }
-      const pg = new BufferGeometry(); pg.setAttribute('position', new BufferAttribute(pos, 3)); this.fireflies = new Points(pg, new PointsMaterial({ color: 0xffe9c4, size: 0.014, map: dotTex, transparent: true, opacity: 0, sizeAttenuation: true, depthWrite: false })); g.add(this.fireflies);
+      this.fireflyLayers = [];
+      for (let L = 0; L < 3; L++) {
+        const n = 50, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const r = 0.15 + Math.random() * 1.4, a = Math.random() * Math.PI * 2; pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = 0.02 + Math.random() * 0.9; pos[i * 3 + 2] = Math.sin(a) * r; }
+        const pg = new BufferGeometry(); pg.setAttribute('position', new BufferAttribute(pos, 3));
+        const pts = new Points(pg, new PointsMaterial({ color: 0xffe9c4, size: 0.005 + L * 0.002, map: dotTex, transparent: true, opacity: 0, sizeAttenuation: true, depthWrite: false, blending: AdditiveBlending })); pts.userData.phase = L * 2.1; g.add(pts); this.fireflyLayers.push(pts);
+      }
+      this.fireflies = this.fireflyLayers[0];
+      // stars on the dome, a pale moon
+      { const n = 220, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, e = Math.asin(Math.random()) ; const r = 4.6; pos[i * 3] = Math.cos(a) * Math.cos(e) * r; pos[i * 3 + 1] = Math.sin(e) * r + 0.2; pos[i * 3 + 2] = Math.sin(a) * Math.cos(e) * r; }
+        const sg = new BufferGeometry(); sg.setAttribute('position', new BufferAttribute(pos, 3)); this.stars = new Points(sg, new PointsMaterial({ color: 0xf1ebe2, size: 0.022, map: dotTex, transparent: true, opacity: 0, sizeAttenuation: true, depthWrite: false })); g.add(this.stars); }
+      this.moon = new Sprite(new SpriteMaterial({ map: radialTexture('rgba(255,244,226,1)', 'rgba(255,236,210,0.55)'), transparent: true, opacity: 0, depthWrite: false })); this.moon.scale.setScalar(0.42); this.moon.position.set(-1.3, 1.5, -2.6); g.add(this.moon);
+      this.moonGlow = new Sprite(new SpriteMaterial({ map: radialTexture('rgba(255,236,210,0.35)', 'rgba(255,236,210,0.06)'), transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending })); this.moonGlow.scale.setScalar(1.3); this.moonGlow.position.copy(this.moon.position); g.add(this.moonGlow);
+      // light beam texture for the pools (vertical alpha gradient)
+      { const c = document.createElement('canvas'); c.width = 8; c.height = 128; const x = c.getContext('2d'); const gr = x.createLinearGradient(0, 0, 0, 128); gr.addColorStop(0, 'rgba(255,236,205,0)'); gr.addColorStop(0.6, 'rgba(255,236,205,0.12)'); gr.addColorStop(1, 'rgba(255,236,205,0.35)'); x.fillStyle = gr; x.fillRect(0, 0, 8, 128); this.beamTex = new CanvasTexture(c); }
       this.poolTex = radialTexture('rgba(255,236,205,0.9)', 'rgba(255,226,190,0.3)'); this.pools = [];
       this.plant = makePlant(); this.plant.position.set(0.28, 0.42, -0.22); g.add(this.plant);
       this.plantCard = makeCard(); this.plantCard.mesh.scale.setScalar(0.8); g.add(this.plantCard.mesh); this.plantT = 0;
       // doorway on the real table (room) and door home (space)
-      const doorMat = () => new SpriteMaterial({ map: radialTexture('rgba(255,236,205,0.95)', 'rgba(200,190,255,0.35)'), transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending });
-      this.door = new Sprite(doorMat()); this.door.scale.setScalar(0.16); this.scene.add(this.door); this.doorOn = false;
-      this.home = new Sprite(doorMat()); this.home.scale.setScalar(0.12); g.add(this.home); this.home.position.set(-0.32, 0.01, 0.2);
+      const doorTex = radialTexture('rgba(255,236,205,0.95)', 'rgba(200,190,255,0.35)');
+      this.door = flatDisc(doorTex, 0.16); this.scene.add(this.door); this.doorOn = false;
+      this.home = flatDisc(doorTex, 0.12); g.add(this.home); this.home.position.set(-0.32, 0.006, 0.2);
       this.homeCard = makeCard(); this.homeCard.mesh.scale.setScalar(0.6); this.homeCard.draw('home'); g.add(this.homeCard.mesh);
       this.restored = false;
       window.addEventListener('keydown', (e) => { if (e.key === 'g') this.toggle(); });
@@ -92,8 +112,10 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       if (cup.group.parent !== this.group) { cup.group.parent && cup.group.parent.remove(cup.group); this.group.add(cup.group); }
       cup.inSpace = true;
       const a = Math.random() * Math.PI * 2, r = 0.12 + Math.random() * 0.22; cup.group.position.set(Math.cos(a) * r, 0.002, Math.sin(a) * r); cup.group.rotation.set(0, Math.random() * Math.PI * 2, 0);
-      cup.setGlow(1.0);
-      const pool = new Sprite(new SpriteMaterial({ map: this.poolTex, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending })); pool.scale.setScalar(0.001); this.group.add(pool); this.pools.push({ pool, cup, grow: 0 });
+      cup.setGlow(0.6); cup.uniforms.uUnder.value = 0.8; cup.uniforms.uShade.value = 0.12; cup.uniforms.uLightDir.value.set(0.15, 1.0, 0.25).normalize();
+      const pool = flatDisc(this.poolTex, 1); pool.scale.setScalar(0.001); this.group.add(pool);
+      const beam = new Mesh(new CylinderGeometry(0.02, 0.075, 0.3, 24, 1, true), new MeshBasicMaterial({ map: this.beamTex, transparent: true, opacity: 0, depthWrite: false, side: DoubleSide, blending: AdditiveBlending })); beam.position.y = 0.15; this.group.add(beam);
+      this.pools.push({ pool, beam, cup, grow: 0 });
       const brain = new Brain(cup, { group: this.group, radius: this.radius }, sound); this.brains.push(brain); this.residents.push(cup);
       upsert(serialize(cup));
       if (this.residents.length === 1) this.say('it looks a little lonely out here.');
@@ -107,21 +129,22 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       const wantDoor = awake && !this.inSpace;
       this.doorOn += ((wantDoor ? 1 : 0) - this.doorOn) * Math.min(1, delta * 2); this.door.material.opacity = this.doorOn * 0.9; this.door.visible = this.doorOn > 0.02;
       if (wantDoor) {
-        if (!this.doorPlaced) { this.doorPlaced = true; cup.group.getWorldPosition(this.door.position); tmp.copy(head).sub(this.door.position); tmp.y = 0; tmp.normalize(); const side = new Vector3(-tmp.z, 0, tmp.x); this.door.position.addScaledVector(side, 0.22); this.door.position.y += 0.01; }
+        if (!this.doorPlaced) { this.doorPlaced = true; cup.group.getWorldPosition(this.door.position); tmp.copy(head).sub(this.door.position); tmp.y = 0; tmp.normalize(); const side = new Vector3(-tmp.z, 0, tmp.x); this.door.position.addScaledVector(side, 0.22); this.door.position.y += 0.004; }
         // released on the doorway → go in
         cup.group.getWorldPosition(tmp); if (!grabbed && cup.wasGrabbed && tmp.distanceTo(this.door.position) < 0.09) { this.enterSpace(cup); this.doorPlaced = false; this.onAdopted && this.onAdopted(cup); }
         cup.wasGrabbed = grabbed;
       }
       // fade in / out
       const target = this.wantIn ? 1 : 0; this.fade += (target - this.fade) * Math.min(1, delta * 1.2);
-      const f = this.fade; this.dome.material.opacity = f; this.floor.material.opacity = f; this.fireflies.material.opacity = f * 0.85; this.hills.children.forEach(m => m.material.opacity = f * 0.9);
+      const f = this.fade; this.dome.material.opacity = f; this.floor.material.opacity = f; this.hills.children.forEach(m => m.material.opacity = f * 0.9);
       this.home.material.opacity = f * 0.8; this.homeCard.mat.opacity = f * 0.9; this.plantCard.mat.opacity = Math.min(f, this.plantT > 0 ? Math.min(1, this.plantT) : 0);
       if (f < 0.01 && !this.wantIn && this.group.visible) this.group.visible = false;
       // the room's object stays in the room while you are in the garden
       if (cup && !cup.inSpace) cup.group.visible = f < 0.6;
       if (!this.group.visible) return;
       // ambience
-      this.fireflies.rotation.y = time * 0.02; this.fireflies.position.y = Math.sin(time * 0.3) * 0.02;
+      for (const L of this.fireflyLayers) { L.rotation.y = time * 0.015 + L.userData.phase; L.position.y = Math.sin(time * 0.3 + L.userData.phase) * 0.02; L.material.opacity = f * (0.25 + 0.5 * (0.5 + 0.5 * Math.sin(time * 1.1 + L.userData.phase))); }
+      this.stars.material.opacity = f * (0.42 + 0.12 * Math.sin(time * 0.7)); this.moon.material.opacity = f * 0.95; this.moonGlow.material.opacity = f * 0.8; this.haze.material.opacity = f; this.hillsFar.children.forEach(m => m.material.opacity = f * 0.95);
       // plant: sway, look, speak
       this.plant.rotation.z = Math.sin(time * 0.7) * 0.05; this.plantCard.mesh.position.copy(this.plant.position); this.plantCard.mesh.position.y += 0.09; this.plantCard.mesh.lookAt(this.group.worldToLocal(head.clone()));
       if (this.plantT > 0) this.plantT -= delta;
@@ -129,7 +152,9 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       // brains
       const headLocal = this.group.worldToLocal(head.clone());
       for (const b of this.brains) b.update(delta, this.brains, headLocal);
-      for (const p of this.pools) { p.grow = Math.min(1, p.grow + delta); p.pool.scale.setScalar(0.22 * p.grow * (p.cup.creature && p.cup.creature.napping ? 0.8 : 1) * (1 + Math.sin(time * 1.5) * 0.03)); p.pool.position.copy(p.cup.group.position); p.pool.position.y = 0.004; p.pool.material.opacity = f * 0.85; p.cup.creature && p.cup.creature.update(delta, head); p.cup.tick(delta, time); }
+      for (const p of this.pools) { p.grow = Math.min(1, p.grow + delta); const nap = p.cup.creature && p.cup.creature.napping; p.pool.scale.setScalar(0.2 * p.grow * (nap ? 0.8 : 1) * (1 + Math.sin(time * 1.5) * 0.03)); p.pool.position.copy(p.cup.group.position); p.pool.position.y = 0.005; p.pool.material.opacity = f * 0.55;
+        p.beam.position.set(p.cup.group.position.x, 0.15, p.cup.group.position.z); p.beam.scale.set(p.grow, 1, p.grow); p.beam.material.opacity = f * (nap ? 0.12 : 0.2) * (1 + Math.sin(time * 1.5 + 1) * 0.08);
+        p.cup.creature && p.cup.creature.update(delta, head); p.cup.tick(delta, time); }
       // touching the home disc with a fingertip leaves
       for (const h of ['left', 'right']) { const t = this.group.worldToLocal(hands.tip[h].clone()); if (t.distanceTo(this.home.position) < 0.05) { this.leave(); break; } }
       // periodic save

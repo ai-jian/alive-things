@@ -12,7 +12,7 @@ export function makeThing({ geometry, dominant = new Color(0.9, 0.86, 0.78), wid
   paint.around = 1;                                   // front and back sheets share UVs already
   paint.setCentreUV(0.5, 0.5);
   const uniforms = {
-    uHeat: { value: paint.texture }, uPaint: { value: 1 }, uBaseLo: { value: 0.10 }, uBaseHi: { value: 0.55 }, uShade: { value: 0.16 }, uGlow: { value: 0 },
+    uHeat: { value: paint.texture }, uPaint: { value: 1 }, uBaseLo: { value: 0.10 }, uBaseHi: { value: 0.55 }, uShade: { value: 0.16 }, uGlow: { value: 0 }, uUnder: { value: 0 },
     uLightDir: { value: new Vector3(0.5, 0.8, 0.6).normalize() }, uPal: { value: paletteFromColor(dominant) },
     uPoke: { value: new Vector3() }, uAmt: { value: 0 }, uWob: { value: 0 }, uTime: { value: 0 }, uHeightNorm: { value: height },
   };

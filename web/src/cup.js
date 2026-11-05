@@ -22,7 +22,7 @@ const vert = /* glsl */`
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
   }`;
 const frag = /* glsl */`
-  uniform sampler2D uHeat; uniform float uPaint, uBaseLo, uBaseHi, uShade, uGlow; uniform vec3 uLightDir; uniform vec3 uPal[6];
+  uniform sampler2D uHeat; uniform float uPaint, uBaseLo, uBaseHi, uShade, uGlow, uUnder; uniform vec3 uLightDir; uniform vec3 uPal[6];
   varying vec2 vUv; varying vec3 vN; varying float vY;
   vec3 pal(float t){
     t = clamp(t, 0.0, 1.0) * 5.0;
@@ -37,6 +37,9 @@ const frag = /* glsl */`
     vec3 N = normalize(vN); vec3 L = normalize((viewMatrix * vec4(uLightDir, 0.0)).xyz);
     float lit = smoothstep(-0.25, 0.55, dot(N, L));
     base -= uShade * (1.0 - lit);
+    // in the garden the light pool shines up from below: faces that look down get warmer
+    vec3 downV = normalize((viewMatrix * vec4(0.0, -1.0, 0.0, 0.0)).xyz);
+    base += max(dot(N, downV), 0.0) * uUnder * 0.2;
     float h = uPaint > 0.5 ? texture2D(uHeat, vUv).r : 0.0;
     float t = base + h * 0.32;
     vec3 col = pal(t) + pal(min(t + 0.12, 0.95)) * smoothstep(0.0, 0.8, h) * uGlow * 0.25;
@@ -64,7 +67,7 @@ export function makeCup({ dominant = new Color(0.93, 0.88, 0.78), heightMetres =
   geo.computeVertexNormals();
 
   const uniforms = {
-    uHeat: { value: paint.texture }, uPaint: { value: 1 }, uBaseLo: { value: 0.10 }, uBaseHi: { value: 0.55 }, uShade: { value: 0.16 }, uGlow: { value: 0 },
+    uHeat: { value: paint.texture }, uPaint: { value: 1 }, uBaseLo: { value: 0.10 }, uBaseHi: { value: 0.55 }, uShade: { value: 0.16 }, uGlow: { value: 0 }, uUnder: { value: 0 },
     uLightDir: { value: new Vector3(0.5, 0.8, 0.6).normalize() }, uPal: { value: paletteFromColor(dominant) },
     uPoke: { value: new Vector3() }, uAmt: { value: 0 }, uWob: { value: 0 }, uTime: { value: 0 },
   };
