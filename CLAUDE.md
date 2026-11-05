@@ -1,6 +1,6 @@
 # Alive Things — agent handoff
 
-Hands-only mixed reality app for Meta Quest 3. Competition entry (Meta VR Start 2026, deadline reported Nov 18, 2026).
+Hands-only mixed reality app for Meta Quest 3. Competition entry (Meta VR Start 2026, **deadline Nov 18, 2026 12:00 PM PT**, rules summarised in `docs/PRD.md` §12).
 One line: *Pick up a cup. Be quiet for ten minutes. It comes alive.*
 
 ## Read these first, in order
@@ -8,13 +8,18 @@ One line: *Pick up a cup. Be quiet for ten minutes. It comes alive.*
 2. `docs/art-direction.md` — **decided:** whole-body gradient, palette from the object's own colour (no picking), guide 2 × 6 × mirror, two marks, every control a gesture. Live proof `docs/lookdev-gradient.html`. Don't reopen this without the owner.
 3. `docs/storyboard-v4.html` (or the .png) — the 2-minute demo video. **This is the scope.** If a feature is not in a shot, don't build it.
 4. `docs/design-notes.md` — decision log with reasons, capture pipeline, two-week build order.
+5. `docs/PRD.md` §12 — the official rules that bind the build: seated 2 ft, 60 fps, plane-anchored passthrough, ≤10 min sessions, WebXR allowed via link.
+
+## Platform decision (Nov 5, evening)
+The rules accept **IWSDK / WebXR entries by link**. That makes WebXR (three.js + Meta Immersive Web SDK) the primary build path: it can be built and deployed from a cloud session and tested on the Quest browser without Unity. The `unity/` folder stays as the port target if a native build is ever needed. One real loss on WebXR: no camera access, so "photo capture" becomes **trace the object's outline with a fingertip** → inflate; palette then comes from the plant guide, not the photo.
 
 ## Repo map
 - `docs/lookdev-gradient.html` — Option A, current pass: whole-body gradient, guide 2 × 6 × mirror, natural stroke width, all options as gestures (table on the page). Open in a browser; loads three.js 0.152.2 from cdnjs.
 - `docs/lookdev-symmetry.html` — Option A, first pass: strokes only, six patterns (owner found them indistinguishable at this scale).
 - `docs/lookdev-relief.html` — archived Option B (carved relief). Not chosen.
 - `docs/lookdev.html` — first colour-paint test. Kept for the lighting and jelly reference only.
-- `unity/` — Unity 2022.3 LTS project. URP. Scripts under `Assets/AliveThings/Scripts/`, grouped: Creature, Interaction, Paint, Capture, World. Shader includes under `Assets/AliveThings/Shaders/`.
+- `web/` — (coming) IWSDK/WebXR app, deployed to GitHub Pages.
+- `unity/` — Unity 2022.3 LTS project (secondary path now). URP. Scripts under `Assets/AliveThings/Scripts/`, grouped: Creature, Interaction, Paint, Capture, World. Shader includes under `Assets/AliveThings/Shaders/`.
 
 ## Unity setup (local machine)
 1. Unity Hub → install 2022.3.x LTS with Android Build Support (SDK/NDK/OpenJDK).

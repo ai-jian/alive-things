@@ -29,10 +29,11 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 5. Scale from pinch depth and mask width; spawn at the real object, float to the palm.
 6. Interaction SDK grab; JellyPoke for touch; HoldAndOpenGesture for Focus Mode.
 
-## Competition facts (verify on Devpost)
-- Meta VR Start Developer Competition 2026. Entries must be fully usable with hands, end to end.
-- Reported deadline: November 18, 2026. Prize pool $1M, 20 prizes up to $100K.
-- Deliverables: build + video. The video decides what gets built; the build must do what the video shows.
+## Competition facts (official rules read Nov 5, full list in PRD §12)
+- Deadline Nov 18, 2026 12:00 PM PT. Hands-first mandatory. Seated, 2 ft radius. 60 fps. ≤10 min sessions. Video ≤3 min, English subtitles.
+- WebXR (IWSDK) entries submitted as a link. Native as APK on a Competition channel.
+- Passthrough must be purposeful and anchored to detected planes.
+- **Platform decision:** WebXR primary, Unity secondary. Capture becomes finger-tracing (no camera on the web).
 
 ## Build order (two weeks)
 1. Hands + passthrough + one ready cup with JellyPoke (days 1–3)

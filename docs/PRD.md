@@ -1,6 +1,6 @@
 # Alive Things, PRD
 
-Status: v1, 2026-11-05. Owner: ai-jian. Target: Meta VR Start Developer Competition 2026 (submission reported as Nov 18, 2026; verify on Devpost).
+Status: v1.1, 2026-11-05. Owner: ai-jian. Target: Meta VR Start Developer Competition 2026. Official rules read (Devpost PDF, Nov 4 capture): see section 12.
 
 ## 1. One line
 Pick up a cup. Be quiet for ten minutes. It comes alive.
@@ -73,6 +73,28 @@ Someone at the end of a long day who wants ten quiet minutes with their hands bu
 2:00, three acts: Room (0:00–0:24), Focus (0:24–1:06), My Space (1:06–1:46), Title. Shot list and build notes: `docs/storyboard-v4.html`. Shot 5 (carving) is the heart; shot 10 (garden wide) is the thumbnail.
 
 ## 11. Open questions
-- Exact Devpost rules: file formats, max video length, whether a store listing is required.
+- Track: Productivity ("creative tools, habits tied to a recurring context such as wind-down") vs Entertainment. Owner decides; see section 12.
 - (resolved) Palette comes from the photo's dominant colour; no user pick.
 - Does Focus Mode dim passthrough via OVRPassthroughLayer colour controls or a fog quad? Test both on device.
+
+## 12. Official rules, the parts that bind us (Devpost, read Nov 5)
+- **Deadline: November 18, 2026, 12:00 PM Pacific** (2:00 PM Central). Judging to ~Dec 9, winners ~Dec 11.
+- Entrant must be a **Meta VR Start Program member** with a Meta developer account (Developer Access on). One entry per person.
+- **Division: New Experience** = conceived and built within the window starting Sept 24, 2026. No pre-existing codebase. (We started Nov 5. Fine.)
+- **Tracks:** Entertainment, Gaming, Productivity. Hands-first is mandatory. Productivity explicitly lists "creative tools, or habits tied to a recurring context (morning routine, commute, wind-down)". Prizes: Gaming/Entertainment $100k + $50k runner-up; Productivity $70k + $35k.
+- **Special awards ($25k each)** that fit us: Best First Five Minutes, Best Reason to Come Back, Boldest Original Concept. Judge's Choice ×2 ($20k).
+- **Submission formats:** native engines → APK in a "Competition" release channel on the Meta developer dashboard. **IWSDK / WebXR → a link** (GitHub Pages or any host). WebXR is explicitly allowed.
+- **Video:** under 3 minutes, real gameplay on a Quest or XR simulator, YouTube/Vimeo, English or English subtitles. "Don't lean on AI-generated video."
+- **Guidelines (judged):** seated-optimized, every interaction inside a **2 ft radius**; fast cold start, satisfying in **≤10 minutes**; original, not a wrapper.
+- **Judging, 4 × 25%:** Innovation & Creativity (leverage device capabilities: spatial depth, hands, gaze, passthrough, scene understanding, persistent anchors). Experience Design (seated, hands-first, habit-forming; **passthrough must be purposeful**, the real room must change the experience; FoV-aware, works on narrower-FoV glasses). Technical (min **60 fps**, bug-free; for passthrough, **scene understanding: anchor content to detected planes/surfaces**, hold up in untested rooms). Polish & Presentation (art direction, sound, honest video).
+- Permitted tools: anything public or available to Start members. Must comply with Meta content guidelines; 10+ rating.
+- Entry must stay available free of charge until winners are announced.
+
+### What this changes for us
+- **Platform: WebXR via IWSDK is a legitimate primary path.** It can be built and deployed from the cloud session and tested on a Quest browser via a link. Unity stays as the fallback/port target.
+- **The cup must sit on the real detected table** (plane detection). The room is not a backdrop; the object comes from it and returns to it.
+- **Seated, 2 ft:** everything happens at the desk. Hide-and-seek is formally dead.
+- **10 minutes, fast start:** no onboarding wall. First creature in under two minutes.
+- **Come back:** My Space must visibly grow; creatures remember. Persist locally.
+- **Video ≤ 3 min:** storyboard is 2:00. Good.
+- **Track recommendation:** Productivity (wind-down creative tool, habit). Less crowded than Gaming, and the brief literally describes us. Entertainment is the alternative. Owner decides.
