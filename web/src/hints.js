@@ -26,8 +26,9 @@ export function makeCard() {
     const r = 56; ctx.fillStyle = 'rgba(255,253,248,0.94)';
     ctx.beginPath(); ctx.roundRect(8, 8, canvas.width - 16, canvas.height - 16, r); ctx.fill();
     ctx.fillStyle = '#2e2a36'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const lines = text.split('\n'); const size = lines.length > 1 ? 62 : 68;
+    const lines = text.split('\n'); let size = lines.length > 1 ? 62 : 68;
     ctx.font = `600 ${size}px Nunito, system-ui, sans-serif`;
+    const widest = Math.max(...lines.map(l => ctx.measureText(l).width)); if (widest > canvas.width - 90) { size = Math.floor(size * (canvas.width - 90) / widest); ctx.font = `600 ${size}px Nunito, system-ui, sans-serif`; }
     lines.forEach((l, i) => ctx.fillText(l, canvas.width / 2, canvas.height / 2 + (i - (lines.length - 1) / 2) * (size * 1.25)));
     tex.needsUpdate = true;
   }
@@ -62,7 +63,7 @@ export function makeHintSystem(active, events) {
       cup.group.getWorldPosition(target); target.y += 0.115;
       this.card.mesh.position.lerp(target, 1 - Math.pow(0.001, delta));
       this.card.mesh.lookAt(head);
-      const want = this.started && this.visibleWanted && STEPS[this.step] ? 1 : 0;
+      const want = this.started && this.visibleWanted && STEPS[this.step] && !events.inSpace ? 1 : 0;
       this.alpha += (want - this.alpha) * Math.min(1, delta * 3);
       this.card.mat.opacity = this.alpha;
       this.card.mesh.visible = this.alpha > 0.01;

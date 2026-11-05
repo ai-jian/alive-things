@@ -21,7 +21,7 @@ function makeDome() {
 }
 function makeHills(radius) {
   const g = new Group(); const mat = new MeshBasicMaterial({ color: 0x3a3f78, transparent: true, opacity: 0.9, side: DoubleSide });
-  for (let i = 0; i < 7; i++) { const sh = new Shape(); const w = 0.25 + Math.random() * 0.3, h = 0.08 + Math.random() * 0.14; sh.moveTo(-w, 0); sh.quadraticCurveTo(-w * 0.4, h * 1.6, 0.05, h); sh.quadraticCurveTo(w * 0.5, h * 0.8, w, 0); sh.lineTo(-w, 0);
+  for (let i = 0; i < 7; i++) { const sh = new Shape(); const w = 0.16 + Math.random() * 0.18, h = 0.04 + Math.random() * 0.07; sh.moveTo(-w, 0); sh.quadraticCurveTo(-w * 0.4, h * 1.6, 0.05, h); sh.quadraticCurveTo(w * 0.5, h * 0.8, w, 0); sh.lineTo(-w, 0);
     const m = new Mesh(new ShapeGeometry(sh), mat); const a = i / 7 * Math.PI * 2 + Math.random() * 0.4; m.position.set(Math.cos(a) * radius * 1.05, 0, Math.sin(a) * radius * 1.05); m.lookAt(0, 0, 0); m.rotateY(Math.PI); g.add(m); }
   return g;
 }
@@ -43,8 +43,9 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.dome = makeDome(); g.add(this.dome);
       this.floor = new Mesh(new CircleGeometry(this.radius, 64), new MeshBasicMaterial({ color: 0x23245a, transparent: true, opacity: 0 })); this.floor.rotation.x = -Math.PI / 2; g.add(this.floor);
       this.hills = makeHills(this.radius); g.add(this.hills);
+      const dotTex = radialTexture('rgba(255,240,210,1)', 'rgba(255,240,210,0.35)');
       const n = 160, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 3; pos[i * 3 + 1] = Math.random() * 1.6 - 0.3; pos[i * 3 + 2] = (Math.random() - 0.5) * 3; }
-      const pg = new BufferGeometry(); pg.setAttribute('position', new BufferAttribute(pos, 3)); this.fireflies = new Points(pg, new PointsMaterial({ color: 0xffe9c4, size: 0.012, transparent: true, opacity: 0, sizeAttenuation: true })); g.add(this.fireflies);
+      const pg = new BufferGeometry(); pg.setAttribute('position', new BufferAttribute(pos, 3)); this.fireflies = new Points(pg, new PointsMaterial({ color: 0xffe9c4, size: 0.014, map: dotTex, transparent: true, opacity: 0, sizeAttenuation: true, depthWrite: false })); g.add(this.fireflies);
       this.poolTex = radialTexture('rgba(255,236,205,0.9)', 'rgba(255,226,190,0.3)'); this.pools = [];
       this.plant = makePlant(); this.plant.position.set(0.28, 0.42, -0.22); g.add(this.plant);
       this.plantCard = makeCard(); this.plantCard.mesh.scale.setScalar(0.8); g.add(this.plantCard.mesh); this.plantT = 0;
@@ -81,8 +82,9 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
     }
     adopt(cup) {
       // move the cup into the garden group at a free spot
+      // hand the object over from the ECS to the garden: the transform system owns entity objects, so release it first
+      if (cup.entity) { try { cup.entity.dispose({ disposeResources: false }); } catch (e) { try { cup.entity.destroy(); } catch (e2) {} } cup.entity = null; }
       if (cup.group.parent !== this.group) { cup.group.parent && cup.group.parent.remove(cup.group); this.group.add(cup.group); }
-      if (cup.entity) { try { if (cup.entity.hasComponent(OneHandGrabbable)) cup.entity.removeComponent(OneHandGrabbable); } catch (e) {} }
       cup.inSpace = true;
       const a = Math.random() * Math.PI * 2, r = 0.12 + Math.random() * 0.22; cup.group.position.set(Math.cos(a) * r, 0.002, Math.sin(a) * r); cup.group.rotation.set(0, Math.random() * Math.PI * 2, 0);
       cup.setGlow(1.0);
@@ -96,7 +98,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       const headObj = this.renderer.xr.isPresenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
       const cup = getActiveCup();
       // doorway appears on the table once the cup is awake and set down
-      const awake = cup && cup.creature && !cup.inSpace; const grabbed = cup && cup.entity && cup.entity.hasComponent(Grabbed);
+      const awake = cup && cup.creature && !cup.inSpace && cup.entity; const grabbed = !!(cup && cup.entity && cup.entity.hasComponent(Grabbed));
       const wantDoor = awake && !this.inSpace;
       this.doorOn += ((wantDoor ? 1 : 0) - this.doorOn) * Math.min(1, delta * 2); this.door.material.opacity = this.doorOn * 0.9; this.door.visible = this.doorOn > 0.02;
       if (wantDoor) {
@@ -110,6 +112,8 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       const f = this.fade; this.dome.material.opacity = f; this.floor.material.opacity = f; this.fireflies.material.opacity = f * 0.85; this.hills.children.forEach(m => m.material.opacity = f * 0.9);
       this.home.material.opacity = f * 0.8; this.homeCard.mat.opacity = f * 0.9; this.plantCard.mat.opacity = Math.min(f, this.plantT > 0 ? Math.min(1, this.plantT) : 0);
       if (f < 0.01 && !this.wantIn && this.group.visible) this.group.visible = false;
+      // the room's object stays in the room while you are in the garden
+      if (cup && !cup.inSpace) cup.group.visible = f < 0.6;
       if (!this.group.visible) return;
       // ambience
       this.fireflies.rotation.y = time * 0.02; this.fireflies.position.y = Math.sin(time * 0.3) * 0.02;

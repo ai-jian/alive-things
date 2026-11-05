@@ -9,7 +9,7 @@ export class Brain {
     this.cup = cup; this.garden = garden; this.sound = sound; this.t = cup.traits || { curious: .5, sleepy: .3, social: .5, playful: .4, shy: .2 };
     this.need = { explore: Math.random() * 0.3, rest: 0, company: Math.random() * 0.3, play: 0 };
     this.state = 'idle'; this.timer = 1 + Math.random() * 2; this.target = new Vector3(); this.partner = null; this.affinity = new Map();
-    this.speed = 0.05 * (1 - 0.5 * this.t.sleepy) + 0.03 * this.t.playful;   // m/s, tabletop scale
+    this.speed = 0.04 * (1 - 0.5 * this.t.sleepy) + 0.03 * this.t.playful;   // m/s, tabletop scale
     this.whisper = makeWhisper(); garden.group.add(this.whisper.mesh); this.whisperT = 0;
     this.pickWander();
   }
