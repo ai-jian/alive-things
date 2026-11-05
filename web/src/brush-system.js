@@ -59,7 +59,7 @@ export function makeBrushSystem(active, events, hands, sound) {
         if (nearest && near < 0.25) { const local = cup.group.worldToLocal(tmpA.copy(nearest)); const yaw = Math.atan2(local.x, local.z); cup.group.rotation.y += yaw * 0.35 * Math.min(1, delta * 3); }
         cup.group.rotation.x += ((-0.12 * (cup.approachGlow || 0) / 0.35) - cup.group.rotation.x) * Math.min(1, delta * 4);
       }
-      if (cup.spawnT !== undefined && cup.spawnT < 1) { cup.spawnT = Math.min(1, cup.spawnT + delta * 1.5); const k = cup.spawnT; const s = k < 0.7 ? k / 0.7 * 1.12 : 1.12 - (k - 0.7) / 0.3 * 0.12; cup.group.scale.setScalar(Math.max(0.001, s)); cup.group.position.y += delta * 0.02 * (1 - k); }
+      if (cup.spawnT !== undefined && cup.spawnT < 1) { cup.spawnT = Math.min(1, cup.spawnT + delta * 1.5); const k = cup.spawnT; const s = k < 0.7 ? k / 0.7 * 1.12 : 1.12 - (k - 0.7) / 0.3 * 0.12; cup.group.scale.setScalar(Math.max(0.001, s) * (cup.scale || 1)); /* relative to the object's own base scale */ cup.group.position.y += delta * 0.02 * (1 - k); }
       const touches = [];
       for (const side of ['left', 'right', 'mouse']) {
         const h = this.hands[side];

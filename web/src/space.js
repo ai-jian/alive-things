@@ -2,8 +2,9 @@
 // Opaque dome around the player, a garden disc at table height, light pools, fireflies, a hanging plant that
 // speaks in one-line cards, a doorway disc on the table to go in and a door home to come back.
 import { createSystem, Grabbed, OneHandGrabbable } from '@iwsdk/core';
-import { Group, Mesh, SphereGeometry, CircleGeometry, PlaneGeometry, CylinderGeometry, MeshBasicMaterial, BackSide, Points, BufferGeometry, BufferAttribute, PointsMaterial, Sprite, SpriteMaterial, CanvasTexture, Vector3, Color, AdditiveBlending, LatheGeometry, Vector2, DoubleSide, ShapeGeometry, Shape, SRGBColorSpace } from 'three';
+import { Group, Mesh, SphereGeometry, CircleGeometry, PlaneGeometry, CylinderGeometry, MeshBasicMaterial, BackSide, Points, BufferGeometry, BufferAttribute, PointsMaterial, Sprite, SpriteMaterial, CanvasTexture, Vector3, Color, AdditiveBlending, LatheGeometry, Vector2, DoubleSide, ShapeGeometry, Shape, SRGBColorSpace, Quaternion } from 'three';
 import { Brain } from './brain.js';
+import { Newcomer } from './newcomer.js';
 import { makeCard } from './hints.js';
 import { makeCup } from './cup.js';
 import { wakeCup } from './creature.js';
@@ -62,6 +63,10 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.haze = new Mesh(new CircleGeometry(this.radius * 2.6, 48), new MeshBasicMaterial({ map: radialTexture('rgba(60,62,130,0.55)', 'rgba(40,42,100,0.15)'), transparent: true, opacity: 0, depthWrite: false })); this.haze.rotation.x = -Math.PI / 2; this.haze.position.y = -0.003; g.add(this.haze);
       this.hills = makeHills(this.radius); g.add(this.hills);
       this.hillsFar = makeHills(this.radius * 1.9, 0x2a2e63, 1.7); g.add(this.hillsFar);
+      // the shy one at the edge: appears after a while in the garden, never on the landing
+      this.newcomer = new Newcomer({ group: g, radius: this.radius, hills: this.hills }, sound);
+      this.newcomer.onFirstPeek = () => this.say('someone is shy over there.');
+      this.gardenTime = 0; this.nextNewcomerAt = 20;
       const dotTex = radialTexture('rgba(255,240,210,1)', 'rgba(255,240,210,0.35)');
       this.fireflyLayers = [];
       for (let L = 0; L < 3; L++) {
@@ -86,7 +91,9 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       this.home = flatDisc(doorTex, 0.12); g.add(this.home); this.home.position.set(-0.32, 0.006, 0.2);
       this.homeCard = makeCard(); this.homeCard.mesh.scale.setScalar(0.6); this.homeCard.draw('home'); g.add(this.homeCard.mesh);
       this.restored = false;
-      window.addEventListener('keydown', (e) => { if (e.key === 'g') this.toggle(); });
+      window.addEventListener('keydown', (e) => { if (e.key === 'g') this.toggle();
+        // emulator: 'n' makes the newcomer appear and peek at once; pressed again, it is caught (on a headset: a quick pinch while it is out)
+        if (e.key === 'n' && this.inSpace) { const nc = this.newcomer; if (!nc.cup) { nc.appear(); nc.timer = 0.2; } else this.catchNewcomer(); } });
     }
     /** landing page: the live garden (your creatures, or a painted demo cup) under a drifting camera, outside XR */
     showcase() {
@@ -110,6 +117,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
     }
     toggle() { if (this.inSpace) this.leave(); else { const cup = getActiveCup(); if (cup && cup.creature && !cup.inSpace) { this.enterSpace(cup); this.onAdopted && this.onAdopted(cup); } else this.enterSpace(); } }
     say(line) { this.plantCard.draw(line); this.plantT = 4.5; }
+    catchNewcomer() { const nc = this.newcomer.release(); if (!nc) return; this.nextNewcomerAt = this.gardenTime + 120; events.newcomerCaught = true; sound.wake(1.4); if (this.onNewcomer) this.onNewcomer(nc); }
     placeGarden() {
       // garden sits where the cup's table is, in front of the player
       const cup = getActiveCup(); const headObj = this.renderer.xr.isPresenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
@@ -193,6 +201,14 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       // brains
       const headLocal = this.group.worldToLocal(head.clone());
       for (const b of this.brains) b.update(delta, this.brains, headLocal);
+      // the newcomer: waits until you have spent a little time here with at least one creature
+      if (this.inSpace && !this.showcasing) { this.gardenTime += delta; if (!this.newcomer.cup && this.residents.length >= 1 && this.gardenTime >= this.nextNewcomerAt) this.newcomer.appear(); }
+      if (this.newcomer.cup) {
+        const gq = this.group.getWorldQuaternion(new Quaternion()).invert();
+        const fwdLocal = new Vector3(0, 0, -1).applyQuaternion(headObj.getWorldQuaternion(new Quaternion())).applyQuaternion(gq);
+        const tips = ['left', 'right'].map(h => this.group.worldToLocal(hands.tip[h].clone())), pinch = [hands.pinching.left, hands.pinching.right];
+        if (this.newcomer.update(delta, time, headLocal, fwdLocal, tips, pinch, f) === 'caught') this.catchNewcomer();
+      }
       for (const p of this.pools) { p.grow = Math.min(1, p.grow + delta); const nap = p.cup.creature && p.cup.creature.napping; p.pool.scale.setScalar(0.2 * p.grow * (nap ? 0.8 : 1) * (1 + Math.sin(time * 1.5) * 0.03)); p.pool.position.copy(p.cup.group.position); p.pool.position.y = 0.005; p.pool.material.opacity = f * 0.55;
         p.beam.position.set(p.cup.group.position.x, 0.15, p.cup.group.position.z); p.beam.scale.set(p.grow, 1, p.grow); p.beam.material.opacity = f * (nap ? 0.12 : 0.2) * (1 + Math.sin(time * 1.5 + 1) * 0.08);
         p.cup.creature && p.cup.creature.update(delta, head); p.cup.tick(delta, time); }

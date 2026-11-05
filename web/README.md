@@ -26,7 +26,8 @@ One-time: repository Settings → Pages → Source: **GitHub Actions**.
 - **Come back.** Creatures persist in localStorage (paint at half resolution, traced shapes as masks).
 - **Hints.** One soft card above the object that advances on what you actually did, then fades.
 - **Landing.** Outside XR the page shows the live garden with your creatures (or a painted demo cup) under a drifting camera; the words sit on top.
-- **Emulator keys (desktop):** `t` demo trace, `f` studio in/out, `w` wake, `g` garden.
+- **The newcomer.** After a while in the garden a tiny blank one peeks out from behind a hill at the far edge. Stare at it or reach slowly and it ducks back; catch it with a quick pinch and it comes home as your next blank canvas.
+- **Emulator keys (desktop):** `t` demo trace, `f` studio in/out, `w` wake, `g` garden, `n` newcomer appear / catch.
 
 ## Files
 - `src/main.js` world, cup entity, systems

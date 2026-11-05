@@ -46,7 +46,7 @@ Someone at the end of a long day who wants ten quiet minutes with their hands bu
 | F11 | Affinity and following | P1 | After three meetings two creatures follow each other sometimes |
 | F12 | Plant guide prompts, three-creature party | P2 | One line at one creature, party at three |
 | F13 | Real object capture (photo → mask → inflated mesh) | P1 | Works on a plain desk in daylight for a cup; otherwise falls back to F2 silently |
-| F14 | Hidden blank newcomer in a corner | P2 | One creature peeks from the dark edge after five minutes |
+| F14 | Hidden blank newcomer in a corner | P2 | Built Nov 6: peeks from behind its own hill after ~20 s in the garden; ducks when stared at or reached for; a quick pinch catches it and it becomes the next blank canvas |
 | F15 | Sound: hum, ticks, chirps | P1 | No melody assets required |
 
 ## 7. Technical constraints
