@@ -97,7 +97,10 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
         cup.traits = { curious: .6, sleepy: .3, social: .6, playful: .5, shy: .1 };
         cup.creature = wakeCup(cup, { traits: cup.traits, dark: cup.uniforms.uPal.value[0].getHex() }); cup.creature.pop = 1; cup.creature.parts.scale.setScalar(1);
         this.adopt(cup, { persist: false, showcase: true }); this.demo = cup;
+        cup.group.position.set(0.02, 0.002, -0.02); cup.group.rotation.set(0, 0, 0);
       }
+      // whoever is first keeps looking at the camera while it drifts
+      if (this.brains[0]) this.brains[0].enter('look', 1e6);
       this.orbitT = 0; this.home.visible = this.homeCard.mesh.visible = false; this.plantCard.mesh.visible = false;
     }
     clearShowcase() {
@@ -152,9 +155,9 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
       const presenting = this.renderer.xr.isPresenting;
       if (this.showcasing && !presenting) {
         // slow drift around the garden, looking at its first resident
-        this.orbitT += delta; const a = -0.35 + Math.sin(this.orbitT * 0.12) * 0.45;
-        const c = this.group.position; const r = 0.5; this.camera.position.set(c.x + Math.sin(a) * r, c.y + 0.2 + Math.sin(this.orbitT * 0.2) * 0.02, c.z + Math.cos(a) * r);
-        const focus = this.residents[0] ? this.residents[0].group.getWorldPosition(new Vector3()) : c.clone(); focus.y += 0.04; this.camera.lookAt(focus); this.camera.updateMatrixWorld();
+        this.orbitT += delta; const a = -0.25 + Math.sin(this.orbitT * 0.12) * 0.4;
+        const c = this.group.position; const r = 0.34; this.camera.position.set(c.x + Math.sin(a) * r, c.y + 0.13 + Math.sin(this.orbitT * 0.2) * 0.015, c.z + Math.cos(a) * r);
+        const focus = this.residents[0] ? this.residents[0].group.getWorldPosition(new Vector3()) : c.clone(); focus.y += 0.04; focus.x -= 0.06; this.camera.lookAt(focus); this.camera.updateMatrixWorld();
       }
       const headObj = presenting ? this.player.head : this.camera; headObj.getWorldPosition(head);
       const cup = getActiveCup();
