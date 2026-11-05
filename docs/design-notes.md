@@ -7,9 +7,9 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 拿起一个杯子，安静十分钟，它活了。
 
 ## The three pillars (one per act of the demo video)
-1. **Room.** A real object from your desk becomes yours. Passthrough, hands, one photo, an inflated soft copy that keeps the object's look.
-2. **Focus.** The room fades, you draw on it slowly. Anyone can draw: the brush makes the patterns, you make the rhythm. Zen doodle, wabi-sabi, no eraser.
-3. **My Space.** A dark painted garden where creatures live without you. Needs-based free will, whispers made of their own patterns, friendships.
+1. **Room.** A real object from your desk becomes yours. It notices your hand before you touch it. Pinch it (or trace around anything) and it is yours.
+2. **Studio.** Let go and it floats up in front of you, big, while the room fades. You draw on it slowly. Anyone can draw: the brush makes the patterns, you make the rhythm. Set it down and it shrinks back and wakes.
+3. **My Space.** A dark painted garden where creatures live without you. Needs-based free will, whispers in a wordless language, friendships.
 
 ## Decisions
 - **Core loop is the living garden, not a quest.** Hide-and-seek was considered (Nov 5) and demoted to one peeking newcomer in the corner. Reason: a quest leans on music and is linear; the garden is open, emergent, and cheap.
@@ -20,6 +20,16 @@ Pick up a cup. Be quiet for ten minutes. It comes alive.
 - **Personality comes from how you painted.** Not random. Slow and dotted → quiet, shy. Loops and speed → playful. Coverage → chatty.
 - **Sound is garnish, not structure.** One ambient hum, Animalese-style syllables pitched by personality, a tick per brush unit. No melodies, no soundtrack dependency.
 - **Hands only.** Everything is a pinch, a pull, or a palm. No menus. Required by the competition.
+
+## Nov 6: the studio flow replaces Focus Mode (owner)
+- Reason, in the owner's words: the object should come to you and become a big canvas in front of you, so there is a size contrast and parallax; painting a tiny object at arm's length has no visual kick, and the old two-hand gesture made the player do all the work with no reaction from the object.
+- New flow: pinch → it grows in the hand → let go → floats to an anchor 42 cm ahead at about 30 cm tall, fog + hum, slow turntable paused by touch → pinch and lower below chest height → shrinks, lands, wakes. One pinch does everything.
+- Objects react before touch: glow, turn toward the hand, lean.
+- Landing page: no illustration (it read as machine-made); the page shows the live garden with the player's creatures or a painted demo cup.
+- Colours: the four palettes from the gradient look test, verbatim. Captured colours use the same deep-to-light ramp with a saturation floor.
+- Traced loops are resampled and rounded (Chaikin ×2) so a shaky finger still gives a clean silhouette.
+- Whispers became a spatial wordless language with call and response; arms grow from the object's sides.
+- Storyboard v5 documents the shots; v4 is history.
 
 ## Technical path for "real object → thing in your hand"
 1. Pinch near the object → Passthrough Camera API grabs one frame + pinch world position.

@@ -1,0 +1,409 @@
+<title>Alive Things Storyboard v5</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;600;700&display=swap">
+<style>
+/* Layout: paper sketchbook. Two-column grid of 16:9 panels. Art is flat gouache cut-outs; the creatures carry the dusk gradient of the product. */
+:root{
+  --paper:#f6f2ea; --ink:#2e2a36; --soft:#8a8190; --line:#e2dbd0; --card:#ffffff; --accent:#3f6fc0;
+  --skin:#f6dcc8; --navy:#1d2140; --navy2:#2b2f5e; --warm:#ffe9c4;
+  --display:'Patrick Hand',"Comic Sans MS",cursive; --body:'Nunito',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --paper:#1b1a20; --ink:#f1ebe2; --soft:#a79fab; --line:#36333e; --card:#26242d; --accent:#9ec5e8; color-scheme:dark } }
+:root[data-theme="dark"]{ --paper:#1b1a20; --ink:#f1ebe2; --soft:#a79fab; --line:#36333e; --card:#26242d; --accent:#9ec5e8; color-scheme:dark }
+
+body{ background:var(--paper); color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:32px 64px; }
+.wrap{ max-width:1100px; margin:0 auto; }
+header{ display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px 24px; border-bottom:2px dashed var(--line); padding-bottom:16px; margin-bottom:18px; }
+h1{ font-family:var(--display); font-size:44px; font-weight:400; line-height:1; margin:0; text-wrap:balance; }
+h1 small{ display:block; font-size:18px; color:var(--soft); margin-top:6px; }
+.meta{ display:flex; gap:18px; flex-wrap:wrap; color:var(--soft); font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+.meta b{ color:var(--ink); font-family:var(--display); font-size:21px; letter-spacing:0; text-transform:none; display:block; }
+.pitch{ font-family:var(--display); font-size:24px; margin:0 0 18px; color:var(--ink); }
+.pitch span{ color:var(--soft); font-size:18px; margin-left:10px; }
+.acts{ display:flex; gap:3px; margin:0 0 28px; height:18px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+.acts span{ flex:1; border-radius:4px; display:grid; place-items:center; color:#2e2a36; }
+.grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px 24px; }
+@media (max-width:720px){ .grid{ grid-template-columns:1fr } h1{ font-size:36px } }
+.shot{ min-width:0; display:flex; flex-direction:column; gap:10px; }
+.frame{ position:relative; aspect-ratio:16/9; max-width:100%; background:#efe9df; border-radius:10px; overflow:hidden; box-shadow:0 6px 0 var(--line); }
+.frame svg{ width:100%; height:100%; display:block; }
+.num{ position:absolute; top:8px; left:8px; font-family:var(--display); font-size:19px; background:var(--ink); color:#fff; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; }
+.tc{ position:absolute; bottom:6px; right:8px; font-family:var(--display); font-size:15px; color:#2e2a36; background:rgba(255,255,255,.8); padding:0 6px; border-radius:4px; }
+.card{ display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:14px; }
+.card dt{ color:var(--soft); font-size:11px; text-transform:uppercase; letter-spacing:.08em; padding-top:3px; }
+.card dd{ margin:0; min-width:0; }
+.card .title{ font-family:var(--display); font-size:22px; line-height:1.1; grid-column:1/-1; }
+.vo{ font-style:italic; }
+.build{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:13px; }
+.build b{ color:var(--accent); }
+.notes{ margin-top:40px; border-top:2px dashed var(--line); padding-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; }
+.notes h2{ font-family:var(--display); font-weight:400; font-size:24px; margin:0 0 6px; }
+.notes ul{ margin:0; padding-left:18px; } .notes li{ margin:2px 0 }
+@media (prefers-reduced-motion:no-preference){ .breathe{ animation:br 3.2s ease-in-out infinite; transform-origin:center; } }
+@keyframes br{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.025)} }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="cut" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence baseFrequency="0.04" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"/></filter>
+    <radialGradient id="pool"><stop offset="0" stop-color="#ffe9c4" stop-opacity=".95"/><stop offset=".55" stop-color="#ffe2b8" stop-opacity=".35"/><stop offset="1" stop-color="#ffe2b8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glow"><stop offset="0" stop-color="#f2b63c" stop-opacity=".55"/><stop offset="1" stop-color="#f2b63c" stop-opacity="0"/></radialGradient>
+    <radialGradient id="fog"><stop offset="0" stop-color="#5a4a52" stop-opacity="0"/><stop offset=".6" stop-color="#3a2f3a" stop-opacity=".6"/><stop offset="1" stop-color="#2a2230" stop-opacity=".95"/></radialGradient>
+    <linearGradient id="dusk" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#2a2a6b"/><stop offset=".3" stop-color="#6b4d94"/><stop offset=".6" stop-color="#c2769e"/><stop offset=".85" stop-color="#f5a399"/><stop offset="1" stop-color="#ffd6b8"/></linearGradient>
+    <linearGradient id="duskShade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1b1748" stop-opacity=".3"/></linearGradient>
+
+    <!-- plain cup on the desk (cut-out, no outline) 90x80 -->
+    <symbol id="cup" viewBox="0 0 90 80" overflow="visible">
+      <path d="M12,16 L20,72 Q22,78 30,78 L58,78 Q66,78 68,72 L76,16 Z" fill="#f4eee2"/>
+      <path d="M52,16 L58,78 Q66,78 68,72 L76,16 Z" fill="#e3d9c8"/>
+      <ellipse cx="44" cy="16" rx="32" ry="7" fill="#fbf8f1"/>
+      <ellipse cx="44" cy="16" rx="26" ry="4.5" fill="#d9cfbd"/>
+      <path d="M74,30 Q98,34 86,56 Q80,66 70,62 L72,54 Q84,56 86,46 Q86,38 72,38 Z" fill="#e9e1d1"/>
+    </symbol>
+    <!-- the same cup once it is yours: dusk gradient body -->
+    <symbol id="cupg" viewBox="0 0 90 80" overflow="visible">
+      <path d="M74,30 Q98,34 86,56 Q80,66 70,62 L72,54 Q84,56 86,46 Q86,38 72,38 Z" fill="url(#dusk)"/>
+      <path d="M12,16 L20,72 Q22,78 30,78 L58,78 Q66,78 68,72 L76,16 Z" fill="url(#dusk)"/>
+      <path d="M12,16 L20,72 Q22,78 30,78 L58,78 Q66,78 68,72 L76,16 Z" fill="url(#duskShade)"/>
+      <ellipse cx="44" cy="16" rx="32" ry="7" fill="#ffd6b8"/>
+      <ellipse cx="44" cy="16" rx="26" ry="4.5" fill="#c98aa6"/>
+    </symbol>
+    <!-- six-fold strokes, a lighter tint of the body -->
+    <symbol id="mandala" viewBox="0 0 90 80" overflow="visible">
+      <g fill="none" stroke="#ffd6b8" stroke-opacity=".8" stroke-width="2" stroke-linecap="round">
+        <path d="M44,48 q-6,-12 -2,-22 M44,48 q6,-12 2,-22 M44,48 q-13,-3 -20,4 M44,48 q13,-3 20,4 M44,48 q-4,12 -14,16 M44,48 q4,12 14,16"/>
+        <path d="M44,48 q-10,-4 -13,-12 M44,48 q10,-4 13,-12 M44,48 q0,13 0,18" stroke-opacity=".45"/>
+      </g>
+    </symbol>
+    <symbol id="hand" viewBox="-60 -20 120 160" overflow="visible">
+      <path d="M-6,0 C-14,8 -22,22 -24,40 L-34,46 C-40,52 -40,66 -34,76 L-28,120 C-22,134 24,136 30,120 L38,70 C44,58 42,44 34,36 L22,28 C18,18 10,6 4,0 Z" fill="#f6dcc8"/>
+      <path d="M-24,40 L-34,46 C-40,52 -40,66 -34,76 L-28,96 L-10,90 Z" fill="#edcbb3" opacity=".6"/>
+    </symbol>
+    <!-- a pinching hand seen from the side: thumb and index meet at (0,0) -->
+    <symbol id="pinch" viewBox="-20 -10 120 110" overflow="visible">
+      <path d="M0,0 C10,-6 22,-4 30,4 L70,10 C86,14 90,40 80,60 L72,80 C64,96 30,98 20,80 L8,40 C2,26 -4,12 0,0 Z" fill="#f6dcc8"/>
+      <path d="M0,0 C6,8 10,18 8,30 L18,34 C22,22 18,8 10,-2 Z" fill="#edcbb3" opacity=".7"/>
+    </symbol>
+    <symbol id="finger" viewBox="0 0 130 90" overflow="visible">
+      <path d="M6,34 L60,28 C68,28 72,32 74,38 L104,30 C122,30 128,50 122,64 L116,76 C110,84 92,86 78,82 L64,78 C56,76 54,66 56,54 L8,52 C-2,50 -2,36 6,34 Z" fill="#f6dcc8"/>
+      <path d="M74,38 L104,30 C122,30 128,50 122,64 L116,76 C110,84 92,86 78,82 L64,78 Z" fill="#edcbb3" opacity=".5"/>
+    </symbol>
+    <symbol id="face" viewBox="0 0 90 80" overflow="visible">
+      <circle cx="34" cy="42" r="3.4" fill="#1f1b4a"/><circle cx="54" cy="42" r="3.4" fill="#1f1b4a"/>
+      <path d="M38,54 Q44,60 50,54 Q44,58 38,54 Z" fill="#1f1b4a"/>
+      <circle cx="25" cy="52" r="4.5" fill="#f5a399" opacity=".8"/><circle cx="63" cy="52" r="4.5" fill="#f5a399" opacity=".8"/>
+    </symbol>
+    <symbol id="limbs" viewBox="0 0 90 80" overflow="visible">
+      <rect x="27" y="76" width="5" height="12" rx="2.5" fill="#1f1b4a"/><rect x="58" y="76" width="5" height="12" rx="2.5" fill="#1f1b4a"/>
+      <ellipse cx="28" cy="89" rx="8" ry="3" fill="#1f1b4a"/><ellipse cx="62" cy="89" rx="8" ry="3" fill="#1f1b4a"/>
+      <path d="M12,44 q-10,6 -8,18" fill="none" stroke="#1f1b4a" stroke-width="4" stroke-linecap="round"/><path d="M76,42 q12,4 12,16" fill="none" stroke="#1f1b4a" stroke-width="4" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="lampc" viewBox="0 0 90 120" overflow="visible">
+      <path d="M20,10 L70,10 L84,50 L6,50 Z" fill="#f2b63c"/><path d="M52,10 L70,10 L84,50 L58,50 Z" fill="#e0a22f"/>
+      <rect x="42" y="50" width="6" height="40" fill="#e9e1d1"/><ellipse cx="45" cy="92" rx="20" ry="5" fill="#e9e1d1"/>
+      <circle cx="36" cy="30" r="3" fill="#2e2a36"/><circle cx="54" cy="30" r="3" fill="#2e2a36"/><path d="M40,40 q5,4 10,0 q-5,2 -10,0 Z" fill="#2e2a36"/>
+      <rect x="30" y="96" width="5" height="12" rx="2.5" fill="#2e2a36"/><rect x="55" y="96" width="5" height="12" rx="2.5" fill="#2e2a36"/><ellipse cx="31" cy="109" rx="7" ry="2.6" fill="#2e2a36"/><ellipse cx="59" cy="109" rx="7" ry="2.6" fill="#2e2a36"/>
+    </symbol>
+    <symbol id="lamp" viewBox="0 0 90 120" overflow="visible">
+      <path d="M20,10 L70,10 L84,50 L6,50 Z" fill="#f2b63c"/><rect x="42" y="50" width="6" height="40" fill="#dcd5ca"/><ellipse cx="45" cy="92" rx="20" ry="5" fill="#dcd5ca"/>
+    </symbol>
+    <symbol id="plantc" viewBox="0 0 80 110" overflow="visible">
+      <path d="M40,70 C30,50 10,50 8,30 C26,32 36,46 40,70 Z" fill="#a9d38f"/><path d="M40,70 C50,48 70,48 72,26 C54,30 44,46 40,70 Z" fill="#8fc27a"/>
+      <path d="M18,72 L62,72 L56,106 L24,106 Z" fill="#f3a7b6"/>
+      <circle cx="34" cy="84" r="2.5" fill="#2e2a36"/><circle cx="46" cy="84" r="2.5" fill="#2e2a36"/><path d="M36,92 q4,4 8,0 q-4,2 -8,0 Z" fill="#2e2a36"/>
+    </symbol>
+    <symbol id="desk" viewBox="0 0 320 180" overflow="visible">
+      <rect x="0" y="112" width="320" height="68" fill="#e4dccf"/>
+      <rect x="10" y="20" width="110" height="76" rx="4" fill="#dcd5ca"/><rect x="22" y="34" width="70" height="4" rx="2" fill="#cfc7bb"/><rect x="22" y="48" width="50" height="4" rx="2" fill="#cfc7bb"/><rect x="22" y="62" width="78" height="4" rx="2" fill="#cfc7bb"/>
+    </symbol>
+    <symbol id="bubble" viewBox="0 0 80 60" overflow="visible"><path d="M8,6 H72 Q78,6 78,12 V40 Q78,46 72,46 H34 L22,58 L24,46 H8 Q2,46 2,40 V12 Q2,6 8,6 Z" fill="#fff"/></symbol>
+    <symbol id="sparkles" viewBox="0 0 320 180" overflow="visible"><g fill="#ffe9c4" opacity=".85"><circle cx="30" cy="40" r="1.5"/><circle cx="90" cy="24" r="1"/><circle cx="150" cy="50" r="1.5"/><circle cx="250" cy="30" r="1"/><circle cx="300" cy="90" r="1.5"/><circle cx="60" cy="150" r="1"/><circle cx="200" cy="160" r="1.2"/><circle cx="280" cy="150" r="1"/><circle cx="120" cy="100" r="1"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+<header>
+  <h1>Alive Things <small>Storyboard v5 · 2 minutes · 12 shots · the studio flow</small></h1>
+  <div class="meta">
+    <div>Core<b>a living garden</b></div>
+    <div>Entry<b>your own objects</b></div>
+    <div>Key moment<b>it comes to you, big</b></div>
+    <div>Rule<b>hands only</b></div>
+  </div>
+</header>
+<p class="pitch">Pick up a cup. Be quiet for ten minutes. It comes alive. <span>拿起一个杯子，安静十分钟，它活了。</span></p>
+<div class="acts" aria-hidden="true">
+  <span style="flex:22;background:#f6d3d8">Room</span><span style="flex:44;background:#e8d9c8">Studio</span><span style="flex:42;background:#c9c8e6">My Space</span><span style="flex:12;background:#dcd5ca">Title</span>
+</div>
+
+<div class="grid">
+
+<!-- 1 -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#efe9df"/><use href="#desk"/>
+    <use href="#lamp" x="236" y="16" width="56" height="76"/>
+    <path d="M186,60 C176,44 160,44 158,30 C172,32 182,44 186,60 Z" fill="#a9d38f"/><path d="M186,60 C194,42 210,42 212,26 C198,30 190,44 186,60 Z" fill="#8fc27a"/><path d="M168,62 L204,62 L200,92 L172,92 Z" fill="#f3a7b6"/>
+    <use href="#cup" x="68" y="68" width="54" height="48"/>
+    <path d="M90,60 q4,-8 0,-14 M98,58 q4,-8 0,-14" stroke="#cfc7bb" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <use href="#hand" x="36" y="150" width="60" height="80" transform="rotate(-12 60 160)"/>
+    <use href="#hand" x="226" y="150" width="60" height="80" transform="rotate(14 256 160) scale(-1,1) translate(-512,0)"/>
+  </svg><span class="num">1</span><span class="tc">0:00–0:08</span></div>
+  <dl class="card">
+    <dd class="title">A tired afternoon.</dd>
+    <dt>Shot</dt><dd>Wide POV through passthrough. Your real desk: laptop, a plant, a lamp, a cup still warm. Hands rest in frame. Nothing happens for a beat.</dd>
+    <dt>Text</dt><dd class="vo">"Long day."</dd>
+    <dt>Build</dt><dd class="build"><b>Passthrough + hand tracking. Cup placed on the detected table.</b> Done.</dd>
+  </dl>
+</section>
+
+<!-- 2 -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#efe9df"/><use href="#desk"/>
+    <circle cx="162" cy="90" r="56" fill="url(#glow)"/>
+    <g transform="rotate(10 162 100)"><use href="#cup" x="128" y="60" width="68" height="60"/></g>
+    <g fill="none" stroke="#c9b9a6" stroke-width="2" stroke-linecap="round"><path d="M108,70 q-8,10 -4,22 M100,60 q-14,14 -8,34"/></g>
+    <use href="#hand" x="214" y="140" width="64" height="84" transform="rotate(34 246 150) scale(-1,1) translate(-492,0)"/>
+  </svg><span class="num">2</span><span class="tc">0:08–0:15</span></div>
+  <dl class="card">
+    <dd class="title">It notices you.</dd>
+    <dt>Shot</dt><dd>One hand drifts toward the cup. Before you touch it, it warms with a soft glow, turns a little toward your hand and leans in, like a cat deciding whether to come over. Nothing else in the room reacts.</dd>
+    <dt>Text</dt><dd class="vo">"Something noticed."</dd>
+    <dt>Build</dt><dd class="build"><b>Hand proximity → glow, yaw toward the hand, lean.</b> Done (brush-system).</dd>
+  </dl>
+</section>
+
+<!-- 3 -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#efe9df"/><use href="#desk"/>
+    <use href="#cup" x="78" y="86" width="40" height="36" opacity=".35"/>
+    <circle cx="190" cy="80" r="62" fill="url(#glow)"/>
+    <use href="#pinch" x="150" y="78" width="110" height="100" transform="rotate(-20 200 120)"/>
+    <g class="breathe"><use href="#cup" x="150" y="28" width="92" height="82"/></g>
+    <g fill="none" stroke="#c9b9a6" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3"><path d="M118,100 L146,78 M128,66 l12,-10 M118,110 l0,-14 M128,66 l14,2"/></g>
+  </svg><span class="num">3</span><span class="tc">0:15–0:22</span></div>
+  <dl class="card">
+    <dd class="title">Pinch. It grows in your hand.</dd>
+    <dt>Shot</dt><dd>Thumb and finger close on the rim. The cup lifts off the table and, while you hold it, swells: twice, three times the size, soft as a lantern. The real cup is still on the desk behind it.</dd>
+    <dt>Text</dt><dd class="vo">"Take it."</dd>
+    <dt>Build</dt><dd class="build"><b>Pinch-grab → studio: scale eases up to ~30 cm tall in the hand.</b> Done (studio-system).</dd>
+  </dl>
+</section>
+
+<!-- 4 -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#efe9df"/><use href="#desk" opacity=".5"/>
+    <rect width="320" height="180" fill="url(#fog)"/>
+    <circle cx="160" cy="92" r="92" fill="url(#pool)"/>
+    <use href="#cupg" x="88" y="22" width="150" height="134"/>
+    <use href="#hand" x="40" y="146" width="60" height="80" transform="rotate(-25 70 160)"/>
+    <use href="#hand" x="226" y="146" width="60" height="80" transform="rotate(25 256 160) scale(-1,1) translate(-512,0)"/>
+    <use href="#cup" x="150" y="150" width="18" height="16" opacity=".3"/>
+  </svg><span class="num">4</span><span class="tc">0:22–0:32</span></div>
+  <dl class="card">
+    <dd class="title">Let go. It comes to you, big.</dd>
+    <dt>Shot</dt><dd>You open your hand. The cup doesn't fall. It floats up to chest height in front of you, now a big soft canvas, and the room behind it fades to warm dark fog. A low hum. Only the cup is lit. Far below, tiny, the real cup on the real desk: that size contrast is the shot.</dd>
+    <dt>Text</dt><dd class="vo">(nothing. The hum.)</dd>
+    <dt>Build</dt><dd class="build"><b>On release: lerp to anchor 42 cm ahead, fog dome, halo, hum.</b> Done.</dd>
+  </dl>
+</section>
+
+<!-- 5 -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#2a2230"/>
+    <circle cx="150" cy="100" r="116" fill="url(#pool)"/>
+    <use href="#cupg" x="52" y="14" width="190" height="168"/>
+    <g transform="translate(52,14) scale(2.11,2.1)"><use href="#mandala" width="90" height="80"/></g>
+    <use href="#finger" x="186" y="60" width="130" height="90"/>
+    <circle cx="190" cy="102" r="4" fill="#ffd6b8"/>
+    <text x="28" y="166" font-family="Patrick Hand" font-size="13" fill="#ffe9c4" opacity=".8">tick · tick · tick · one line, six times</text>
+  </svg><span class="num">5</span><span class="tc">0:32–0:48</span></div>
+  <dl class="card">
+    <dd class="title">One finger. One slow line. Six appear.</dd>
+    <dt>Shot</dt><dd>Close on the big canvas. A fingertip drags slowly across it. The stroke appears six times at once, mirrored around a centre, and closes into a flower-like shape on its own. Each unit lands with a soft tick. The line is a lighter tint of the cup's own colour, never a foreign colour. This shot is long and quiet on purpose.</dd>
+    <dt>Text</dt><dd class="vo">"You don't have to know how to draw. Just keep going."</dd>
+    <dt>Build</dt><dd class="build"><b>Brush with the 2 × 6 × mirror guide, width from slowness and press, palette-mapped intensity.</b> Done.</dd>
+  </dl>
+</section>
+
+<!-- 6 -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#2a2230"/>
+    <circle cx="150" cy="100" r="116" fill="url(#pool)"/>
+    <g transform="rotate(-12 150 100)"><use href="#cupg" x="58" y="18" width="184" height="162"/><g transform="translate(58,18) scale(2.04,2.03)"><use href="#mandala" width="90" height="80" opacity=".9"/></g></g>
+    <ellipse cx="128" cy="84" rx="26" ry="14" fill="#ffd6b8" opacity=".35"/>
+    <path d="M250,40 a60,60 0 0 1 20,60" fill="none" stroke="#ffe9c4" stroke-width="2" stroke-dasharray="4 4" opacity=".7"/>
+    <use href="#hand" x="212" y="40" width="60" height="80" transform="rotate(100 242 70)"/>
+    <text x="28" y="166" font-family="Patrick Hand" font-size="13" fill="#ffe9c4" opacity=".8">hold still · it blooms · it turns to show its back</text>
+  </svg><span class="num">6</span><span class="tc">0:48–0:58</span></div>
+  <dl class="card">
+    <dd class="title">Hold still. It blooms. It turns.</dd>
+    <dt>Shot</dt><dd>The finger stops but stays. Ink pools and spreads from under it. Then the hand lifts away and the big cup slowly turns by itself to show its back, where the same pattern already is. Touch it and the turning pauses. A flat palm softens a line into a wash.</dd>
+    <dt>Text</dt><dd class="vo">"Nothing is a mistake here."</dd>
+    <dt>Build</dt><dd class="build"><b>Dwell = water, slow turntable paused by touch, palm = soften. Long-press moves the centre, two-finger twist changes the fold.</b> Done.</dd>
+  </dl>
+</section>
+
+<!-- 7 -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#2a2230"/>
+    <rect width="320" height="180" fill="#efe9df" opacity=".4"/>
+    <use href="#desk" opacity=".55"/>
+    <g opacity=".3"><use href="#cupg" x="96" y="6" width="130" height="116"/></g>
+    <path d="M160,112 L160,136" stroke="#ffe9c4" stroke-width="2.5" stroke-dasharray="4 4" fill="none"/><path d="M152,130 L160,140 L168,130" fill="none" stroke="#ffe9c4" stroke-width="2.5" stroke-linecap="round"/>
+    <use href="#pinch" x="190" y="60" width="100" height="90" transform="rotate(-30 240 100)"/>
+    <circle cx="160" cy="156" r="40" fill="url(#pool)"/>
+    <g><use href="#cupg" x="138" y="124" width="44" height="39"/><g transform="translate(138,124) scale(0.49,0.49)"><use href="#mandala" width="90" height="80"/></g><use href="#face" x="138" y="124" width="44" height="39"/><use href="#limbs" x="138" y="124" width="44" height="39"/></g>
+    <rect x="196" y="128" width="84" height="18" rx="9" fill="#fff" opacity=".9"/><text x="238" y="141" font-family="Patrick Hand" font-size="11" text-anchor="middle" fill="#2e2a36">quiet · curious</text>
+  </svg><span class="num">7</span><span class="tc">0:58–1:06</span></div>
+  <dl class="card">
+    <dd class="title">Pinch it, set it down. It wakes.</dd>
+    <dt>Shot</dt><dd>You pinch the big cup and lower it toward the table. As it passes your chest it shrinks back to cup size, lands, and the fog lifts. A beat. It blinks. Little feet, little arms. A tag floats up: "quiet · curious". Those words came from how you drew: slow lines, long pauses.</dd>
+    <dt>Text</dt><dd class="vo">"It learned you while you drew."</dd>
+    <dt>Build</dt><dd class="build"><b>Lowering below chest height ends the studio: scale back, land on the table, wake, traits from stroke stats.</b> Done.</dd>
+  </dl>
+</section>
+
+<!-- 8 trace -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#efe9df"/><use href="#desk"/>
+    <use href="#lamp" x="196" y="22" width="70" height="92"/>
+    <path d="M186,22 C200,8 262,10 276,30 C290,56 288,100 272,114 C250,124 210,124 194,110 C178,92 174,42 186,22 Z" fill="none" stroke="#ffd58a" stroke-width="3" stroke-dasharray="6 5" stroke-linecap="round" opacity=".9"/>
+    <circle cx="276" cy="30" r="5" fill="#ffe9c4"/>
+    <use href="#pinch" x="246" y="18" width="90" height="80" transform="rotate(30 290 50)"/>
+    <g><use href="#cupg" x="60" y="80" width="40" height="36"/><use href="#face" x="60" y="80" width="40" height="36"/><use href="#limbs" x="60" y="80" width="40" height="36"/></g>
+  </svg><span class="num">8</span><span class="tc">1:06–1:14</span></div>
+  <dl class="card">
+    <dd class="title">Bring your own.</dd>
+    <dt>Shot</dt><dd>The cup creature watches from the table. You pinch in the air and hold, then trace a loop around the real lamp with your fingertip. A thread of light follows. Release: the loop puffs into a soft lamp at the lamp's real size, in the lamp's own yellow. It floats up to you, big, like the cup did.</dd>
+    <dt>Text</dt><dd class="vo">"Anything on your desk."</dd>
+    <dt>Build</dt><dd class="build"><b>Trace → smooth loop → inflate; camera colour inside the loop (headset); shelf fallback.</b> Done; camera colour unverified on device.</dd>
+  </dl>
+</section>
+
+<!-- 9 doorway -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#efe9df"/><use href="#desk"/>
+    <ellipse cx="226" cy="118" rx="44" ry="12" fill="url(#pool)"/>
+    <g><use href="#cupg" x="112" y="68" width="52" height="46"/><use href="#face" x="112" y="68" width="52" height="46"/><use href="#limbs" x="112" y="68" width="52" height="46"/></g>
+    <path d="M170,96 Q200,80 224,104" fill="none" stroke="#c9b9a6" stroke-width="2" stroke-dasharray="4 4"/>
+    <use href="#pinch" x="190" y="30" width="100" height="90" transform="rotate(-40 240 70)"/>
+  </svg><span class="num">9</span><span class="tc">1:14–1:22</span></div>
+  <dl class="card">
+    <dd class="title">A doorway opens beside it.</dd>
+    <dt>Shot</dt><dd>A warm disc of light appears on the table next to the awake cup. You pinch the cup and set it down on the disc. The disc brightens, the desk dims, and we cut to the garden as its own light pool lights up under it.</dd>
+    <dt>Text</dt><dd class="vo">"This is where they live."</dd>
+    <dt>Build</dt><dd class="build"><b>Door disc on the table; release within 9 cm → garden; creature handed from the ECS to the garden group.</b> Done.</dd>
+  </dl>
+</section>
+
+<!-- 10 meet -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#1d2140"/>
+    <path d="M0,120 C60,96 110,130 170,112 C230,96 270,124 320,108 L320,180 L0,180 Z" fill="#2b2f5e"/>
+    <use href="#sparkles"/>
+    <circle cx="112" cy="116" r="54" fill="url(#pool)"/><circle cx="216" cy="110" r="54" fill="url(#pool)"/>
+    <g><use href="#cupg" x="84" y="66" width="62" height="55"/><g transform="translate(84,66) scale(0.69,0.69)"><use href="#mandala" width="90" height="80"/></g><use href="#face" x="84" y="66" width="62" height="55"/><use href="#limbs" x="84" y="66" width="62" height="55"/></g>
+    <use href="#lampc" x="186" y="44" width="60" height="80" transform="scale(-1,1) translate(-432,0)"/>
+    <use href="#bubble" x="96" y="10" width="58" height="44"/><g transform="translate(112,20)"><circle cx="6" cy="8" r="3" fill="#c2769e"/><circle cx="16" cy="8" r="3" fill="#f5a399"/><path d="M4,16 q5,-6 10,0 q5,-6 10,0" stroke="#6b4d94" stroke-width="2" fill="none"/></g>
+    <use href="#bubble" x="186" y="8" width="58" height="44" transform="scale(-1,1) translate(-430,0)"/><g transform="translate(200,18)"><path d="M10,2 l2,6 l6,0 l-5,4 l2,6 l-5,-4 l-5,4 l2,-6 l-5,-4 l6,0 Z" fill="#f2b63c"/><circle cx="26" cy="10" r="3" fill="#e0a22f"/></g>
+    <path d="M152,104 q12,-8 26,0" stroke="#f3a7b6" stroke-width="2" fill="none" stroke-linecap="round" stroke-dasharray="3 3"/>
+    <text x="14" y="168" font-family="Patrick Hand" font-size="13" fill="#c9c8e6">a question · an answer</text>
+  </svg><span class="num">10</span><span class="tc">1:22–1:36</span></div>
+  <dl class="card">
+    <dd class="title">They find each other.</dd>
+    <dt>Shot</dt><dd>The lamp you brought in waddles over from its own light. They stop. One whispers, in a little voice with a rising question in it; a card above it shows marks in its own colours. A pause. The other answers, falling. They bounce once together and their lights merge.</dd>
+    <dt>Text</dt><dd class="vo">"Nobody wrote this part. They did."</dd>
+    <dt>Build</dt><dd class="build"><b>Needs-based brain, spatial wordless whispers in turns, pattern cards, affinity.</b> Done.</dd>
+  </dl>
+</section>
+
+<!-- 11 wide -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#1d2140"/>
+    <path d="M0,124 C60,100 110,134 170,116 C230,100 270,128 320,112 L320,180 L0,180 Z" fill="#2b2f5e"/>
+    <path d="M20,128 C50,84 90,92 110,124 Z" fill="#3a3f78" opacity=".8"/><path d="M226,120 C246,70 292,78 306,116 Z" fill="#3a3f78" opacity=".8"/>
+    <use href="#sparkles"/>
+    <circle cx="58" cy="122" r="44" fill="url(#pool)"/><circle cx="130" cy="120" r="40" fill="url(#pool)"/><circle cx="192" cy="112" r="46" fill="url(#pool)"/><circle cx="254" cy="124" r="44" fill="url(#pool)"/>
+    <g><use href="#cupg" x="36" y="84" width="46" height="41"/><use href="#face" x="36" y="84" width="46" height="41"/><use href="#limbs" x="36" y="84" width="46" height="41"/></g>
+    <g><path d="M108,104 Q130,100 152,104 L146,124 Q130,128 114,124 Z" fill="url(#dusk)"/><circle cx="124" cy="112" r="2.4" fill="#1f1b4a"/><circle cx="136" cy="112" r="2.4" fill="#1f1b4a"/><rect x="116" y="124" width="4" height="8" rx="2" fill="#1f1b4a"/><rect x="140" y="124" width="4" height="8" rx="2" fill="#1f1b4a"/></g>
+    <path d="M84,108 q8,-12 20,-2" stroke="#f3a7b6" stroke-width="2" fill="none" stroke-dasharray="3 3"/>
+    <use href="#lampc" x="164" y="44" width="56" height="75"/>
+    <g><path d="M226,112 L278,112 L280,130 L228,130 Z" fill="#a9d38f"/><path d="M226,112 Q252,106 278,112 L278,116 Q252,110 226,116 Z" fill="#8fc27a"/><path d="M240,122 q4,3 8,0 M258,122 q4,3 8,0" fill="none" stroke="#2e2a36" stroke-width="2" stroke-linecap="round"/><text x="272" y="104" font-family="Patrick Hand" font-size="12" fill="#ffe9c4">z z</text></g>
+    <rect x="285" y="0" width="2" height="24" fill="#c9c8e6"/><use href="#plantc" x="268" y="20" width="36" height="50"/>
+    <circle cx="296" cy="100" r="18" fill="#ffe9c4" opacity=".9"/><circle cx="296" cy="100" r="30" fill="#ffe9c4" opacity=".15"/>
+    <path d="M300,150 q8,-10 16,0 q-8,4 -16,0 Z" fill="#e9e1d1" opacity=".6"/><circle cx="305" cy="148" r="1.6" fill="#2e2a36"/><circle cx="311" cy="148" r="1.6" fill="#2e2a36"/>
+  </svg><span class="num">11</span><span class="tc">1:36–1:48</span></div>
+  <dl class="card">
+    <dd class="title">The garden, wide.</dd>
+    <dt>Shot</dt><dd>Slow pull back. A pale moon, stars, fireflies. Five creatures, each in a warm pool with a soft beam over it. The bowl follows the cup. The book sleeps. Top right the plant hangs and smiles at you. Bottom corner, half in the dark, a tiny blank one peeks out. Nobody told you it was there.</dd>
+    <dt>Text</dt><dd class="vo">"A garden made of the things you already own."</dd>
+    <dt>Build</dt><dd class="build"><b>Garden lighting pass, sleep and follow states, plant guide.</b> Done except the peeking newcomer.</dd>
+  </dl>
+</section>
+
+<!-- 12 title -->
+<section class="shot">
+  <div class="frame"><svg viewBox="0 0 320 180" filter="url(#cut)">
+    <rect width="320" height="180" fill="#1d2140"/>
+    <use href="#sparkles"/>
+    <circle cx="160" cy="110" r="70" fill="url(#pool)"/>
+    <use href="#hand" x="104" y="96" width="60" height="80" transform="rotate(70 134 110)"/>
+    <use href="#hand" x="156" y="96" width="60" height="80" transform="rotate(-70 186 110) scale(-1,1) translate(-372,0)"/>
+    <g><use href="#cupg" x="138" y="78" width="44" height="39"/><use href="#face" x="138" y="78" width="44" height="39"/></g>
+    <text x="160" y="50" font-family="Patrick Hand" font-size="30" text-anchor="middle" fill="#f1ebe2">Alive Things</text>
+    <text x="160" y="68" font-family="Patrick Hand" font-size="12" text-anchor="middle" fill="#c9c8e6">hands only · meta quest 3</text>
+  </svg><span class="num">12</span><span class="tc">1:48–2:00</span></div>
+  <dl class="card">
+    <dd class="title">Title.</dd>
+    <dt>Shot</dt><dd>Both hands cup one tiny creature close to the camera. It looks up and blinks. Title fades in. Hold three seconds, cut to black, one last tick.</dd>
+    <dt>Text</dt><dd class="vo">"Pick up a cup. Be quiet for ten minutes. It comes alive."</dd>
+    <dt>Build</dt><dd class="build"><b>Logo, final sound.</b> Working title.</dd>
+  </dl>
+</section>
+
+</div>
+
+<div class="notes">
+  <div>
+    <h2>What changed from v4</h2>
+    <ul>
+      <li>No more "hold with one hand, pull with the other". One pinch does everything: it grows in your hand, floats up big when you let go.</li>
+      <li>The size contrast is the key visual: a 9 cm cup on the desk, a 30 cm canvas in front of you, back to 9 cm on the table.</li>
+      <li>Objects react before you touch them (glow, turn, lean).</li>
+      <li>Tracing your own object is its own shot (8).</li>
+      <li>Colours are the gradient look test's palettes; strokes are a tint of the body, never a new colour.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Build status (web/)</h2>
+    <ul>
+      <li>Shots 1–7, 9, 10: built, verified in the emulator</li>
+      <li>Shot 8: built; camera colour needs a headset</li>
+      <li>Shot 11: built except the peeking newcomer</li>
+      <li>Shot 12: title card only</li>
+      <li>All of it: not yet verified on a real Quest</li>
+    </ul>
+  </div>
+  <div>
+    <h2>Shooting tips</h2>
+    <ul>
+      <li>Shot 4 is the money shot: let the cup float up slowly, keep the real desk in the bottom of frame.</li>
+      <li>Shot 5 is the heart. Let it be slow. Don't cut early.</li>
+      <li>Shot 11 is the thumbnail.</li>
+      <li>Real desk, real mess, afternoon light. No AI-generated footage.</li>
+    </ul>
+  </div>
+</div>
+</div>

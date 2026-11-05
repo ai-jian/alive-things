@@ -6,20 +6,30 @@ One line: *Pick up a cup. Be quiet for ten minutes. It comes alive.*
 ## Read these first, in order
 1. `docs/PRD.md` — goals, core loop, feature list with priorities and acceptance, risks, milestones.
 2. `docs/art-direction.md` — **decided:** whole-body gradient, palette from the object's own colour (no picking), guide 2 × 6 × mirror, two marks, every control a gesture. Live proof `docs/lookdev-gradient.html`. Don't reopen this without the owner.
-3. `docs/storyboard-v4.html` (or the .png) — the 2-minute demo video. **This is the scope.** If a feature is not in a shot, don't build it.
+3. `docs/storyboard-v5.html` (or the .png) — the 2-minute demo video, the studio flow. **This is the scope.** If a feature is not in a shot, don't build it. (v4 is kept for history.)
 4. `docs/design-notes.md` — decision log with reasons, capture pipeline, two-week build order.
 5. `docs/PRD.md` §12 — the official rules that bind the build: seated 2 ft, 60 fps, plane-anchored passthrough, ≤10 min sessions, WebXR allowed via link.
 
 ## Platform decision (Nov 5, evening)
-The rules accept **IWSDK / WebXR entries by link**. That makes WebXR (three.js + Meta Immersive Web SDK) the primary build path: it can be built and deployed from a cloud session and tested on the Quest browser without Unity. The `unity/` folder stays as the port target if a native build is ever needed. Camera: IWSDK exposes `features.camera` (`CameraSource` → texture via getUserMedia). Plan: **trace the object's outline with a fingertip** for the shape (hands-first, no CV), sample the camera frame inside the trace for the palette; if the camera is unavailable the palette falls back to the shelf default. Owner's instruction (Nov 5, night): build the complete product now, no staging, use the camera.
+The rules accept **IWSDK / WebXR entries by link**. WebXR (three.js + Meta Immersive Web SDK) is the primary and only active build path: it is built and deployed from a cloud session and tested on the Quest browser. The `unity/` folder is a dormant port target. Camera: IWSDK exposes `features.camera` (`CameraSource` → texture via getUserMedia); the shape comes from **tracing the object's outline with a fingertip** (hands-first, no CV), the palette from the camera frame inside the trace; without a camera the palette falls back to a soft default. Owner's instruction (Nov 5, night): build the complete product now, no staging, use the camera.
+
+## The interaction, as built (Nov 6)
+1. **Room.** A cup sits on the detected table. When a hand comes near it glows, turns toward the hand and leans in.
+2. **Pinch** it: it lifts and grows in the hand. **Let go:** it floats up to an anchor 42 cm ahead, about 30 cm tall, the room fades to warm fog, a hum rises. It slowly turns to show its back; touching pauses the turn.
+3. **Draw** with a fingertip: line (slow/deep = thick, tapered), tap = dot, hold still = bloom, press-and-hold = move the mandala centre, two fingertips twist = fold 4/6/8/12, flat palm = soften. Guide 2 × 6 × mirror. Strokes are a tint of the object's own gradient.
+4. **Pinch it and lower it** below chest height: it shrinks to real size, lands on the table, wakes (face, arms, feet, two-word trait tag from the stroke stats).
+5. **Doorway** disc appears beside it; set it on the disc → the garden. Home disc to return; a fresh cup waits.
+6. **Trace:** pinch in the air, hold 0.35 s, trace around any real object, release → a smooth inflated thing at real size and place; it then behaves like the cup.
+Removed on Nov 6: the hold-with-one-hand-pull-with-the-other gesture (`focus-system.js`); replaced by `studio-system.js`.
 
 ## Repo map
-- `docs/lookdev-gradient.html` — Option A, current pass: whole-body gradient, guide 2 × 6 × mirror, natural stroke width, all options as gestures (table on the page). Open in a browser; loads three.js 0.152.2 from cdnjs.
+- `docs/lookdev-gradient.html` — the reference look: whole-body gradient, guide 2 × 6 × mirror, natural stroke width, all options as gestures (table on the page). The product's palettes are copied from here. Loads three.js 0.152.2 from cdnjs.
 - `docs/lookdev-symmetry.html` — Option A, first pass: strokes only, six patterns (owner found them indistinguishable at this scale).
 - `docs/lookdev-relief.html` — archived Option B (carved relief). Not chosen.
 - `docs/lookdev.html` — first colour-paint test. Kept for the lighting and jelly reference only.
-- `web/` — the product. IWSDK/WebXR app, deployed to GitHub Pages from `main` (https://ai-jian.github.io/alive-things/). The deployed page carries Meta's IWER emulator, so a desktop browser shows an emulated Quest 3 (see `web/README.md`). Mouse-drag on the cup paints in the emulator.
-- `unity/` — Unity 2022.3 LTS project (secondary path now). URP. Scripts under `Assets/AliveThings/Scripts/`, grouped: Creature, Interaction, Paint, Capture, World. Shader includes under `Assets/AliveThings/Shaders/`.
+- `web/` — the product. IWSDK/WebXR app, deployed to GitHub Pages from `main` (https://ai-jian.github.io/alive-things/). The deployed page carries Meta's IWER emulator, so a desktop browser shows an emulated Quest 3 (see `web/README.md`). Mouse-drag on the object paints in the emulator; keys `t` trace, `f` studio in/out, `w` wake, `g` garden.
+  - `src/main.js` world, active object, systems, landing lifecycle · `cup.js` lathe cup + gradient shader (`gradientShader()`) · `thing.js` captured objects · `paint.js` intensity/wet fields + symmetry guide · `brush-system.js` gestures → marks, notice behaviour · `studio-system.js` grow/float/fog/set-down/wake · `hints.js` cards · `space.js` garden, doorway, showcase landing · `brain.js` creature free will + whisper cards · `creature.js` face/arms/feet/traits · `audio.js` hum/ticks/spatial whisper language · `trace.js` + `inflate.js` capture · `palette.js` the four reference palettes · `store.js` localStorage · `place-on-table.js` plane detection · `hands.js` pinch/tips.
+- `unity/` — Unity 2022.3 LTS project (dormant; behind the web build). URP. Scripts under `Assets/AliveThings/Scripts/`, grouped: Creature, Interaction, Paint, Capture, World. Shader includes under `Assets/AliveThings/Shaders/`.
 
 ## Unity setup (local machine)
 1. Unity Hub → install 2022.3.x LTS with Android Build Support (SDK/NDK/OpenJDK).
@@ -51,13 +61,13 @@ With either, an agent can build the first scene and fix compile errors itself; t
 - Don't commit `Library/`, builds, or APKs (see `.gitignore`).
 - Deploy = push to `main`. Branch pushes only build. Pages environment only accepts `main`.
 - Emulator gotcha: desktop Chrome's native `XRWebGLBinding` rejects IWER sessions; `web/index.html` deletes it before modules load unless the UA is OculusBrowser. Keep that script.
-- Storyboard changes are design changes: edit `docs/storyboard-v4.html`, re-render the PNG, and note the reason in `docs/design-notes.md`.
+- Storyboard changes are design changes: edit `docs/storyboard-v5.html`, re-render the PNG (Playwright screenshot of the page at 1180 px wide, 2× scale), and note the reason in `docs/design-notes.md`.
 - When something can't be verified here (no headset, no Unity), say so plainly in the handoff instead of claiming it works.
 
-## State as of 2026-11-05 (night)
-- `web/` is the product and is deployed at https://ai-jian.github.io/alive-things/ (push to `main`). All three acts run end to end in the desktop emulator: room (cup on table, notices your hand, grab), capture by tracing (smoothed loop → inflate, camera colour on device), **studio** (pinch → grows in hand → let go → floats in front as a big canvas, fog + hum; lower it → shrinks, lands, wakes), gesture brush with the symmetry guide, My Space garden with free-will creatures, spatial wordless whispers in turns, plant guide, doorway in and home out, localStorage persistence. Landing page = the live garden. Palettes are the four from `docs/lookdev-gradient.html` (owner's reference look); captured colours get the same ramp structure. `web/README.md` lists features and emulator keys.
-- Headless smoke tests live in the session scratchpad only; to check locally run `npm run dev` in `web/` and use the emulator keys.
-- **Not yet verified on a real Quest.** First device pass should check: fingertip touch distance (TOUCH in `brush-system.js`), table detection, camera permission and colour, 60 fps with one creature painting (JS diffusion runs at 30 Hz over the wet box).
-- Owner feedback applied Nov 6: no illustration on the landing (it looked AI-made), colours must match the gradient look test, the object must come to you and get big to paint (size contrast), objects should react to you. The hold-and-open gesture is gone; `focus-system.js` was replaced by `studio-system.js`.
-- Known rough edges: the Unity folder is behind the web build (secondary path).
-- Next: device pass, then polish passes guided by the storyboard (lighting in the garden, wake animation timing, hint copy), then the 2-minute video.
+## State as of 2026-11-06
+- `web/` is the product, deployed at https://ai-jian.github.io/alive-things/ (push to `main`). The whole studio flow above runs end to end in the desktop emulator: room, notice, pinch → grow → float big → fog, brush with the symmetry guide, set down → wake with traits, doorway → garden, free-will creatures, spatial wordless whispers in turns, plant guide, home disc, trace capture with smoothing, persistence, and a landing page that is the live garden. Palettes are the four from `docs/lookdev-gradient.html`.
+- Headless smoke tests live in the session scratchpad only; locally run `npm run dev` in `web/` and use the emulator keys.
+- **Not yet verified on a real Quest.** First device pass: fingertip touch distance (TOUCH in `brush-system.js`), studio anchor height and the 0.22 m set-down threshold, table detection, camera permission and colour, 60 fps while painting (JS diffusion runs at 30 Hz over the wet box).
+- Owner feedback applied Nov 6: no illustration on the landing (it looked machine-made), colours must match the gradient look test, the object must come to you and get big to paint (size contrast, parallax), objects should react to you, traced shapes must read cleanly.
+- Not built: the peeking blank newcomer (storyboard shot 11), the demo video itself.
+- Next: device pass, then the video.
