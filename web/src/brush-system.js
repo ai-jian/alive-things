@@ -50,6 +50,10 @@ export function makeBrushSystem(active, events, hands, sound) {
       const cup = active.cup; if (!cup) return;
       cup.tick(delta, time);
       const grabbed = active.entity && active.entity.hasComponent(Grabbed); if (grabbed) events.grabbed = true;
+      // a hand coming close makes it glow a little, like it noticed you
+      let near = Infinity; cup.group.getWorldPosition(tmpB); for (const side of ['left', 'right']) near = Math.min(near, hands.tip[side].distanceTo(tmpB));
+      const wantGlow = near < 0.12 && !events.inSpace ? 0.35 * (1 - near / 0.12) : 0; cup.approachGlow = (cup.approachGlow || 0) + (wantGlow - (cup.approachGlow || 0)) * Math.min(1, delta * 4);
+      if (cup.spawnT !== undefined && cup.spawnT < 1) { cup.spawnT = Math.min(1, cup.spawnT + delta * 1.5); const k = cup.spawnT; const s = k < 0.7 ? k / 0.7 * 1.12 : 1.12 - (k - 0.7) / 0.3 * 0.12; cup.group.scale.setScalar(Math.max(0.001, s)); cup.group.position.y += delta * 0.02 * (1 - k); }
       const touches = [];
       for (const side of ['left', 'right', 'mouse']) {
         const h = this.hands[side];

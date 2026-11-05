@@ -44,11 +44,11 @@ export function makeFocusSystem(active, hands, sound, events, brushStats) {
       // ease the fog
       const target = this.wantFocus ? 1 : 0;
       const prev = this.focus; this.focus += (target - this.focus) * Math.min(1, delta * 1.4);
-      if (Math.abs(this.focus - prev) > 1e-4) {
+      if (Math.abs(this.focus - prev) > 1e-4 || cup.approachGlow > 0.001) {
         this.dome.material.opacity = this.focus * 0.88;
         this.halo.material.opacity = this.focus * 0.9;
         cup.uniforms.uShade.value = 0.16 + this.focus * 0.08;
-        cup.setGlow(this.focus * 0.35);
+        cup.setGlow(this.focus * 0.35 + (cup.approachGlow || 0));
         sound.setHum(this.focus);
       }
       const headObj = this.renderer.xr.isPresenting ? this.player.head : this.camera; headObj.getWorldPosition(head);

@@ -7,7 +7,9 @@ import { Brain } from './brain.js';
 import { makeCard } from './hints.js';
 import { makeCup } from './cup.js';
 import { wakeCup } from './creature.js';
-import { loadAll, upsert, serialize, restorePaint } from './store.js';
+import { loadAll, upsert, serialize, restorePaint, decodeMask } from './store.js';
+import { makeThing } from './thing.js';
+import { inflateMask } from './inflate.js';
 
 const head = new Vector3(), tmp = new Vector3();
 
@@ -76,7 +78,10 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
     }
     leave() { this.wantIn = false; this.inSpace = false; events.inSpace = false; sound.setHum(0); }
     rebuild(rec) {
-      const cup = makeCup({ dominant: new Color(rec.dominant), heightMetres: 0.09 }); cup.id = rec.id; cup.traits = rec.traits; cup.dominant = new Color(rec.dominant); cup.bornAt = rec.bornAt; restorePaint(cup, rec);
+      let cup = null;
+      if (rec.kind === 'thing' && rec.shape) { const sh = decodeMask(rec); const geo = inflateMask(sh.mask, sh.w, sh.h, sh.width, sh.height, 0.55); if (geo) { cup = makeThing({ geometry: geo, dominant: new Color(rec.dominant), width: sh.width, height: sh.height }); cup.shape = sh; } }
+      if (!cup) cup = makeCup({ dominant: new Color(rec.dominant), heightMetres: 0.09 });
+      cup.id = rec.id; cup.traits = rec.traits; cup.dominant = new Color(rec.dominant); cup.bornAt = rec.bornAt; restorePaint(cup, rec);
       cup.creature = wakeCup(cup, { traits: rec.traits, dark: cup.uniforms.uPal.value[0].getHex() }); cup.creature.pop = 1; cup.creature.parts.scale.setScalar(cup.wakeFit ? cup.wakeFit.unit : 1);
       return cup;
     }

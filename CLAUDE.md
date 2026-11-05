@@ -54,8 +54,9 @@ With either, an agent can build the first scene and fix compile errors itself; t
 - Storyboard changes are design changes: edit `docs/storyboard-v4.html`, re-render the PNG, and note the reason in `docs/design-notes.md`.
 - When something can't be verified here (no headset, no Unity), say so plainly in the handoff instead of claiming it works.
 
-## State as of 2026-11-05 (evening)
-- Done: PRD, storyboard v4.2, look tests (gradient one is the reference), Unity skeleton with 15 scripts and 3 shader files matching the decided design. Nothing has been compiled in Unity yet; expect small fixes.
-- `Paint/ZenBrush.cs` implements the full gesture map and the 2 × N × mirror guide. `Paint/PaintSurface.cs` is intensity + wet with a diffusion blit. `Paint/PaletteFromObject.cs` builds the six stops. `Shaders/GradientSurface.hlsl` is the surface.
-- Not started: scene, Meta SDK hand adapter, capture pipeline (Sentis model, mask → `SilhouetteInflator`, dominant colour → `PaletteFromObject.SetDominant`), My Space art, sounds, ripple/spoke visuals (`ZenBrush.OnCentreSet` / `OnFoldChanged` are virtual hooks).
-- Next: open locally, install Meta SDK, build the first scene, get the cup painting in the editor with the mouse, then on device.
+## State as of 2026-11-05 (night)
+- `web/` is the product and is deployed at https://ai-jian.github.io/alive-things/ (push to `main`). All three acts of the storyboard run end to end in the desktop emulator: room (cup on table, glow, grab), capture by tracing (inflate, camera colour on device), gesture brush with the symmetry guide, Focus Mode, wake with traits, My Space garden with free-will creatures, whispers, plant guide, doorway in and home out, localStorage persistence. `web/README.md` lists features and emulator keys.
+- Headless smoke tests live in the session scratchpad only; to check locally run `npm run dev` in `web/` and use the emulator keys.
+- **Not yet verified on a real Quest.** First device pass should check: fingertip touch distance (TOUCH in `brush-system.js`), table detection, camera permission and colour, 60 fps with one creature painting (JS diffusion runs at 30 Hz over the wet box).
+- Known rough edges: landing page is plain; no sound for whispers beyond chirps; traced things' arms are stubs; no exit-from-garden hint; the Unity folder is behind the web build (secondary path).
+- Next: device pass, then polish passes guided by the storyboard (lighting in the garden, wake animation timing, hint copy), then the 2-minute video.

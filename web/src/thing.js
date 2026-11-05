@@ -24,7 +24,7 @@ export function makeThing({ geometry, dominant = new Color(0.9, 0.86, 0.78), wid
   const thing = {
     kind: 'thing', group, body, handle: null, paint, uniforms, scale: 1, dominant, creature: null, traits: null, _acc: 0,
     // where a face and feet go, in metres: front of the puffy body, bottom edge
-    wakeFit: { unit: height / 1.04, offset: [0, -height / 2, Math.min(width, height) * 0.55 * 0.5 - 0.575 * (height / 1.04)] },
+    wakeFit: { unit: height / 1.04, halfWidth: (width / 2) / (height / 1.04), offset: [0, -height / 2, Math.min(width, height) * 0.55 * 0.5 - 0.575 * (height / 1.04)] },
     setDominant(c) { thing.dominant = c; uniforms.uPal.value = paletteFromColor(c); },
     setGlow(g) { uniforms.uGlow.value = g; },
     /** touch model: cast from outside toward the centre through the point; gap = signed distance along that ray */

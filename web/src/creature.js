@@ -24,7 +24,7 @@ const head = new Vector3();
 
 /** Adds a face and limbs to a cup (in cup units, parented to cup.group). Returns the creature controller. */
 export function wakeCup(cup, { traits, dark }) {
-  const fit = cup.wakeFit || { unit: 1, offset: [0, 0, 0] }; const unit = fit.unit;
+  const fit = cup.wakeFit || { unit: 1, offset: [0, 0, 0] }; const unit = fit.unit; const hw = fit.halfWidth || 0.6;   // half width in parts units
   const ink = new MeshBasicMaterial({ color: dark || 0x2a2a6b });
   const blush = new MeshBasicMaterial({ color: 0xf3a7b6, transparent: true, opacity: 0.7 });
   const face = new Group();
@@ -40,8 +40,8 @@ export function wakeCup(cup, { traits, dark }) {
     const foot = new Mesh(new SphereGeometry(0.075, 12, 8), ink); foot.scale.set(1.3, 0.5, 1); foot.position.y = -0.22;
     g.add(leg, foot); g.position.set(x, 0, 0.1); limbs.add(g); legs.push(g);
   }
-  const armL = new Mesh(new CylinderGeometry(0.025, 0.025, 0.3, 8), ink); armL.position.set(-0.66, 0.55, 0); armL.rotation.z = 1.2;
-  const armR = armL.clone(); armR.position.set(0.95, 0.72, 0); armR.rotation.z = -0.9;
+  const armL = new Mesh(new CylinderGeometry(0.025, 0.025, 0.3, 8), ink); armL.position.set(-(hw + 0.06), 0.55, 0); armL.rotation.z = 1.2;
+  const armR = armL.clone(); armR.position.set(hw + (cup.handle ? 0.35 : 0.06), cup.handle ? 0.72 : 0.55, 0); armR.rotation.z = -0.9;
   limbs.add(armL, armR);
   const parts = new Group(); parts.add(face, limbs); parts.scale.setScalar(0.001); parts.position.set(fit.offset[0], fit.offset[1], fit.offset[2]); cup.group.add(parts);
 

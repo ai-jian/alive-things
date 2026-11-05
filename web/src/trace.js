@@ -62,6 +62,8 @@ export function makeTraceSystem(world, active, hands, sound, events, onThing) {
       if (!geo) return;
       const dominant = this.sampleColour(pts, poly, r) || new Color().setHSL(Math.random(), 0.35, 0.6);
       const thing = makeThing({ geometry: geo, dominant, width: r.width, height: r.height });
+      thing.shape = { w: r.w, h: r.h, width: r.width, height: r.height, mask: r.mask };
+      thing.spawnT = 0;
       // place at the real spot, front toward the player; the bbox centre is offset from the centroid by the margin
       thing.group.position.copy(c).addScaledVector(u, r.minX + r.width / 2).addScaledVector(v, r.minY + r.height / 2);
       thing.group.lookAt(head);

@@ -11,7 +11,10 @@ export function saveAll(list) { try { localStorage.setItem(KEY, JSON.stringify(l
 /** serialize a creature-bearing cup */
 export function serialize(cup, extra = {}) {
   const { W, H } = cup.paint;
-  return { id: cup.id || (cup.id = 'c' + Date.now().toString(36)), kind: cup.kind || 'cup', dominant: cup.dominant ? cup.dominant.getHex() : 0xeee0c6, traits: cup.traits, paint: { w: W >> 1, h: H >> 1, data: b64.enc(downsample(cup.paint.heat, W, H)) }, bornAt: cup.bornAt || Date.now(), ...extra };
+  const rec = { id: cup.id || (cup.id = 'c' + Date.now().toString(36)), kind: cup.kind || 'cup', dominant: cup.dominant ? cup.dominant.getHex() : 0xeee0c6, traits: cup.traits, paint: { w: W >> 1, h: H >> 1, data: b64.enc(downsample(cup.paint.heat, W, H)) }, bornAt: cup.bornAt || Date.now(), ...extra };
+  if (cup.kind === 'thing' && cup.shape) rec.shape = { w: cup.shape.w, h: cup.shape.h, width: cup.shape.width, height: cup.shape.height, mask: b64.enc(cup.shape.mask) };
+  return rec;
 }
+export function decodeMask(rec) { return rec.shape ? { ...rec.shape, mask: b64.dec(rec.shape.mask) } : null; }
 export function restorePaint(cup, rec) { if (!rec.paint) return; const bytes = b64.dec(rec.paint.data); upsample(bytes, rec.paint.w, rec.paint.h, cup.paint.heat); cup.paint.dirty = true; cup.paint.coverage = 0.5; }
 export function upsert(rec) { const all = loadAll(); const i = all.findIndex(r => r.id === rec.id); if (i >= 0) all[i] = rec; else all.push(rec); return saveAll(all); }
