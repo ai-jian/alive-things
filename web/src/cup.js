@@ -44,6 +44,8 @@ const frag = /* glsl */`
     #include <colorspace_fragment>
   }`;
 
+export function gradientShader() { return { vert, frag }; }
+
 export function makeCup({ dominant = new Color(0.93, 0.88, 0.78), heightMetres = 0.09 } = {}) {
   const scale = heightMetres / 1.04;
   const circumference = 2 * Math.PI * ((WALL_R0 + WALL_R1) / 2) * scale;
@@ -75,7 +77,7 @@ export function makeCup({ dominant = new Color(0.93, 0.88, 0.78), heightMetres =
 
   const poke = { amt: 0, vel: 0 };
   const cup = {
-    group, body, handle, paint, uniforms, scale, dominant,
+    kind: 'cup', group, body, handle, paint, uniforms, scale, dominant,
     setDominant(c) { cup.dominant = c; uniforms.uPal.value = paletteFromColor(c); },
     setGlow(g) { uniforms.uGlow.value = g; },
     /** Analytic surface model in cup units: returns {u, v, depth, onWall} for a point in the cup's local space. */

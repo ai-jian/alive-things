@@ -10,6 +10,7 @@ export function makePlacementSystem(active, { fallbackAfter = 4 } = {}) {
     init() { this.placed = false; this.t = 0; this.lastCup = null; this.spot = null; }
     update(delta) {
       const cup = active.cup; if (!cup) return;
+      if (cup.kind !== 'cup') { this.lastCup = cup; return; }          // traced things stay where they were traced
       if (cup !== this.lastCup) { this.lastCup = cup; if (this.spot) { cup.group.position.copy(this.spot); return; } this.placed = false; }
       if (this.placed) return;
       this.t += delta;

@@ -24,6 +24,7 @@ const head = new Vector3();
 
 /** Adds a face and limbs to a cup (in cup units, parented to cup.group). Returns the creature controller. */
 export function wakeCup(cup, { traits, dark }) {
+  const fit = cup.wakeFit || { unit: 1, offset: [0, 0, 0] }; const unit = fit.unit;
   const ink = new MeshBasicMaterial({ color: dark || 0x2a2a6b });
   const blush = new MeshBasicMaterial({ color: 0xf3a7b6, transparent: true, opacity: 0.7 });
   const face = new Group();
@@ -42,14 +43,14 @@ export function wakeCup(cup, { traits, dark }) {
   const armL = new Mesh(new CylinderGeometry(0.025, 0.025, 0.3, 8), ink); armL.position.set(-0.66, 0.55, 0); armL.rotation.z = 1.2;
   const armR = armL.clone(); armR.position.set(0.95, 0.72, 0); armR.rotation.z = -0.9;
   limbs.add(armL, armR);
-  const parts = new Group(); parts.add(face, limbs); parts.scale.setScalar(0.001); cup.group.add(parts);
+  const parts = new Group(); parts.add(face, limbs); parts.scale.setScalar(0.001); parts.position.set(fit.offset[0], fit.offset[1], fit.offset[2]); cup.group.add(parts);
 
   const c = {
     traits, parts, legs, eyeL, eyeR, awake: true, t: 0, pop: 0, blinkT: 2 + Math.random() * 2, walking: false, lookTarget: null,
     update(dt, headWorld) {
       c.t += dt;
       // pop in with a little overshoot
-      if (c.pop < 1) { c.pop = Math.min(1, c.pop + dt * 2.2); const k = c.pop; const s = k < 0.8 ? k / 0.8 * 1.15 : 1.15 - (k - 0.8) / 0.2 * 0.15; parts.scale.setScalar(Math.max(0.001, s)); }
+      if (c.pop < 1) { c.pop = Math.min(1, c.pop + dt * 2.2); const k = c.pop; const s = k < 0.8 ? k / 0.8 * 1.15 : 1.15 - (k - 0.8) / 0.2 * 0.15; parts.scale.setScalar(Math.max(0.001, s) * unit); }
       // blink
       c.blinkT -= dt; const ey = c.blinkT < 0.12 ? 0.1 : 1; eyeL.scale.y = eyeR.scale.y = ey; if (c.blinkT < 0) c.blinkT = 2 + Math.random() * 3 + traits.sleepy * 2;
       // feet

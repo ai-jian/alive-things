@@ -9,6 +9,7 @@ import { makeFocusSystem } from './focus-system.js';
 import { Hands } from './hands.js';
 import { Sound } from './audio.js';
 import { makeSpaceSystem } from './space.js';
+import { makeTraceSystem } from './trace.js';
 
 const world = await World.create(document.getElementById('app'), {
   xr: {
@@ -20,13 +21,14 @@ const world = await World.create(document.getElementById('app'), {
   features: {
     grabbing: { useHandPinchForGrab: true },
     sceneUnderstanding: true,
+    camera: /OculusBrowser/i.test(navigator.userAgent),   // headset passthrough camera for the palette; never the desktop webcam
     locomotion: false,
     spatialUI: false,
   },
 });
 
 // What the player has done so far. The hint card advances on these; traits will read them later.
-const events = { strokes: 0, dwell: false, grabbed: false, centreSet: false, foldChanged: false, focused: false, awake: false };
+const events = { strokes: 0, dwell: false, grabbed: false, centreSet: false, foldChanged: false, focused: false, awake: false, traced: false, inSpace: false };
 const hands = new Hands(world);
 const sound = new Sound();
 
@@ -52,6 +54,14 @@ world.registerSystem(makeHintSystem(active, events));
 const SpaceSystem = makeSpaceSystem(world, hands, sound, events, () => active.cup);
 world.registerSystem(SpaceSystem);
 world.getSystem(SpaceSystem).onAdopted = () => { spawnCup(); };   // a fresh object waits on the table when you come back
+// capture: a traced loop becomes the active thing; an untouched cup on the table makes way for it
+world.registerSystem(makeTraceSystem(world, active, hands, sound, events, (thing, entity) => {
+  const old = active.cup;
+  if (old && !old.creature && old.entity && old.paint.coverage < 0.01) { try { old.entity.dispose({ disposeResources: true }); } catch (e) {} }
+  active.cup = thing; active.entity = entity;
+  events.strokes = 0; events.dwell = false; events.focused = false; events.awake = false; events.grabbed = false;
+  const b = world.getSystem(BrushSystem); if (b) b.resetStats();
+}));
 spawnCup();
 
 // Passthrough in AR: no world background. In the browser fallback keep a soft paper colour.

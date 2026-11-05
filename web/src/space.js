@@ -77,7 +77,7 @@ export function makeSpaceSystem(world, hands, sound, events, getActiveCup) {
     leave() { this.wantIn = false; this.inSpace = false; events.inSpace = false; sound.setHum(0); }
     rebuild(rec) {
       const cup = makeCup({ dominant: new Color(rec.dominant), heightMetres: 0.09 }); cup.id = rec.id; cup.traits = rec.traits; cup.dominant = new Color(rec.dominant); cup.bornAt = rec.bornAt; restorePaint(cup, rec);
-      cup.creature = wakeCup(cup, { traits: rec.traits, dark: cup.uniforms.uPal.value[0].getHex() }); cup.creature.pop = 1; cup.creature.parts.scale.setScalar(1);
+      cup.creature = wakeCup(cup, { traits: rec.traits, dark: cup.uniforms.uPal.value[0].getHex() }); cup.creature.pop = 1; cup.creature.parts.scale.setScalar(cup.wakeFit ? cup.wakeFit.unit : 1);
       return cup;
     }
     adopt(cup) {

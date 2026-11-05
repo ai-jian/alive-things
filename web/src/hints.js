@@ -4,12 +4,14 @@ import { createSystem } from '@iwsdk/core';
 import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, Vector3 } from 'three';
 
 const STEPS = [
-  { key: 'touch',  text: 'Touch the cup with one fingertip.\nDraw slowly.', done: ev => ev.strokes >= 1 },
+  { key: 'touch',  text: 'Touch it with one fingertip.\nDraw slowly.', done: ev => ev.strokes >= 1 },
   { key: 'dwell',  text: 'Now stop moving, but keep touching.\nWatch the ink bloom.', done: ev => ev.dwell, timeout: 20 },
   { key: 'grab',   text: 'Pinch to pick it up.\nTurn it. Your strokes went round.', done: ev => ev.grabbed, timeout: 25 },
   { key: 'focus',  text: 'Hold it. Pinch beside it with\nyour other hand and pull away.', done: ev => ev.focused, timeout: 30 },
   { key: 'draw2',  text: 'Just you and the cup now.\nDraw slowly. Hold still to bloom.', done: ev => ev.strokes >= 4, timeout: 40 },
   { key: 'release',text: 'When it feels done,\nopen your hand.', done: ev => ev.awake, timeout: 60 },
+  { key: 'door',   text: 'A doorway opened beside it.\nSet it down there when you are ready.', done: ev => ev.inSpace, timeout: 60 },
+  { key: 'trace',  text: 'Pinch in the air and hold, then trace\naround anything on your desk.', done: ev => ev.traced, timeout: 45 },
   { key: 'bye',    text: 'It learned you while you drew.\nStay as long as you like.', done: () => false, timeout: 7 },
 ];
 
